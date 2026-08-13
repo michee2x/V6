@@ -4,7 +4,7 @@ import * as React from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import {
-  Copy, Download, Wand2, CheckCheck, AlertCircle, RefreshCw, ArrowLeft, Settings2
+  Copy, Download, Wand2, CheckCheck, AlertCircle, RefreshCw, ArrowLeft, Settings2, ArrowUp
 } from "lucide-react";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -61,8 +61,8 @@ export function BriefPanel({ sessionId, contentType }: BriefPanelProps) {
     setTimeout(() => setCopied(false), 2000);
   };
 
-  const handleRefinement = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key !== "Enter" || !refinement.trim() || isRefining) return;
+  const submitRefinement = () => {
+    if (!refinement.trim() || isRefining) return;
     const instruction = refinement.trim();
     setRefinement("");
     refineStream.reset();
@@ -70,6 +70,13 @@ export function BriefPanel({ sessionId, contentType }: BriefPanelProps) {
       brief: liveBrief,
       instruction,
     });
+  };
+
+  const handleRefinement = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      submitRefinement();
+    }
   };
 
   const isLoadingSkeleton = briefStream.isStreaming && briefStream.text.length === 0;
@@ -89,7 +96,7 @@ export function BriefPanel({ sessionId, contentType }: BriefPanelProps) {
             className="self-start"
             onClick={() => {
               briefStream.reset();
-              briefStream.trigger(`/api/v1/sessions/${sessionId}/brief`, {});
+              briefStream.trigger(`/api/v1/sessions/${sessionId}/brief?force=true`, {});
             }}
           >
             <RefreshCw className="w-3.5 h-3.5 mr-1.5" />
@@ -213,9 +220,13 @@ export function BriefPanel({ sessionId, contentType }: BriefPanelProps) {
       </div>
 
       {/* Refinement input (Floating Pill) */}
-      <div className="absolute bottom-6 left-4 right-4 md:left-8 md:right-8 bg-background border border-border shadow-lg rounded-full px-4 py-2.5 flex items-center gap-2">
-        {isRefining && (
-          <span className="animate-spin h-4 w-4 border-2 border-muted-foreground border-t-transparent rounded-full inline-block shrink-0" />
+      <div className="fixed bottom-4 left-4 right-4 md:left-1/2 md:-translate-x-1/2 md:w-[calc(100%-2rem)] md:max-w-2xl bg-muted/90 backdrop-blur-xl border border-border/80 shadow-2xl rounded-full p-1.5 flex items-center gap-2 z-50 focus-within:ring-2 focus-within:ring-primary/50 transition-all">
+        {isRefining ? (
+          <div className="pl-3 py-2 flex items-center justify-center shrink-0">
+            <span className="animate-spin h-4 w-4 border-2 border-muted-foreground border-t-transparent rounded-full inline-block" />
+          </div>
+        ) : (
+          <div className="w-2" /> // small left spacer
         )}
         <input
           id="brief-refinement-input"
@@ -223,12 +234,26 @@ export function BriefPanel({ sessionId, contentType }: BriefPanelProps) {
           value={refinement}
           onChange={(e) => setRefinement(e.target.value)}
           onKeyDown={handleRefinement}
-          placeholder='Chat with AI (e.g. "make it warmer", "add space theme")...'
-          className="flex-1 bg-transparent text-body placeholder:text-muted-foreground outline-none px-1"
+          placeholder='Message AI to refine (e.g. "make it warmer")...'
+          className="flex-1 bg-transparent text-body text-foreground placeholder:text-muted-foreground outline-none px-2 py-2.5"
           disabled={isRefining || briefStream.isStreaming}
         />
+        <Button 
+          type="button"
+          size="icon"
+          className="rounded-full shrink-0 h-9 w-9 bg-foreground text-background hover:bg-foreground/90 transition-colors disabled:opacity-30 disabled:bg-muted-foreground"
+          onClick={submitRefinement}
+          disabled={!refinement.trim() || isRefining || briefStream.isStreaming}
+          aria-label="Send message"
+        >
+          <ArrowUp className="h-4 w-4" />
+        </Button>
         {refineStream.error && (
-          <p className="absolute -top-6 left-4 text-caption text-destructive">{refineStream.error}</p>
+          <div className="absolute -top-12 left-1/2 -translate-x-1/2 w-max max-w-full px-4">
+            <p className="text-caption text-destructive bg-destructive/10 px-3 py-1.5 rounded-full backdrop-blur-md border border-destructive/20 shadow-sm truncate">
+              {refineStream.error}
+            </p>
+          </div>
         )}
       </div>
     </div>

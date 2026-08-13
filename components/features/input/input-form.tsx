@@ -3,8 +3,8 @@
 import * as React from "react";
 import { useRouter } from "next/navigation";
 import {
-  Link2, Upload, FileImage, Video, Newspaper, X, ZoomIn,
-  FileText, File,
+  Link2, FileImage, Video, Newspaper, X, ZoomIn,
+  FileText, Plus,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
@@ -124,25 +124,7 @@ export function InputForm() {
   return (
     <>
       <form onSubmit={handleSubmit} className="w-full flex flex-col gap-4">
-        {/* Content type selector */}
-        <div className="flex items-center gap-1 p-1 rounded-lg bg-muted w-fit self-center">
-          {contentTypes.map(({ value, label, icon: Icon }) => (
-            <button
-              key={value}
-              type="button"
-              onClick={() => setContentType(value)}
-              className={cn(
-                "flex items-center gap-1.5 px-3 py-1.5 rounded-md text-label transition-all duration-150",
-                contentType === value
-                  ? "bg-background text-foreground shadow-sm"
-                  : "text-muted-foreground hover:text-foreground"
-              )}
-            >
-              <Icon className="w-3.5 h-3.5" />
-              {label}
-            </button>
-          ))}
-        </div>
+
 
         {/* Main input area */}
         <div
@@ -248,11 +230,11 @@ export function InputForm() {
               <button
                 type="button"
                 onClick={() => fileInputRef.current?.click()}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-label text-muted-foreground hover:text-foreground hover:bg-muted transition-all"
+                className="p-2 rounded-full bg-muted hover:bg-muted-foreground/20 text-muted-foreground hover:text-foreground transition-all border border-border shrink-0"
                 title="Upload a file instead"
+                aria-label="Upload a file"
               >
-                <Upload className="w-3.5 h-3.5" />
-                Upload
+                <Plus className="w-4 h-4" />
               </button>
             </div>
           )}

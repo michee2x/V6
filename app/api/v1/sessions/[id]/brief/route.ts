@@ -12,7 +12,7 @@ interface RouteContext {
   params: Promise<{ id: string }>;
 }
 
-export async function POST(_req: NextRequest, { params }: RouteContext) {
+export async function POST(req: NextRequest, { params }: RouteContext) {
   const { id } = await params;
   const session = getSession(id);
 
@@ -33,6 +33,23 @@ export async function POST(_req: NextRequest, { params }: RouteContext) {
   }
 
   const userPrompt = briefPrompt(session.contentType, baseInsight);
+
+  // If a brief already exists (e.g. on page refresh), just stream it back instantly
+  const url = new URL(req.url);
+  const force = url.searchParams.get("force") === "true";
+  
+  if (session.brief && !force) {
+    const encoder = new TextEncoder();
+    const stream = new ReadableStream({
+      start(controller) {
+        controller.enqueue(
+          encoder.encode(`data: ${JSON.stringify({ type: "delta", text: session.brief })}\n\n`)
+        );
+        controller.close();
+      }
+    });
+    return sseResponse(stream);
+  }
 
   const claudeStream = createClaudeStream({ userPrompt });
   const persistingStream = new ReadableStream<Uint8Array>({

@@ -1,4 +1,5 @@
 import { InputForm } from "@/components/features/input/input-form";
+import { GoogleGeminiEffect } from "@/components/ui/google-gemini-effect";
 
 export const metadata = {
   title: "v6 — Paste a link, understand it. Create from it.",
@@ -8,8 +9,11 @@ export const metadata = {
 
 export default function HomePage() {
   return (
-    <main className="flex flex-col flex-1 items-center justify-center min-h-screen px-4">
-      <div className="w-full max-w-2xl flex flex-col items-center gap-10">
+    <main className="relative flex flex-col flex-1 items-center justify-center min-h-screen px-4 overflow-hidden">
+      {/* Background Effect */}
+      <GoogleGeminiEffect />
+
+      <div className="relative z-10 w-full max-w-2xl flex flex-col items-center gap-10">
         {/* Hero */}
         <div className="flex flex-col items-center text-center gap-4">
           <span className="inline-flex items-center rounded-full border border-border bg-muted px-3 py-1 text-label text-muted-foreground">

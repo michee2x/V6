@@ -120,50 +120,59 @@ ${content}
 // ─── Phase 2 — Creative Brief ─────────────────────────────────────────────────
 
 const briefInstructions: Record<ContentType, string> = {
-  video: `Convert the advanced insights into a production-ready creative brief for a VIDEO inspired by (not identical to) the analysed content.
+  video: `Convert the advanced insights into a PRODUCTION-READY AI VIDEO BRIEF — formatted as a clean, plain-text prompt that can be pasted directly into any AI video generation tool (Runway, Kling, Pika, etc.) or handed to a director.
 
-Frame everything as "inspired by" — generalise techniques, never reproduce specific content.
+DO NOT use Markdown. No asterisks, no bold, no bullet dashes, no headers with hashtags.
+Write in flowing, structured plain text using clear section labels followed by a colon and the value on the same line.
 
-Structure the brief as:
-**Format:** [length, orientation, platform target]
-**Tone & Energy:** [delivery style, pacing feel]
-**Opening Hook:** [first 2–3 seconds — be specific about what happens]
-**Structure:** [beat-by-beat outline, 4–6 beats]
-**Visual Style:** [shot types, editing techniques, text overlay approach]
-**Audio:** [music mood, VO style if applicable]
-**CTA / Close:** [how it ends]
+Output format:
 
-Then add a single line: _"Refine this brief: tell me your product, target audience, or any style changes."_`,
+FORMAT: [length, orientation, platform target]
+TONE AND ENERGY: [delivery style, pacing feel]
+OPENING HOOK: [first 2–3 seconds — be specific about what happens]
+STRUCTURE: [beat-by-beat outline, 4–6 beats separated by forward slashes or semicolons]
+VISUAL STYLE: [shot types, editing techniques, text overlay approach]
+AUDIO: [music mood, VO style if applicable]
+CALL TO ACTION: [how it ends]
 
-  image: `Convert the advanced insights into a production-ready creative brief for an IMAGE inspired by (not identical to) the analysed content.
+Then add this line exactly:
+Refine this brief: tell me your product, target audience, or any style changes.`,
 
-Frame everything as "inspired by" — generalise techniques, never reproduce specific content.
+  image: `Convert the advanced insights into a PRODUCTION-READY AI IMAGE PROMPT — formatted as clean, plain text that can be pasted directly into Midjourney, DALL-E, Flux, Stable Diffusion, or any other image generation tool.
 
-Structure the brief as:
-**Format:** [dimensions, orientation, use case]
-**Subject:** [what to depict]
-**Composition:** [layout approach, focal point]
-**Colour Palette:** [2–4 specific colours or palette description]
-**Lighting:** [quality, direction, mood]
-**Style:** [visual genre or reference point]
-**Mood:** [emotional target]
+DO NOT use Markdown. No asterisks, no bold, no bullet dashes, no headers with hashtags.
+Write in flowing, structured plain text using clear section labels followed by a colon and the value on the same line.
 
-Then add a single line: _"Refine this brief: tell me your subject, brand colours, or any style changes."_`,
+Output format:
 
-  article: `Convert the advanced insights into a production-ready creative brief for a PIECE OF WRITING inspired by (not identical to) the analysed content.
+FORMAT: [dimensions, orientation, use case]
+SUBJECT: [what to depict, in vivid, specific detail]
+COMPOSITION: [layout approach, focal point, framing]
+COLOUR PALETTE: [2–4 specific colours or palette description]
+LIGHTING: [quality, direction, mood]
+STYLE: [visual genre or reference point — e.g. "Karsh portrait photography, mid-century editorial"]
+MOOD: [emotional target, one or two sentences]
 
-Frame everything as "inspired by" — generalise techniques, never reproduce specific content.
+Then add this line exactly:
+Refine this brief: tell me your subject, brand colours, or any style changes.`,
 
-Structure the brief as:
-**Format:** [article type, approximate length, platform]
-**Central Argument / Thesis:** [1–2 sentences]
-**Opening Hook:** [how to start — specific approach]
-**Structure:** [3–5 key sections or beats]
-**Tone & Voice:** [register, person, sentence style]
-**Rhetorical Approach:** [what techniques to deploy]
-**Close:** [how to end it]
+  article: `Convert the advanced insights into a PRODUCTION-READY AI WRITING BRIEF — formatted as clean, plain text that can be pasted directly into ChatGPT, Claude, or any AI writing tool.
 
-Then add a single line: _"Refine this brief: tell me your topic, audience, or any structural changes."_`,
+DO NOT use Markdown. No asterisks, no bold, no bullet dashes, no headers with hashtags.
+Write in flowing, structured plain text using clear section labels followed by a colon and the value on the same line.
+
+Output format:
+
+FORMAT: [article type, approximate length, platform]
+CENTRAL ARGUMENT: [1–2 sentences summarising the core thesis]
+OPENING HOOK: [how to start — specific approach]
+STRUCTURE: [3–5 key sections or beats separated by forward slashes or semicolons]
+TONE AND VOICE: [register, person, sentence style]
+RHETORICAL APPROACH: [what techniques to deploy]
+CLOSING: [how to end it]
+
+Then add this line exactly:
+Refine this brief: tell me your topic, audience, or any structural changes.`,
 };
 
 export function briefPrompt(
@@ -185,6 +194,8 @@ export function refinePrompt(
   instruction: string
 ): string {
   return `You are refining a creative brief based on a user instruction. Update only the parts the instruction affects — keep everything else intact.
+
+CRITICAL: The brief MUST stay in clean plain text format. No Markdown. No asterisks, no bold (**), no bullet dashes, no hashtag headers. Use the same UPPERCASE LABEL: value format as the original brief.
 
 Current brief:
 ---
