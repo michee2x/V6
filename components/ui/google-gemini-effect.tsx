@@ -26,7 +26,7 @@ export const GoogleGeminiEffect = ({
         height="890"
         viewBox="0 0 1440 890"
         xmlns="http://www.w3.org/2000/svg"
-        className="w-full h-[50vh] md:h-full object-cover opacity-80 md:opacity-100"
+        className="w-full h-[50vh] md:h-full object-cover opacity-80 md:opacity-100 translate-y-[25%] md:translate-y-0"
         preserveAspectRatio="xMidYMid slice"
       >
         <motion.path
