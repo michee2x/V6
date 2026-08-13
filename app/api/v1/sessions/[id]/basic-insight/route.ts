@@ -52,7 +52,14 @@ export async function GET(_req: NextRequest, { params }: RouteContext) {
   let image = undefined;
   let content = session.fetchedContent;
 
-  if (session.contentType === "image" && content.startsWith("IMAGE_URL:")) {
+  if (session.contentType === "image" && content.startsWith("IMAGE_BASE64:")) {
+    // Locally-uploaded file — already a data URL, no network fetch needed
+    const dataUrl = content.replace("IMAGE_BASE64:", "");
+    const [meta, base64] = dataUrl.split(",");
+    const mimeType = meta.replace("data:", "").replace(";base64", "");
+    image = { base64, mimeType };
+    content = "Analyse this image.";
+  } else if (session.contentType === "image" && content.startsWith("IMAGE_URL:")) {
     const imageUrl = content.replace("IMAGE_URL:", "");
     try {
       image = await fetchImageAsBase64(imageUrl);

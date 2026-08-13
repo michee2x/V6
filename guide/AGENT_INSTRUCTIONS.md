@@ -316,3 +316,13 @@ A feature is not complete until it has: a loading state, an empty state, an
 error state, and a success state — all four, not just the happy path. If any
 of the four is missing, the feature is unfinished, regardless of whether the
 core logic works.
+
+---
+
+## 10. Navigation & Page Segmentation
+
+- **Every distinct "view" or "phase" in the app gets its own URL.** Do not build single-page apps that toggle major views via local state. If the user moves from "Insights" to "Creative Brief", the URL must change (e.g. `/session/[id]` -> `/session/[id]/brief`).
+- **Use standard navigation.** Navigation between phases must use `router.push` or Next.js `<Link>`, never `window.scrollTo` or side-panel toggles that hide/show major content areas.
+- **The browser back button must always work as the user expects.** State-driven views break the back button. URL-driven views fix it.
+- **Tab bars must reflect the route.** If there is a tab bar (e.g. Insights | Creative Brief), it must highlight the active tab by reading `usePathname()`, rather than storing active tab state in a React component.
+- **Do not mix concerns on a single page.** For example, the Insights content and the Creative Brief content are distinct tasks with different layouts and actions. They live on separate pages, not stacked vertically requiring the user to scroll back and forth.

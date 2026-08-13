@@ -2,7 +2,10 @@
  * app/api/v1/sessions/route.ts
  * POST — create a new analysis session
  *
- * Body: { url: string; contentType?: "auto" | "video" | "image" | "article" }
+ * Accepts either:
+ *   - JSON body: { url: string; contentType?: "auto" | "video" | "image" | "article" }
+ *   - FormData:  { file: File; contentType?: string }
+ *
  * Returns: { success: true, data: { sessionId, contentType, url } }
  */
 
@@ -12,13 +15,55 @@ import {
   detectContentType,
   fetchVideoMetadata,
   fetchArticleText,
-  fetchImageAsBase64,
 } from "@/lib/content-fetcher";
 import { createSession } from "@/lib/session-store";
 import type { ContentType } from "@/lib/session-store";
 
 export async function POST(req: NextRequest) {
   try {
+    const contentTypeHeader = req.headers.get("content-type") ?? "";
+
+    // ── Multipart file upload path ──────────────────────────────────────────
+    if (contentTypeHeader.includes("multipart/form-data")) {
+      const form = await req.formData();
+      const file = form.get("file") as File | null;
+      const declaredType = (form.get("contentType") as string) ?? "auto";
+
+      if (!file) {
+        return NextResponse.json(
+          { success: false, error: { code: "VALIDATION_ERROR", message: "No file provided.", field: "file" } },
+          { status: 400 }
+        );
+      }
+
+      const mimeType = file.type;
+      let resolvedType: ContentType = "image";
+      if (mimeType.startsWith("video/")) resolvedType = "video";
+      else if (declaredType && declaredType !== "auto") resolvedType = declaredType as ContentType;
+
+      // Convert to base64 so the AI route can read it
+      const arrayBuffer = await file.arrayBuffer();
+      const base64 = Buffer.from(arrayBuffer).toString("base64");
+      const dataUrl = `data:${mimeType};base64,${base64}`;
+
+      const sessionId = randomUUID();
+      const pseudoUrl = `upload://${file.name}`;
+
+      createSession({
+        id: sessionId,
+        url: pseudoUrl,
+        contentType: resolvedType,
+        fetchedContent: resolvedType === "image" ? `IMAGE_BASE64:${dataUrl}` : dataUrl,
+        createdAt: new Date(),
+      });
+
+      return NextResponse.json({
+        success: true,
+        data: { sessionId, contentType: resolvedType, url: pseudoUrl },
+      });
+    }
+
+    // ── JSON / URL path ─────────────────────────────────────────────────────
     const body = await req.json();
     const { url, contentType: declaredType } = body as {
       url?: string;
@@ -68,8 +113,6 @@ export async function POST(req: NextRequest) {
       if (resolvedType === "video") {
         fetchedContent = await fetchVideoMetadata(url);
       } else if (resolvedType === "image") {
-        // For image, we store a marker — the actual base64 is fetched per-request
-        // in the insight route to keep session store lean.
         fetchedContent = `IMAGE_URL:${url}`;
       } else {
         fetchedContent = await fetchArticleText(url);
