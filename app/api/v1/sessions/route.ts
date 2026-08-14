@@ -16,6 +16,7 @@ import {
   detectContentType,
   fetchVideoMetadata,
   fetchArticleText,
+  validateUrlSupport,
 } from "@/lib/content-fetcher";
 import { createSession } from "@/lib/session-store";
 import type { ContentType } from "@/lib/session-store";
@@ -92,16 +93,21 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Validate URL shape
+    // Validate URL shape and platform support
     try {
       new URL(url);
-    } catch {
+      validateUrlSupport(url);
+    } catch (err) {
+      const message = err instanceof Error && err.message.includes("not supported")
+        ? err.message
+        : "That doesn't look like a valid URL.";
+
       return NextResponse.json(
         {
           success: false,
           error: {
             code: "VALIDATION_ERROR",
-            message: "That doesn't look like a valid URL.",
+            message,
             field: "url",
           },
         },

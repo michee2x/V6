@@ -6,6 +6,7 @@
  */
 
 import type { ContentType } from "./session-store";
+import { YoutubeTranscript } from "youtube-transcript";
 
 // ─── Type Detection ───────────────────────────────────────────────────────────
 
@@ -31,6 +32,22 @@ export function detectContentType(url: string): ContentType {
   }
 }
 
+export function validateUrlSupport(url: string): void {
+  try {
+    const parsed = new URL(url);
+    const host = parsed.hostname.replace(/^www\./, "");
+    const unsupported = [
+      "x.com", "twitter.com", "instagram.com", "twitch.tv", "facebook.com", "linkedin.com"
+    ];
+    if (unsupported.includes(host)) {
+      throw new Error(`Links from ${host} are not supported yet because they require login to read. Please paste a YouTube, TikTok, or article URL instead.`);
+    }
+  } catch (e) {
+    if (e instanceof Error && e.message.includes("not supported yet")) throw e;
+    // URL parsing failed, ignore here
+  }
+}
+
 // ─── Video (YouTube / TikTok via oEmbed) ─────────────────────────────────────
 
 interface OEmbedResponse {
@@ -43,15 +60,34 @@ interface OEmbedResponse {
   description?: string;
 }
 
-async function fetchYouTubeOEmbed(url: string): Promise<string> {
-  const endpoint = `https://www.youtube.com/oembed?url=${encodeURIComponent(url)}&format=json`;
-  const res = await fetch(endpoint);
-  if (!res.ok) throw new Error(`YouTube oEmbed failed: ${res.status}`);
-  const data: OEmbedResponse = await res.json();
+async function fetchYouTubeContent(url: string): Promise<string> {
+  let title = "Unknown Title";
+  let channel = "Unknown Channel";
+  try {
+    const endpoint = `https://www.youtube.com/oembed?url=${encodeURIComponent(url)}&format=json`;
+    const res = await fetch(endpoint);
+    if (res.ok) {
+      const data: OEmbedResponse = await res.json();
+      title = data.title ?? title;
+      channel = data.author_name ?? channel;
+    }
+  } catch {
+    // Ignore oEmbed errors
+  }
+
+  let transcriptText = "";
+  try {
+    const transcript = await YoutubeTranscript.fetchTranscript(url);
+    transcriptText = transcript.map(t => t.text).join(" ");
+  } catch {
+    transcriptText = "[No transcript available or subtitles are disabled for this video.]";
+  }
+
   return [
-    `Title: ${data.title ?? "Unknown"}`,
-    `Channel: ${data.author_name ?? "Unknown"}`,
+    `Title: ${title}`,
+    `Channel: ${channel}`,
     `Platform: YouTube`,
+    `\nTranscript:\n${transcriptText}`
   ].join("\n");
 }
 
@@ -68,7 +104,7 @@ async function fetchTikTokOEmbed(url: string): Promise<string> {
 }
 
 export async function fetchVideoMetadata(url: string): Promise<string> {
-  if (/youtube\.com|youtu\.be/i.test(url)) return fetchYouTubeOEmbed(url);
+  if (/youtube\.com|youtu\.be/i.test(url)) return fetchYouTubeContent(url);
   if (/tiktok\.com/i.test(url)) return fetchTikTokOEmbed(url);
   // Generic video URL — just return the URL itself for Claude to work with
   return `Video URL: ${url}`;
