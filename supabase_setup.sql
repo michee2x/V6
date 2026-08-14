@@ -5,11 +5,15 @@ CREATE TABLE IF NOT EXISTS public.sessions (
   url TEXT NOT NULL,
   content_type TEXT NOT NULL,
   fetched_content TEXT NOT NULL,
+  focus_hint TEXT,
   basic_insight TEXT,
   advanced_insight TEXT,
   brief TEXT,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
 );
+
+-- Migration: add focus_hint to existing tables (run once if table already exists)
+ALTER TABLE public.sessions ADD COLUMN IF NOT EXISTS focus_hint TEXT;
 
 -- Enable Row Level Security (RLS)
 ALTER TABLE public.sessions ENABLE ROW LEVEL SECURITY;

@@ -49,9 +49,13 @@ Keep it tight — this is the "get your bearings in 10 seconds" layer. 3–5 sho
 
 export function basicInsightPrompt(
   type: ContentType,
-  content: string
+  content: string,
+  focusHint?: string | null
 ): string {
-  return `${basicInsightInstructions[type]}
+  const focusLine = focusHint
+    ? `IMPORTANT: The user specifically wants to focus on: "${focusHint}". Keep your entire analysis centred on this aspect.\n\n`
+    : "";
+  return `${focusLine}${basicInsightInstructions[type]}
 
 Content to analyse:
 ---
@@ -102,9 +106,13 @@ Be specific and analytical. This output will be used to create a creative brief.
 export function advancedInsightPrompt(
   type: ContentType,
   content: string,
-  basicInsight: string
+  basicInsight: string,
+  focusHint?: string | null
 ): string {
-  return `${advancedInsightInstructions[type]}
+  const focusLine = focusHint
+    ? `IMPORTANT: The user specifically wants to focus on: "${focusHint}". Anchor your deep analysis to this aspect.\n\n`
+    : "";
+  return `${focusLine}${advancedInsightInstructions[type]}
 
 Basic insight already generated (use as context, don't repeat it):
 ---

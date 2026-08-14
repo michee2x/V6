@@ -74,7 +74,8 @@ export async function POST(_req: NextRequest, { params }: RouteContext) {
   const userPrompt = advancedInsightPrompt(
     session.contentType,
     content,
-    session.basicInsight
+    session.basicInsight,
+    session.focusHint
   );
 
   const claudeStream = createClaudeStream({ userPrompt, image });

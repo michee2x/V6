@@ -69,7 +69,7 @@ export async function GET(_req: NextRequest, { params }: RouteContext) {
     }
   }
 
-  const userPrompt = basicInsightPrompt(session.contentType, content);
+  const userPrompt = basicInsightPrompt(session.contentType, content, session.focusHint);
 
   // Wrap the Claude stream to also persist the full result to the session store
   const claudeStream = createClaudeStream({ userPrompt, image });

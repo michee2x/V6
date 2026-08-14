@@ -3,8 +3,8 @@
  * POST — create a new analysis session
  *
  * Accepts either:
- *   - JSON body: { url: string; contentType?: "auto" | "video" | "image" | "article" }
- *   - FormData:  { file: File; contentType?: string }
+ *   - JSON body: { url: string; contentType?: "auto" | "video" | "image" | "article"; focusHint?: string }
+ *   - FormData:  { file: File; contentType?: string; focusHint?: string }
  *
  * Returns: { success: true, data: { sessionId, contentType, url } }
  */
@@ -33,6 +33,7 @@ export async function POST(req: NextRequest) {
       const form = await req.formData();
       const file = form.get("file") as File | null;
       const declaredType = (form.get("contentType") as string) ?? "auto";
+      const focusHint = (form.get("focusHint") as string) || null;
 
       if (!file) {
         return NextResponse.json(
@@ -59,6 +60,7 @@ export async function POST(req: NextRequest) {
         url: pseudoUrl,
         contentType: resolvedType,
         fetchedContent: resolvedType === "image" ? `IMAGE_BASE64:${dataUrl}` : dataUrl,
+        focusHint,
         userId,
       });
 
@@ -70,9 +72,10 @@ export async function POST(req: NextRequest) {
 
     // ── JSON / URL path ─────────────────────────────────────────────────────
     const body = await req.json();
-    const { url, contentType: declaredType } = body as {
+    const { url, contentType: declaredType, focusHint } = body as {
       url?: string;
       contentType?: string;
+      focusHint?: string;
     };
 
     if (!url || typeof url !== "string" || !url.trim()) {
@@ -143,6 +146,7 @@ export async function POST(req: NextRequest) {
       url,
       contentType: resolvedType,
       fetchedContent,
+      focusHint: focusHint || null,
       userId,
     });
 

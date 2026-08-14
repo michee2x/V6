@@ -29,6 +29,7 @@ export const GoogleGeminiEffect = ({
         className="w-full h-[50vh] md:h-full object-cover opacity-80 md:opacity-100 translate-y-[25%] md:translate-y-0"
         preserveAspectRatio="xMidYMid slice"
       >
+        <g mask="url(#centerMask)">
         <motion.path
           d="M0 663C145.5 663 191 666.265 269 647C326.5 630 339.5 621 397.5 566C439 531.5 455 529.5 490 523C509.664 519.348 521 503.736 538 504.236C553.591 504.236 562.429 514.739 584.66 522.749C592.042 525.408 600.2 526.237 607.356 523.019C624.755 515.195 641.446 496.324 657 496.735C673.408 496.735 693.545 519.572 712.903 526.769C718.727 528.934 725.184 528.395 730.902 525.965C751.726 517.115 764.085 497.106 782 496.735C794.831 496.47 804.103 508.859 822.469 518.515C835.13 525.171 850.214 526.815 862.827 520.069C875.952 513.049 889.748 502.706 903.5 503.736C922.677 505.171 935.293 510.562 945.817 515.673C954.234 519.76 963.095 522.792 972.199 524.954C996.012 530.611 1007.42 534.118 1034 549C1077.5 573.359 1082.5 594.5 1140 629C1206 670 1328.5 662.5 1440 662.5"
           stroke="#FF3366"
@@ -74,13 +75,30 @@ export const GoogleGeminiEffect = ({
           animate={{ pathLength: 1, pathOffset: 0 }}
           transition={{ duration, ease: "easeInOut", delay: isMobile ? 1.6 : 0.8, repeat: Infinity, repeatType: "reverse" }}
         />
+        </g>
 
         <defs>
-          <filter id="blurMe">
-            <feGaussianBlur in="SourceGraphic" stdDeviation="5" />
-          </filter>
+          {/* Radial mask: transparent at center, opaque at edges */}
+          <radialGradient id="centerFade" cx="50%" cy="50%" r="40%" gradientUnits="userSpaceOnUse"
+            gradientTransform="translate(720 445)">
+            <stop offset="0%"   stopColor="white" stopOpacity="0" />
+            <stop offset="40%"  stopColor="white" stopOpacity="0" />
+            <stop offset="75%"  stopColor="white" stopOpacity="1" />
+            <stop offset="100%" stopColor="white" stopOpacity="1" />
+          </radialGradient>
+          <mask id="centerMask" maskUnits="userSpaceOnUse" x="0" y="0" width="1440" height="890">
+            <rect x="0" y="0" width="1440" height="890" fill="url(#centerFade)" />
+          </mask>
         </defs>
       </svg>
+
+      {/* White radial overlay — fully opaque at center, fades to transparent outward */}
+      <div
+        className="absolute inset-0 pointer-events-none"
+        style={{
+          background: "radial-gradient(ellipse 45% 55% at 50% 50%, white 0%, white 30%, transparent 70%)",
+        }}
+      />
     </div>
   );
 };

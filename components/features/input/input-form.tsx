@@ -4,7 +4,7 @@ import * as React from "react";
 import { useRouter } from "next/navigation";
 import {
   Link2, FileImage, Video, Newspaper, X, ZoomIn,
-  FileText, Plus,
+  FileText, Plus, Target,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
@@ -12,12 +12,70 @@ import { cn } from "@/lib/utils";
 
 type ContentType = "auto" | "video" | "image" | "article";
 
-const contentTypes: { value: ContentType; label: string; icon: React.ElementType }[] = [
+const contentTypes: {
+  value: ContentType;
+  label: string;
+  icon: React.ElementType;
+}[] = [
   { value: "auto",    label: "Auto",    icon: Link2 },
   { value: "video",   label: "Video",   icon: Video },
   { value: "image",   label: "Image",   icon: FileImage },
   { value: "article", label: "Article", icon: Newspaper },
 ];
+
+// ── Focus hint placeholder copy per content type ──────────────────────────────
+const focusHintPlaceholders: Record<ContentType, string> = {
+  auto:    "What should the AI focus on? (optional)",
+  video:   "e.g. \"Focus on the hook and editing style\"",
+  image:   "e.g. \"Focus on the composition and colour palette\"",
+  article: "e.g. \"Focus on the argument structure\"",
+};
+
+// ── Confirmation badge copy ───────────────────────────────────────────────────
+const confirmationCopy: Partial<Record<ContentType, string>> = {
+  video:   "AI will focus on the video in this link",
+  image:   "AI will analyse the image",
+  article: "AI will read and analyse the article text",
+};
+
+// ── Smart URL heuristics ──────────────────────────────────────────────────────
+function detectTypeFromUrl(url: string): ContentType {
+  try {
+    const u = new URL(url);
+    const host = u.hostname.replace(/^www\./, "");
+
+    // Video platforms
+    if (
+      host === "youtube.com" || host === "youtu.be" ||
+      host === "tiktok.com" || host === "vimeo.com" ||
+      host === "twitch.tv" || host === "dailymotion.com" ||
+      host === "rumble.com" || host === "loom.com"
+    ) return "video";
+
+    // Image platforms / direct image URLs
+    if (
+      host === "imgur.com" || host === "flickr.com" ||
+      host === "unsplash.com" || host === "pexels.com" ||
+      host === "500px.com" || host === "pinterest.com" ||
+      /\.(jpg|jpeg|png|gif|webp|avif|svg)(\?.*)?$/i.test(u.pathname)
+    ) return "image";
+
+    // Instagram: could be image or video — default to image (user can override)
+    if (host === "instagram.com") return "image";
+
+    // Twitter / X posts — could be anything, use auto
+    // Article / blog platforms
+    if (
+      host === "medium.com" || host === "substack.com" ||
+      host === "dev.to" || host === "hashnode.com" ||
+      host === "ghost.io"
+    ) return "article";
+
+  } catch {
+    // not a valid URL yet — ignore
+  }
+  return "auto";
+}
 
 /** Returns the category of an uploaded File */
 function fileCategory(file: File): "image" | "video" | "other" {
@@ -36,11 +94,14 @@ export function InputForm() {
   const router = useRouter();
   const [url, setUrl] = React.useState("");
   const [contentType, setContentType] = React.useState<ContentType>("auto");
+  const [focusHint, setFocusHint] = React.useState("");
   const [isDragging, setIsDragging] = React.useState(false);
   const [uploadedFile, setUploadedFile] = React.useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = React.useState<string | null>(null);
   const [isLightboxOpen, setIsLightboxOpen] = React.useState(false);
   const [isLoading, setIsLoading] = React.useState(false);
+  // track if the user manually chose a type so auto-detect doesn't overwrite it
+  const [userChoseType, setUserChoseType] = React.useState(false);
   const fileInputRef = React.useRef<HTMLInputElement>(null);
 
   const hasInput = url.trim().length > 0 || uploadedFile !== null;
@@ -64,6 +125,23 @@ export function InputForm() {
     return () => window.removeEventListener("keydown", onKey);
   }, []);
 
+  // Auto-detect type when URL changes (only if user hasn't manually chosen)
+  const handleUrlChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const val = e.target.value;
+    setUrl(val);
+    if (!userChoseType && val.trim()) {
+      const detected = detectTypeFromUrl(val.trim());
+      if (detected !== "auto") setContentType(detected);
+      else setContentType("auto");
+    }
+  };
+
+  // Manual type selection — lock it so URL changes don't overwrite
+  const handleTypeSelect = (type: ContentType) => {
+    setContentType(type);
+    setUserChoseType(true);
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!hasInput || isLoading) return;
@@ -85,12 +163,17 @@ export function InputForm() {
         const form = new FormData();
         form.append("file", uploadedFile);
         form.append("contentType", contentType);
+        if (focusHint.trim()) form.append("focusHint", focusHint.trim());
         res = await fetch("/api/v1/sessions", { method: "POST", body: form });
       } else {
         res = await fetch("/api/v1/sessions", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ url: url.trim(), contentType }),
+          body: JSON.stringify({
+            url: url.trim(),
+            contentType,
+            ...(focusHint.trim() ? { focusHint: focusHint.trim() } : {}),
+          }),
         });
       }
 
@@ -116,12 +199,29 @@ export function InputForm() {
     e.preventDefault();
     setIsDragging(false);
     const file = e.dataTransfer.files?.[0];
-    if (file) { setUploadedFile(file); setUrl(""); }
+    if (file) {
+      setUploadedFile(file);
+      setUrl("");
+      // Auto-select type from file MIME unless user already chose
+      if (!userChoseType) {
+        const cat = fileCategory(file);
+        if (cat === "image") setContentType("image");
+        else if (cat === "video") setContentType("video");
+      }
+    }
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) { setUploadedFile(file); setUrl(""); }
+    if (file) {
+      setUploadedFile(file);
+      setUrl("");
+      if (!userChoseType) {
+        const cat = fileCategory(file);
+        if (cat === "image") setContentType("image");
+        else if (cat === "video") setContentType("video");
+      }
+    }
   };
 
   const clearFile = () => {
@@ -130,23 +230,52 @@ export function InputForm() {
     if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
+  const showBadge = contentType !== "auto" && hasInput;
+  const badgeText = confirmationCopy[contentType];
+
   return (
     <>
-      <form onSubmit={handleSubmit} className="w-full flex flex-col gap-4">
+      <form onSubmit={handleSubmit} className="w-full flex flex-col gap-3">
 
+        {/* ── Content type pill selector ─────────────────────────────────── */}
+        <div
+          role="group"
+          aria-label="Content type"
+          className="flex items-center gap-1 p-1 rounded-xl bg-muted/60 border border-border/60 w-full"
+        >
+          {contentTypes.map(({ value, label, icon: Icon }) => (
+            <button
+              key={value}
+              type="button"
+              id={`content-type-${value}-btn`}
+              onClick={() => handleTypeSelect(value)}
+              className={cn(
+                "flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-label font-medium transition-all duration-150 flex-1 justify-center",
+                contentType === value
+                  ? "bg-background text-foreground shadow-sm border border-border/50"
+                  : "text-muted-foreground hover:text-foreground hover:bg-background/40"
+              )}
+              aria-pressed={contentType === value}
+            >
+              <Icon className="w-3.5 h-3.5 shrink-0" />
+              <span>{label}</span>
+            </button>
+          ))}
+        </div>
 
-        {/* Main input area */}
+        {/* ── Main input + focus hint area ───────────────────────────────── */}
         <div
           onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
           onDragLeave={() => setIsDragging(false)}
           onDrop={handleDrop}
           className={cn(
-            "relative rounded-xl border-2 border-dashed transition-all duration-150",
+            "relative rounded-xl border-2 border-dashed transition-all duration-150 overflow-hidden",
             isDragging
               ? "border-primary bg-primary/5 scale-[1.01]"
               : "border-border bg-background hover:border-muted-foreground/30"
           )}
         >
+          {/* URL / file row */}
           {uploadedFile ? (
             <div className="flex items-center gap-3 p-3">
               {/* ── Image thumbnail ── */}
@@ -182,7 +311,6 @@ export function InputForm() {
                     playsInline
                     className="w-full h-full object-cover"
                   />
-                  {/* Play icon overlay */}
                   <span className="absolute inset-0 flex items-center justify-center">
                     <span className="w-5 h-5 rounded-full bg-black/60 flex items-center justify-center">
                       <Video className="w-2.5 h-2.5 text-white ml-0.5" />
@@ -228,7 +356,7 @@ export function InputForm() {
                 id="url-input"
                 type="text"
                 value={url}
-                onChange={(e) => setUrl(e.target.value)}
+                onChange={handleUrlChange}
                 placeholder="Paste a link to a video, image, or article..."
                 className="flex-1 bg-transparent text-body text-foreground placeholder:text-muted-foreground outline-none min-w-0 py-2"
                 autoComplete="off"
@@ -248,6 +376,25 @@ export function InputForm() {
             </div>
           )}
 
+          {/* Divider */}
+          <div className="h-px bg-border/60 mx-3" />
+
+          {/* Focus hint row */}
+          <div className="flex items-center gap-2 px-4 py-2">
+            <Target className="w-3.5 h-3.5 text-muted-foreground/60 shrink-0" />
+            <input
+              id="focus-hint-input"
+              type="text"
+              value={focusHint}
+              onChange={(e) => setFocusHint(e.target.value)}
+              placeholder={focusHintPlaceholders[contentType]}
+              className="flex-1 bg-transparent text-caption text-foreground placeholder:text-muted-foreground/60 outline-none min-w-0 py-1"
+              autoComplete="off"
+              spellCheck={false}
+              maxLength={200}
+            />
+          </div>
+
           <input
             ref={fileInputRef}
             type="file"
@@ -266,9 +413,17 @@ export function InputForm() {
         )}
 
         {isDragging && (
-          <p className="text-caption text-center text-primary animate-pulse">
+          <p className="text-caption text-center text-primary animate-pulse -mt-1">
             Drop your file here
           </p>
+        )}
+
+        {/* 🎯 Confirmation badge */}
+        {showBadge && badgeText && (
+          <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-primary/5 border border-primary/20 text-primary">
+            <Target className="w-3.5 h-3.5 shrink-0" />
+            <p className="text-caption font-medium">{badgeText}</p>
+          </div>
         )}
 
         <Button type="submit" size="lg" className="w-full" disabled={!hasInput || isLoading}>

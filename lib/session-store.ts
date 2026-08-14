@@ -15,6 +15,8 @@ export interface Session {
   contentType: ContentType;
   /** Raw extracted text/metadata passed to Claude */
   fetchedContent: string;
+  /** Optional user-supplied focus hint (e.g. "focus on the hook and pacing") */
+  focusHint?: string | null;
   basicInsight?: string;
   advancedInsight?: string;
   brief?: string;
@@ -30,6 +32,7 @@ export async function createSession(session: Omit<Session, "createdAt">): Promis
     url: session.url,
     content_type: session.contentType,
     fetched_content: session.fetchedContent,
+    focus_hint: session.focusHint || null,
     basic_insight: session.basicInsight || null,
     advanced_insight: session.advancedInsight || null,
     brief: session.brief || null,
@@ -57,6 +60,7 @@ export async function getSession(id: string): Promise<Session | undefined> {
     url: data.url,
     contentType: data.content_type as ContentType,
     fetchedContent: data.fetched_content,
+    focusHint: data.focus_hint || undefined,
     basicInsight: data.basic_insight || undefined,
     advancedInsight: data.advanced_insight || undefined,
     brief: data.brief || undefined,
@@ -71,6 +75,7 @@ export async function updateSession(id: string, patch: Partial<Session>): Promis
   if (patch.url !== undefined) updateData.url = patch.url;
   if (patch.contentType !== undefined) updateData.content_type = patch.contentType;
   if (patch.fetchedContent !== undefined) updateData.fetched_content = patch.fetchedContent;
+  if (patch.focusHint !== undefined) updateData.focus_hint = patch.focusHint;
   if (patch.basicInsight !== undefined) updateData.basic_insight = patch.basicInsight;
   if (patch.advancedInsight !== undefined) updateData.advanced_insight = patch.advancedInsight;
   if (patch.brief !== undefined) updateData.brief = patch.brief;
