@@ -37,13 +37,19 @@ export function createClaudeStream({
     async start(controller) {
       try {
         // Build the message content
+        let safeMediaType = image?.mimeType || "image/jpeg";
+        const validTypes = ["image/jpeg", "image/png", "image/gif", "image/webp"];
+        if (!validTypes.includes(safeMediaType)) {
+          safeMediaType = "image/jpeg";
+        }
+
         const content: Anthropic.MessageParam["content"] = image
           ? [
               {
                 type: "image",
                 source: {
                   type: "base64",
-                  media_type: image.mimeType as
+                  media_type: safeMediaType as
                     | "image/jpeg"
                     | "image/png"
                     | "image/gif"

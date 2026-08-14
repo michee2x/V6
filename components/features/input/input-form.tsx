@@ -73,6 +73,15 @@ export function InputForm() {
       let res: Response;
 
       if (uploadedFile) {
+        if (category === "image") {
+          const validTypes = ["image/jpeg", "image/png", "image/gif", "image/webp"];
+          if (!validTypes.includes(uploadedFile.type)) {
+            toast.error("Unsupported image format. Please use JPEG, PNG, GIF, or WebP.");
+            setIsLoading(false);
+            return;
+          }
+        }
+
         const form = new FormData();
         form.append("file", uploadedFile);
         form.append("contentType", contentType);
@@ -242,7 +251,7 @@ export function InputForm() {
           <input
             ref={fileInputRef}
             type="file"
-            accept="image/*,video/*,.pdf,.doc,.docx,.txt"
+            accept="image/jpeg,image/png,image/gif,image/webp,video/*,.pdf,.doc,.docx,.txt"
             onChange={handleFileChange}
             className="hidden"
             aria-label="Upload file"
