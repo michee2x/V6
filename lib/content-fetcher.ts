@@ -85,8 +85,27 @@ export async function fetchImageAsBase64(url: string): Promise<ImageData> {
   const res = await fetch(url);
   if (!res.ok) throw new Error(`Image fetch failed: ${res.status}`);
 
-  const contentType = res.headers.get("content-type") ?? "image/jpeg";
-  const mimeType = contentType.split(";")[0].trim();
+  let contentType = res.headers.get("content-type");
+  let mimeType = contentType ? contentType.split(";")[0].trim() : "";
+
+  // If Supabase or the server returns a generic binary type, try to guess from the URL
+  if (!mimeType || mimeType === "application/octet-stream") {
+    const extMatch = url.match(/\.(jpe?g|png|gif|webp)(?:\?.*)?$/i);
+    if (extMatch) {
+      const ext = extMatch[1].toLowerCase();
+      if (ext === "jpg" || ext === "jpeg") mimeType = "image/jpeg";
+      else if (ext === "png") mimeType = "image/png";
+      else if (ext === "gif") mimeType = "image/gif";
+      else if (ext === "webp") mimeType = "image/webp";
+    }
+  }
+
+  // Claude Vision *only* supports these 4 formats. If it's something else (e.g. svg, bmp),
+  // we default to jpeg to at least try parsing it, or you might want to throw an error instead.
+  const validTypes = ["image/jpeg", "image/png", "image/gif", "image/webp"];
+  if (!validTypes.includes(mimeType)) {
+    mimeType = "image/jpeg"; 
+  }
 
   const arrayBuffer = await res.arrayBuffer();
   const base64 = Buffer.from(arrayBuffer).toString("base64");
