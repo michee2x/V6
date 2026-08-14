@@ -250,15 +250,15 @@ export function InputForm() {
               id={`content-type-${value}-btn`}
               onClick={() => handleTypeSelect(value)}
               className={cn(
-                "flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-label font-medium transition-all duration-150 flex-1 justify-center",
+                "flex items-center gap-1 sm:gap-1.5 px-1.5 sm:px-3 py-1.5 rounded-lg text-[11px] sm:text-sm font-medium transition-all duration-150 flex-1 justify-center",
                 contentType === value
                   ? "bg-background text-foreground shadow-sm border border-border/50"
                   : "text-muted-foreground hover:text-foreground hover:bg-background/40"
               )}
               aria-pressed={contentType === value}
             >
-              <Icon className="w-3.5 h-3.5 shrink-0" />
-              <span>{label}</span>
+              <Icon className="w-3 h-3 sm:w-3.5 sm:h-3.5 shrink-0" />
+              <span className="tracking-tight">{label}</span>
             </button>
           ))}
         </div>
