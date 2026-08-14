@@ -11,6 +11,7 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { randomUUID } from "crypto";
+import { createClient } from "@/utils/supabase/server";
 import {
   detectContentType,
   fetchVideoMetadata,
@@ -21,6 +22,10 @@ import type { ContentType } from "@/lib/session-store";
 
 export async function POST(req: NextRequest) {
   try {
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    const userId = user?.id || null;
+
     const contentTypeHeader = req.headers.get("content-type") ?? "";
 
     // ── Multipart file upload path ──────────────────────────────────────────
@@ -49,12 +54,12 @@ export async function POST(req: NextRequest) {
       const sessionId = randomUUID();
       const pseudoUrl = `upload://${file.name}`;
 
-      createSession({
+      await createSession({
         id: sessionId,
         url: pseudoUrl,
         contentType: resolvedType,
         fetchedContent: resolvedType === "image" ? `IMAGE_BASE64:${dataUrl}` : dataUrl,
-        createdAt: new Date(),
+        userId,
       });
 
       return NextResponse.json({
@@ -133,12 +138,12 @@ export async function POST(req: NextRequest) {
     }
 
     const sessionId = randomUUID();
-    createSession({
+    await createSession({
       id: sessionId,
       url,
       contentType: resolvedType,
       fetchedContent,
-      createdAt: new Date(),
+      userId,
     });
 
     return NextResponse.json({

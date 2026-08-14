@@ -34,8 +34,8 @@ export const GoogleGeminiEffect = ({
           stroke="#FF3366"
           strokeWidth="4"
           fill="none"
-          initial={{ pathLength: 0 }}
-          animate={{ pathLength: 1 }}
+          initial={{ pathLength: 0, pathOffset: 0.5 }}
+          animate={{ pathLength: 1, pathOffset: 0 }}
           transition={{ duration, ease: "easeInOut", delay: 0, repeat: Infinity, repeatType: "reverse" }}
         />
         <motion.path
@@ -43,8 +43,8 @@ export const GoogleGeminiEffect = ({
           stroke="#FF8800"
           strokeWidth="4"
           fill="none"
-          initial={{ pathLength: 0 }}
-          animate={{ pathLength: 1 }}
+          initial={{ pathLength: 0, pathOffset: 0.5 }}
+          animate={{ pathLength: 1, pathOffset: 0 }}
           transition={{ duration, ease: "easeInOut", delay: isMobile ? 0.4 : 0.2, repeat: Infinity, repeatType: "reverse" }}
         />
         <motion.path
@@ -52,8 +52,8 @@ export const GoogleGeminiEffect = ({
           stroke="#0066FF"
           strokeWidth="4"
           fill="none"
-          initial={{ pathLength: 0 }}
-          animate={{ pathLength: 1 }}
+          initial={{ pathLength: 0, pathOffset: 0.5 }}
+          animate={{ pathLength: 1, pathOffset: 0 }}
           transition={{ duration, ease: "easeInOut", delay: isMobile ? 0.8 : 0.4, repeat: Infinity, repeatType: "reverse" }}
         />
         <motion.path
@@ -61,8 +61,8 @@ export const GoogleGeminiEffect = ({
           stroke="#00EEFF"
           strokeWidth="4"
           fill="none"
-          initial={{ pathLength: 0 }}
-          animate={{ pathLength: 1 }}
+          initial={{ pathLength: 0, pathOffset: 0.5 }}
+          animate={{ pathLength: 1, pathOffset: 0 }}
           transition={{ duration, ease: "easeInOut", delay: isMobile ? 1.2 : 0.6, repeat: Infinity, repeatType: "reverse" }}
         />
         <motion.path
@@ -70,8 +70,8 @@ export const GoogleGeminiEffect = ({
           stroke="#9900FF"
           strokeWidth="4"
           fill="none"
-          initial={{ pathLength: 0 }}
-          animate={{ pathLength: 1 }}
+          initial={{ pathLength: 0, pathOffset: 0.5 }}
+          animate={{ pathLength: 1, pathOffset: 0 }}
           transition={{ duration, ease: "easeInOut", delay: isMobile ? 1.6 : 0.8, repeat: Infinity, repeatType: "reverse" }}
         />
 

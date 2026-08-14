@@ -15,7 +15,7 @@ interface RouteContext {
 
 export async function GET(_req: NextRequest, { params }: RouteContext) {
   const { id } = await params;
-  const session = getSession(id);
+  const session = await getSession(id);
 
   if (!session) {
     return new Response(
@@ -103,7 +103,7 @@ export async function GET(_req: NextRequest, { params }: RouteContext) {
         controller.enqueue(value);
       }
       // Persist
-      if (fullText) updateSession(id, { basicInsight: fullText });
+      if (fullText) await updateSession(id, { basicInsight: fullText });
       controller.close();
     },
   });

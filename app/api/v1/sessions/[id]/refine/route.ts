@@ -16,7 +16,7 @@ interface RouteContext {
 
 export async function POST(req: NextRequest, { params }: RouteContext) {
   const { id } = await params;
-  const session = getSession(id);
+  const session = await getSession(id);
 
   if (!session) {
     return new Response(
@@ -64,7 +64,7 @@ export async function POST(req: NextRequest, { params }: RouteContext) {
         controller.enqueue(value);
       }
       // Update the stored brief to the refined version
-      if (fullText) updateSession(id, { brief: fullText });
+      if (fullText) await updateSession(id, { brief: fullText });
       controller.close();
     },
   });

@@ -1,5 +1,6 @@
 import { InputForm } from "@/components/features/input/input-form";
 import { GoogleGeminiEffect } from "@/components/ui/google-gemini-effect";
+import { AnimatedGradientText } from "@/components/ui/animated-gradient-text";
 
 export const metadata = {
   title: "v6 — Paste a link, understand it. Create from it.",
@@ -16,9 +17,17 @@ export default function HomePage() {
       <div className="relative z-10 w-full max-w-2xl flex flex-col items-center gap-10">
         {/* Hero */}
         <div className="flex flex-col items-center text-center gap-4">
-          <span className="inline-flex items-center rounded-full border border-border bg-muted px-3 py-1 text-label text-muted-foreground">
-            Beta — free to try, no account needed
-          </span>
+          <div className="group relative mx-auto flex items-center justify-center rounded-full px-4 py-1.5 shadow-[inset_0_-8px_10px_#8fdfff1f] transition-shadow duration-500 ease-out hover:shadow-[inset_0_-5px_10px_#8fdfff3f]">
+            {/* Animated gradient border wrapper */}
+            <div className="animate-gradient absolute inset-0 -z-10 block rounded-[inherit] bg-gradient-to-r from-primary/50 via-secondary/50 to-primary/50 bg-[length:300%_100%] p-[1px]">
+              {/* Inner background to hollow out the border */}
+              <div className="h-full w-full rounded-[inherit] bg-background/90 backdrop-blur-sm" />
+            </div>
+            🎉 <hr className="mx-2 h-4 w-px shrink-0 bg-border" />
+            <AnimatedGradientText className="text-sm font-medium">
+              Beta — free to try, no account needed
+            </AnimatedGradientText>
+          </div>
           <h1 className="text-display tracking-tight text-foreground">
             Paste a link.
             <br />

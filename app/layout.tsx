@@ -4,6 +4,7 @@ import "./globals.css";
 import { cn } from "@/lib/utils";
 import { Providers } from "@/components/providers";
 import { Toaster } from "@/components/ui/sonner";
+import { Navbar } from "@/components/layout/navbar";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -24,6 +25,7 @@ export default function RootLayout({
     <html lang="en" className={cn("h-full antialiased", inter.variable)} suppressHydrationWarning>
       <body className="min-h-full flex flex-col font-sans" suppressHydrationWarning>
         <Providers>
+          <Navbar />
           {children}
           <Toaster />
         </Providers>

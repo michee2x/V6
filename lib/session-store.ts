@@ -1,10 +1,11 @@
 /**
  * lib/session-store.ts
  *
- * In-memory session store for v6.
- * Keyed by UUID. Resets on server restart — intentional for v1 (no auth yet).
- * When auth lands, this maps directly to a DB table.
+ * Supabase-backed session store for v6.
+ * Stores generated content history in the database.
  */
+
+import { createClient } from "@/utils/supabase/server";
 
 export type ContentType = "video" | "image" | "article";
 
@@ -18,29 +19,69 @@ export interface Session {
   advancedInsight?: string;
   brief?: string;
   createdAt: Date;
+  userId?: string | null;
 }
 
-// Module-level singleton — persists for the lifetime of the Next.js process.
-// In dev, HMR clears module state, so we attach it to globalThis to prevent session loss.
-const globalForStore = globalThis as unknown as {
-  __sessionStore: Map<string, Session> | undefined;
-};
-const store = globalForStore.__sessionStore ?? new Map<string, Session>();
-if (process.env.NODE_ENV !== "production") {
-  globalForStore.__sessionStore = store;
+export async function createSession(session: Omit<Session, "createdAt">): Promise<void> {
+  const supabase = await createClient();
+  const { error } = await supabase.from("sessions").insert({
+    id: session.id,
+    user_id: session.userId || null,
+    url: session.url,
+    content_type: session.contentType,
+    fetched_content: session.fetchedContent,
+    basic_insight: session.basicInsight || null,
+    advanced_insight: session.advancedInsight || null,
+    brief: session.brief || null,
+  });
+
+  if (error) {
+    console.error("Error creating session in Supabase:", error);
+    throw new Error("Failed to save session");
+  }
 }
 
-export function createSession(session: Session): void {
-  store.set(session.id, session);
+export async function getSession(id: string): Promise<Session | undefined> {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("sessions")
+    .select("*")
+    .eq("id", id)
+    .single();
+
+  if (error || !data) return undefined;
+
+  return {
+    id: data.id,
+    userId: data.user_id,
+    url: data.url,
+    contentType: data.content_type as ContentType,
+    fetchedContent: data.fetched_content,
+    basicInsight: data.basic_insight || undefined,
+    advancedInsight: data.advanced_insight || undefined,
+    brief: data.brief || undefined,
+    createdAt: new Date(data.created_at),
+  };
 }
 
-export function getSession(id: string): Session | undefined {
-  return store.get(id);
-}
+export async function updateSession(id: string, patch: Partial<Session>): Promise<void> {
+  const supabase = await createClient();
+  const updateData: any = {};
+  
+  if (patch.url !== undefined) updateData.url = patch.url;
+  if (patch.contentType !== undefined) updateData.content_type = patch.contentType;
+  if (patch.fetchedContent !== undefined) updateData.fetched_content = patch.fetchedContent;
+  if (patch.basicInsight !== undefined) updateData.basic_insight = patch.basicInsight;
+  if (patch.advancedInsight !== undefined) updateData.advanced_insight = patch.advancedInsight;
+  if (patch.brief !== undefined) updateData.brief = patch.brief;
+  if (patch.userId !== undefined) updateData.user_id = patch.userId;
 
-export function updateSession(id: string, patch: Partial<Session>): void {
-  const existing = store.get(id);
-  if (existing) {
-    store.set(id, { ...existing, ...patch });
+  const { error } = await supabase
+    .from("sessions")
+    .update(updateData)
+    .eq("id", id);
+
+  if (error) {
+    console.error("Error updating session in Supabase:", error);
   }
 }
