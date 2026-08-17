@@ -14,6 +14,9 @@ const inter = Inter({
 export const metadata: Metadata = {
   title: "v6",
   description: "Understand content instantly, create your own version of it.",
+  verification: {
+    google: "TPX5XzG9BX9yNlCwlKwkLOV3bABiTMeGkeKUY4Y9uz8",
+  },
 };
 
 export default function RootLayout({

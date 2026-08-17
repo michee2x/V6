@@ -22,7 +22,7 @@ export const models = {
   claude: anthropic("claude-sonnet-5"),
 
   /** Native video + image understanding. Supports YouTube URLs directly. */
-  geminiPro: google("gemini-3.1-pro-preview"),
+  geminiPro: google("gemini-3.5-flash"),
 
   /** Fast general-purpose tasks */
   geminiFlash: google("gemini-3.5-flash"),

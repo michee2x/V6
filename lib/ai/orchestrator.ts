@@ -97,12 +97,28 @@ export function createAnalysisStream({
           content = [{ type: "text", text: userPrompt }];
         }
 
-        const result = await streamText({
-          model: selectedModel,
-          system: SYSTEM_PROMPT,
-          messages: [{ role: "user", content }],
-          maxOutputTokens: 2048,
-        });
+        let result;
+        try {
+          result = await streamText({
+            model: selectedModel,
+            system: SYSTEM_PROMPT,
+            messages: [{ role: "user", content }],
+            maxOutputTokens: 2048,
+          });
+        } catch (primaryErr) {
+          // If native YouTube/Gemini call fails (quota, unsupported), fall back to
+          // Claude with the transcript text already embedded in userPrompt
+          if (youtubeUrl && contentType === "video") {
+            result = await streamText({
+              model: models.claude,
+              system: SYSTEM_PROMPT,
+              messages: [{ role: "user", content: [{ type: "text", text: userPrompt }] }],
+              maxOutputTokens: 2048,
+            });
+          } else {
+            throw primaryErr;
+          }
+        }
 
         let fullText = "";
         for await (const textPart of result.textStream) {
