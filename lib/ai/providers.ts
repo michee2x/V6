@@ -21,8 +21,8 @@ export const models = {
   /** Deep analysis, creative briefs, refinement, article analysis */
   claude: anthropic("claude-sonnet-5"),
 
-  /** Native video + image understanding. Supports YouTube URLs directly. 1M token context. */
-  geminiPro: google("gemini-2.5-pro"),
+  /** Native video + image understanding. Supports YouTube URLs directly. */
+  geminiPro: google("gemini-3.1-pro-preview"),
 
   /** Fast general-purpose tasks */
   geminiFlash: google("gemini-3.5-flash"),
