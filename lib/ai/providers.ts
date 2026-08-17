@@ -5,8 +5,9 @@
  * Swap models here — no changes needed in routes or orchestrator logic.
  *
  * Model routing strategy:
- *   - Claude 3.5 Sonnet  → deep text analysis, creative briefs, refinement
- *   - Gemini 2.0 Flash   → video analysis (native YouTube URL support, visual + audio)
+ *   - Claude Sonnet      → deep text analysis, creative briefs, refinement
+ *   - Gemini 2.5 Pro     → video analysis (native YouTube URL support, visual + audio, 1M ctx)
+ *   - Gemini 3.5 Flash   → fast general-purpose tasks
  *   - Imagen 3 (Vertex)  → image generation from briefs (requires Vertex AI credentials)
  *   - Veo                → video generation (PENDING - not yet in public API)
  */
@@ -20,11 +21,11 @@ export const models = {
   /** Deep analysis, creative briefs, refinement, article analysis */
   claude: anthropic("claude-sonnet-5"),
 
-  /** Native video + image understanding. Supports YouTube URLs directly. */
-  geminiPro: google("gemini-2.0-flash"),
+  /** Native video + image understanding. Supports YouTube URLs directly. 1M token context. */
+  geminiPro: google("gemini-2.5-pro"),
 
   /** Fast general-purpose tasks */
-  geminiFlash: google("gemini-2.0-flash"),
+  geminiFlash: google("gemini-3.5-flash"),
 } as const;
 
 /**
