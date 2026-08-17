@@ -6,8 +6,8 @@
 import { NextRequest } from "next/server";
 import { getSession, updateSession } from "@/lib/session-store";
 import { fetchImageAsBase64 } from "@/lib/content-fetcher";
-import { basicInsightPrompt } from "@/lib/prompts";
-import { createClaudeStream, sseResponse } from "@/lib/claude-stream";
+import { basicInsightPrompt } from "@/lib/ai/prompts";
+import { createAnalysisStream, sseResponse } from "@/lib/ai/orchestrator";
 
 interface RouteContext {
   params: Promise<{ id: string }>;
@@ -71,11 +71,22 @@ export async function GET(_req: NextRequest, { params }: RouteContext) {
 
   const userPrompt = basicInsightPrompt(session.contentType, content, session.focusHint);
 
-  // Wrap the Claude stream to also persist the full result to the session store
-  const claudeStream = createClaudeStream({ userPrompt, image });
+  // For YouTube videos: pass the original URL so Gemini can do native video analysis
+  const youtubeUrl =
+    session.contentType === "video" && /youtube\.com|youtu\.be/i.test(session.url)
+      ? session.url
+      : undefined;
+
+  // Wrap the stream to also persist the full result to the session store
+  const aiStream = createAnalysisStream({
+    userPrompt,
+    contentType: session.contentType,
+    image,
+    youtubeUrl,
+  });
   const persistingStream = new ReadableStream<Uint8Array>({
     async start(controller) {
-      const reader = claudeStream.getReader();
+      const reader = aiStream.getReader();
       let fullText = "";
       while (true) {
         const { done, value } = await reader.read();

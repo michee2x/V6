@@ -5,7 +5,7 @@
  * Every AI behaviour in the app flows through this file — tune here, not in routes.
  */
 
-import type { ContentType } from "./session-store";
+import type { ContentType } from "../session-store";
 
 // ─── Shared system prompt ─────────────────────────────────────────────────────
 

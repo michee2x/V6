@@ -123,9 +123,12 @@ export async function POST(req: NextRequest) {
 
     // Fetch content server-side
     let fetchedContent = "";
+    let videoId: string | null = null;
     try {
       if (resolvedType === "video") {
-        fetchedContent = await fetchVideoMetadata(url);
+        const videoMeta = await fetchVideoMetadata(url);
+        fetchedContent = videoMeta.text;
+        videoId = videoMeta.videoId;
       } else if (resolvedType === "image") {
         fetchedContent = `IMAGE_URL:${url}`;
       } else {
@@ -158,7 +161,7 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({
       success: true,
-      data: { sessionId, contentType: resolvedType, url },
+      data: { sessionId, contentType: resolvedType, url, videoId },
     });
   } catch {
     return NextResponse.json(

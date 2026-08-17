@@ -5,8 +5,8 @@
 
 import { NextRequest } from "next/server";
 import { getSession, updateSession } from "@/lib/session-store";
-import { briefPrompt } from "@/lib/prompts";
-import { createClaudeStream, sseResponse } from "@/lib/claude-stream";
+import { briefPrompt } from "@/lib/ai/prompts";
+import { createAnalysisStream, sseResponse } from "@/lib/ai/orchestrator";
 
 interface RouteContext {
   params: Promise<{ id: string }>;
@@ -51,10 +51,10 @@ export async function POST(req: NextRequest, { params }: RouteContext) {
     return sseResponse(stream);
   }
 
-  const claudeStream = createClaudeStream({ userPrompt });
+  const aiStream = createAnalysisStream({ userPrompt });
   const persistingStream = new ReadableStream<Uint8Array>({
     async start(controller) {
-      const reader = claudeStream.getReader();
+      const reader = aiStream.getReader();
       let fullText = "";
       while (true) {
         const { done, value } = await reader.read();
