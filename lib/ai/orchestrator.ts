@@ -12,7 +12,7 @@
  */
 
 import { streamText, generateImage, LanguageModel } from "ai";
-import { models } from "./providers";
+import { models, getImagen3Model } from "./providers";
 import { SYSTEM_PROMPT } from "./prompts";
 import type { ImageData } from "../content-fetcher";
 import type { ContentType } from "../session-store";
@@ -144,7 +144,7 @@ export async function generateImageFromBrief(
   const { prompt, aspectRatio = "1:1", numberOfImages = 1 } = options;
 
   const result = await generateImage({
-    model: models.imagen3,
+    model: getImagen3Model(),
     prompt,
     aspectRatio,
     n: numberOfImages,
