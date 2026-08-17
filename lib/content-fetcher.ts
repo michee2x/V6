@@ -12,6 +12,7 @@ import { YoutubeTranscript } from "youtube-transcript";
 
 const VIDEO_PATTERNS = [
   /youtube\.com\/watch/i,
+  /youtube\.com\/shorts\//,
   /youtu\.be\//i,
   /tiktok\.com\//i,
   /vimeo\.com\//i,
