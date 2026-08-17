@@ -69,12 +69,12 @@ export function createAnalysisStream({
         if (youtubeUrl && contentType === "video") {
           selectedModel = models.geminiPro;
           content = [
+            { type: "text", text: userPrompt },
             {
               type: "file",
-              data: { type: "url", url: new URL(youtubeUrl) },
+              data: youtubeUrl,  // must be a plain string URL, not an object
               mediaType: "video/mp4",
             },
-            { type: "text", text: userPrompt },
           ];
         }
         // ── Route: Image → Claude vision ──────────────────────────────
