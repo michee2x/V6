@@ -32,7 +32,7 @@ export function SessionNav() {
         href="/"
         className="shrink-0 hover:opacity-70 transition-opacity flex items-center"
       >
-        <img src="/logo.png" alt="recrea8" className="h-6 md:h-8" />
+        <img src="/logo.png" alt="recrea8" className="h-8 md:h-10" />
         <span className="sr-only">recrea8</span>
       </Link>
 

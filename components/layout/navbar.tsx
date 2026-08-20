@@ -13,7 +13,7 @@ export async function Navbar() {
     <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container flex h-14 max-w-screen-2xl items-center justify-between px-4">
         <Link href="/" className="flex items-center space-x-2">
-          <img src="/logo.png" alt="recrea8" className="h-6 md:h-8" />
+          <img src="/logo.png" alt="recrea8" className="h-8 md:h-10" />
           <span className="sr-only">recrea8</span>
         </Link>
         <div className="flex items-center space-x-4">
