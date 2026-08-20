@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { BriefPanel } from "@/components/features/session/brief-panel";
 
 export const metadata: Metadata = {
-  title: "Creative Brief — Conduit",
+  title: "Creative Brief",
 };
 
 interface BriefPageProps {

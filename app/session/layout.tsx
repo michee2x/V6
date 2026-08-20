@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { SessionNav } from "@/components/features/session/session-nav";
 
 export const metadata: Metadata = {
-  title: "Session — Conduit",
+  title: "Session",
 };
 
 export default function SessionLayout({

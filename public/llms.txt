@@ -1,0 +1,31 @@
+# recrea8
+
+> recrea8 is an AI-powered content understanding and creative brief tool. Paste any link — a YouTube video, TikTok, image, or article — and get an instant breakdown of what makes it work. Then turn that into a ready-to-use creative brief in seconds.
+
+recrea8 is designed for marketers, content creators, social media managers, and creative teams who want to understand any piece of content and rapidly recreate or remix it for their own brand.
+
+## Core Product
+
+recrea8 runs a 2-phase AI engine on every piece of content:
+
+1. **Insights** — Paste a URL or upload a file. recrea8 analyzes the content across multiple dimensions: hook quality, emotional triggers, structure, format patterns, and engagement drivers. Outputs a clear, structured breakdown you can actually act on.
+2. **Creative Brief** — Turn the Insights into a complete, ready-to-use creative brief. Covers the angle, format, hook direction, script structure, and production notes — ready to hand off or render immediately.
+
+## Supported Content Types
+
+- YouTube & TikTok videos (via URL)
+- Images (uploaded or linked)
+- Articles & blog posts (via URL)
+
+## How It Works
+
+1. Paste a URL or upload a file on the homepage
+2. Get an AI-generated Insights breakdown instantly
+3. Switch to the Creative Brief tab to generate a ready-to-use brief
+4. Export or use the brief directly
+
+## Key Links
+
+- [Homepage](https://recrea8.app/): Paste a link, understand it, create from it
+- [Login](https://recrea8.app/login): Account login
+- [LLM Full Documentation](https://recrea8.app/llms-full.txt): Extended documentation for LLMs and AI agents

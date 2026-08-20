@@ -13,8 +13,59 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "v6",
-  description: "Understand content instantly, create your own version of it.",
+  metadataBase: new URL("https://recrea8.app"),
+  title: {
+    default: "recrea8",
+    template: "%s — recrea8",
+  },
+  description:
+    "Paste any link — a video, image, or article — and get an instant AI breakdown. Then turn it into a ready-to-use creative brief in seconds.",
+  keywords: [
+    "content analysis",
+    "creative brief",
+    "AI content tool",
+    "video breakdown",
+    "content strategy",
+    "recrea8",
+  ],
+  authors: [{ name: "recrea8" }],
+  creator: "recrea8",
+  openGraph: {
+    type: "website",
+    locale: "en_US",
+    url: "https://recrea8.app",
+    siteName: "recrea8",
+    title: "recrea8 — Paste a link, understand it. Create from it.",
+    description:
+      "Paste any link — a video, image, or article — and get an instant AI breakdown. Then turn it into a ready-to-use creative brief in seconds.",
+    images: [
+      {
+        url: "/og-image.png",
+        width: 1200,
+        height: 630,
+        alt: "recrea8 — Understand content. Create from it.",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "recrea8 — Paste a link, understand it. Create from it.",
+    description:
+      "Paste any link — a video, image, or article — and get an instant AI breakdown. Then turn it into a ready-to-use creative brief in seconds.",
+    images: ["/og-image.png"],
+    creator: "@recrea8",
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      "max-video-preview": -1,
+      "max-image-preview": "large",
+      "max-snippet": -1,
+    },
+  },
   verification: {
     google: "TPX5XzG9BX9yNlCwlKwkLOV3bABiTMeGkeKUY4Y9uz8",
   },

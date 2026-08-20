@@ -30,9 +30,10 @@ export function SessionNav() {
       {/* Logo */}
       <Link
         href="/"
-        className="text-label font-semibold text-foreground tracking-tight shrink-0 hover:opacity-70 transition-opacity"
+        className="shrink-0 hover:opacity-70 transition-opacity flex items-center"
       >
-        Conduit
+        <img src="/logo.png" alt="recrea8" className="h-6 md:h-8" />
+        <span className="sr-only">recrea8</span>
       </Link>
 
       {/* Phase tabs — only shown when inside a session */}
