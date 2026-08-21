@@ -11,12 +11,18 @@ export async function GET(request: Request) {
   const type = searchParams.get('type');
 
   if (code) {
+    if (type === 'signup') {
+      // Prevent email bots from prematurely consuming the verification token.
+      // Redirect to a manual verification page.
+      return NextResponse.redirect(`${origin}/verify-email?code=${code}&next=${next}`);
+    }
+
     const supabase = await createClient();
     const { error } = await supabase.auth.exchangeCodeForSession(code);
     
     if (!error) {
-      if (type === 'signup' || type === 'recovery') {
-        // If it was a signup confirmation, we redirect to login with a success message param
+      if (type === 'recovery') {
+        // Recovery logic...
         return NextResponse.redirect(`${origin}/login?verified=true`);
       }
       

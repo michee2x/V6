@@ -87,7 +87,7 @@ export async function signup(formData: FormData) {
   }
 
   revalidatePath("/", "layout");
-  redirect("/login?message=Check your email to verify your account");
+  redirect("/login?newsignup=true");
 }
 
 export async function logout() {

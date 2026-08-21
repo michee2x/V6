@@ -44,6 +44,14 @@ export function AuthForm() {
     const errorMsg = searchParams.get("error");
     const messageMsg = searchParams.get("message");
     const verified = searchParams.get("verified");
+    const isNewSignup = searchParams.get("newsignup") === "true";
+
+    if (isNewSignup) {
+      toast.success("Account created successfully! Please check your email to verify your account.");
+      const newUrl = new URL(window.location.href);
+      newUrl.searchParams.delete("newsignup");
+      window.history.replaceState({}, "", newUrl.toString());
+    }
 
     if (errorMsg) {
       toast.error(errorMsg);
@@ -143,6 +151,9 @@ export function AuthForm() {
         </TabsList>
 
         <TabsContent value="login" className="space-y-4 mt-4">
+          <div className="bg-green-50 text-green-800 text-sm p-4 rounded-md border border-green-200 mb-4 hidden [&:has(+_form_input:placeholder-shown)]:block" id="new-signup-banner" style={{ display: searchParams.get("newsignup") === "true" ? "block" : "none" }}>
+            <strong>Action Required:</strong> Please check your email and click the verification link before logging in.
+          </div>
           <form onSubmit={(e) => handleEmailAuth(e, "login")} className="flex flex-col gap-4">
             <div className="flex flex-col gap-2">
               <Label htmlFor="login-email">Email</Label>
