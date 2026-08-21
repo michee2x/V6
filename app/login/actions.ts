@@ -34,18 +34,41 @@ export async function signup(formData: FormData) {
     redirect("/login?error=Missing captcha token");
   }
 
-  const origin = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
-  const verifyResponse = await fetch(`${origin}/api/recaptcha`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ token }),
+  const isLocalhost = process.env.NODE_ENV === 'development';
+  const secret = isLocalhost
+    ? process.env.RECAPTCHA_SECRET_KEY_LOCALHOST ?? process.env.RECAPTCHA_SECRET_KEY
+    : process.env.RECAPTCHA_SECRET_KEY;
+
+  if (!secret) {
+    redirect("/login?error=reCAPTCHA secret is not configured");
+  }
+
+  const verifyFormData = new URLSearchParams({
+    secret,
+    response: token,
   });
 
-  const verifyResult = await verifyResponse.json();
-  
-  if (!verifyResponse.ok || !verifyResult.success) {
+  const verifyResponse = await fetch('https://www.google.com/recaptcha/api/siteverify', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/x-www-form-urlencoded',
+    },
+    body: verifyFormData.toString(),
+  }).catch(() => {
+    redirect("/login?error=Network error during captcha verification");
+  });
+
+  if (!verifyResponse || !verifyResponse.ok) {
+    redirect("/login?error=Failed to verify captcha with Google");
+  }
+
+  const result = await verifyResponse.json().catch(() => ({ success: false }));
+
+  if (!result.success) {
     redirect("/login?error=Invalid captcha verification");
   }
+
+  const origin = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
 
   const { data, error } = await supabase.auth.signUp({
     email,
