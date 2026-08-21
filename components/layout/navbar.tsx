@@ -14,8 +14,8 @@ export async function Navbar() {
     <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container flex h-14 max-w-screen-2xl items-center justify-between px-4">
         <Link href="/" className="flex items-center space-x-2">
-          <Image src="/logo.webp" alt="recrea8" width={120} height={40} className="h-8 md:h-10 w-auto" priority />
-          <span className="sr-only">recrea8</span>
+          <Image src="/logo.webp" alt="Recrea8" width={120} height={40} className="h-8 md:h-10 w-auto" priority />
+          <span className="sr-only">Recrea8</span>
         </Link>
         <div className="flex items-center space-x-4">
           {user ? (

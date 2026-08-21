@@ -16,8 +16,8 @@ const inter = Inter({
 export const metadata: Metadata = {
   metadataBase: new URL("https://recrea8.app"),
   title: {
-    default: "recrea8",
-    template: "%s — recrea8",
+    default: "Recrea8",
+    template: "%s — Recrea8",
   },
   description:
     "Paste any link — a video, image, or article — and get an instant AI breakdown. Then turn it into a ready-to-use creative brief in seconds.",
@@ -29,14 +29,14 @@ export const metadata: Metadata = {
     "content strategy",
     "recrea8",
   ],
-  authors: [{ name: "recrea8" }],
-  creator: "recrea8",
+  authors: [{ name: "Recrea8" }],
+  creator: "Recrea8",
   openGraph: {
     type: "website",
     locale: "en_US",
     url: "https://recrea8.app",
-    siteName: "recrea8",
-    title: "recrea8 — Paste a link, understand it. Create from it.",
+    siteName: "Recrea8",
+    title: "Recrea8 — Paste a link, understand it. Create from it.",
     description:
       "Paste any link — a video, image, or article — and get an instant AI breakdown. Then turn it into a ready-to-use creative brief in seconds.",
     images: [
@@ -44,13 +44,13 @@ export const metadata: Metadata = {
         url: "/og-image.png",
         width: 1200,
         height: 630,
-        alt: "recrea8 — Understand content. Create from it.",
+        alt: "Recrea8 — Understand content. Create from it.",
       },
     ],
   },
   twitter: {
     card: "summary_large_image",
-    title: "recrea8 — Paste a link, understand it. Create from it.",
+    title: "Recrea8 — Paste a link, understand it. Create from it.",
     description:
       "Paste any link — a video, image, or article — and get an instant AI breakdown. Then turn it into a ready-to-use creative brief in seconds.",
     images: ["/og-image.png"],
