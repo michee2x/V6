@@ -2,6 +2,7 @@
 
 import * as React from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname, useSearchParams } from "next/navigation";
 import { Lightbulb, Wand2, Plus } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -32,7 +33,7 @@ export function SessionNav() {
         href="/"
         className="shrink-0 hover:opacity-70 transition-opacity flex items-center"
       >
-        <img src="/logo.png" alt="recrea8" className="h-8 md:h-10" />
+        <Image src="/logo.webp" alt="recrea8" width={120} height={40} className="h-8 md:h-10 w-auto" priority />
         <span className="sr-only">recrea8</span>
       </Link>
 
