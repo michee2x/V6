@@ -15,7 +15,7 @@ export async function login(formData: FormData) {
   const { error } = await supabase.auth.signInWithPassword(data);
 
   if (error) {
-    redirect("/login?error=Could not authenticate user");
+    redirect(`/login?error=${encodeURIComponent(error.message || "Could not authenticate user")}`);
   }
 
   revalidatePath("/", "layout");
@@ -47,7 +47,7 @@ export async function signup(formData: FormData) {
     redirect("/login?error=Invalid captcha verification");
   }
 
-  const { error } = await supabase.auth.signUp({
+  const { data, error } = await supabase.auth.signUp({
     email,
     password,
     options: {
@@ -56,7 +56,11 @@ export async function signup(formData: FormData) {
   });
 
   if (error) {
-    redirect("/login?error=Could not sign up user");
+    redirect(`/login?error=${encodeURIComponent(error.message || "Could not sign up user")}`);
+  }
+
+  if (data?.user?.identities && data.user.identities.length === 0) {
+    redirect("/login?error=This email is already registered. Please sign in.");
   }
 
   revalidatePath("/", "layout");
