@@ -2,7 +2,6 @@
 
 import * as React from "react";
 import Link from "next/link";
-import Image from "next/image";
 import { usePathname, useSearchParams } from "next/navigation";
 import { Lightbulb, Wand2, Plus } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -28,15 +27,6 @@ export function SessionNav() {
 
   return (
     <header className="border-b border-border h-14 flex items-center px-6 shrink-0 gap-6">
-      {/* Logo */}
-      <Link
-        href="/"
-        className="shrink-0 hover:opacity-70 transition-opacity flex items-center"
-      >
-        <Image src="/logo.webp" alt="recrea8" width={120} height={40} className="h-8 md:h-10 w-auto" priority />
-        <span className="sr-only">recrea8</span>
-      </Link>
-
       {/* Phase tabs — only shown when inside a session */}
       {sessionId && (
         <nav className="flex items-center gap-1" aria-label="Session phases">
