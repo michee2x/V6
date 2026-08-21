@@ -34,7 +34,7 @@ export function BriefPanel({ sessionId, contentType }: BriefPanelProps) {
   const [selectedModel, setSelectedModel] = React.useState<string | null>(null);
   const [copied, setCopied] = React.useState(false);
   const [refinement, setRefinement] = React.useState("");
-  const [refinementImage, setRefinementImage] = React.useState<{ mimeType: string; data: string } | null>(null);
+  const [refinementImage, setRefinementImage] = React.useState<{ mimeType: string; base64: string } | null>(null);
   const [hastriggered, setHasTriggered] = React.useState(false);
   const fileInputRef = React.useRef<HTMLInputElement>(null);
 
@@ -49,7 +49,7 @@ export function BriefPanel({ sessionId, contentType }: BriefPanelProps) {
     reader.onload = (event) => {
       const base64Url = event.target?.result as string;
       const base64Data = base64Url.split(',')[1];
-      setRefinementImage({ mimeType: file.type, data: base64Data });
+      setRefinementImage({ mimeType: file.type, base64: base64Data });
     };
     reader.readAsDataURL(file);
     if (fileInputRef.current) fileInputRef.current.value = "";
@@ -268,7 +268,7 @@ export function BriefPanel({ sessionId, contentType }: BriefPanelProps) {
             {refinementImage && (
               <div className="relative ml-1 shrink-0">
                 <img
-                  src={`data:${refinementImage.mimeType};base64,${refinementImage.data}`}
+                  src={`data:${refinementImage.mimeType};base64,${refinementImage.base64}`}
                   alt="Attachment"
                   className="h-8 w-8 rounded-md object-cover border border-border"
                 />

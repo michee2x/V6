@@ -25,7 +25,7 @@ export async function POST(req: NextRequest, { params }: RouteContext) {
     );
   }
 
-  let body: { brief?: string; instruction?: string; image?: { mimeType: string; data: string } };
+  let body: { brief?: string; instruction?: string; image?: { mimeType: string; base64: string } };
   try {
     body = await req.json();
   } catch {
