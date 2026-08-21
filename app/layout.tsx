@@ -7,6 +7,7 @@ import { Providers } from "@/components/providers";
 import { Toaster } from "@/components/ui/sonner";
 import { Navbar } from "@/components/layout/navbar";
 import { Footer } from "@/components/layout/footer";
+import { ConditionalHeader, ConditionalFooter } from "@/components/layout/conditional-layout";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -94,10 +95,14 @@ export default function RootLayout({
           `}
         </Script>
         <Providers>
-          <Navbar />
+          <ConditionalHeader>
+            <Navbar />
+          </ConditionalHeader>
           {children}
           <Toaster />
-          <Footer />
+          <ConditionalFooter>
+            <Footer />
+          </ConditionalFooter>
         </Providers>
       </body>
     </html>

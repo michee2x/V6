@@ -4,7 +4,7 @@ import * as React from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import {
-  Copy, Download, Wand2, CheckCheck, AlertCircle, RefreshCw, ArrowLeft, Settings2, ArrowUp
+  Copy, Download, Wand2, CheckCheck, AlertCircle, RefreshCw, ArrowLeft, Settings2, ArrowUp, Paperclip, X
 } from "lucide-react";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -34,7 +34,26 @@ export function BriefPanel({ sessionId, contentType }: BriefPanelProps) {
   const [selectedModel, setSelectedModel] = React.useState<string | null>(null);
   const [copied, setCopied] = React.useState(false);
   const [refinement, setRefinement] = React.useState("");
+  const [refinementImage, setRefinementImage] = React.useState<{ mimeType: string; data: string } | null>(null);
   const [hastriggered, setHasTriggered] = React.useState(false);
+  const fileInputRef = React.useRef<HTMLInputElement>(null);
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (!file.type.startsWith("image/")) {
+      toast.error("Please upload an image file");
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const base64Url = event.target?.result as string;
+      const base64Data = base64Url.split(',')[1];
+      setRefinementImage({ mimeType: file.type, data: base64Data });
+    };
+    reader.readAsDataURL(file);
+    if (fileInputRef.current) fileInputRef.current.value = "";
+  };
 
   // Auto-trigger the brief stream on mount (once)
   React.useEffect(() => {
@@ -69,7 +88,9 @@ export function BriefPanel({ sessionId, contentType }: BriefPanelProps) {
     refineStream.trigger(`/api/v1/sessions/${sessionId}/refine`, {
       brief: liveBrief,
       instruction,
+      image: refinementImage,
     });
+    setRefinementImage(null);
   };
 
   const handleRefinement = (e: React.KeyboardEvent<HTMLInputElement>) => {
@@ -226,7 +247,41 @@ export function BriefPanel({ sessionId, contentType }: BriefPanelProps) {
             <span className="animate-spin h-4 w-4 border-2 border-muted-foreground border-t-transparent rounded-full inline-block" />
           </div>
         ) : (
-          <div className="w-2" /> // small left spacer
+          <div className="flex items-center shrink-0">
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              className="rounded-full h-9 w-9 text-muted-foreground hover:text-foreground shrink-0 ml-1"
+              onClick={() => fileInputRef.current?.click()}
+              aria-label="Upload image"
+            >
+              <Paperclip className="h-4 w-4" />
+            </Button>
+            <input
+              type="file"
+              ref={fileInputRef}
+              onChange={handleFileChange}
+              accept="image/*"
+              className="hidden"
+            />
+            {refinementImage && (
+              <div className="relative ml-1 shrink-0">
+                <img
+                  src={`data:${refinementImage.mimeType};base64,${refinementImage.data}`}
+                  alt="Attachment"
+                  className="h-8 w-8 rounded-md object-cover border border-border"
+                />
+                <button
+                  onClick={() => setRefinementImage(null)}
+                  className="absolute -top-2 -right-2 bg-destructive text-destructive-foreground rounded-full h-4 w-4 flex items-center justify-center shadow-sm hover:bg-destructive/90"
+                  aria-label="Remove image"
+                >
+                  <X className="h-3 w-3" />
+                </button>
+              </div>
+            )}
+          </div>
         )}
         <input
           id="brief-refinement-input"

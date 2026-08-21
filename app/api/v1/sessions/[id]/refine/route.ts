@@ -25,7 +25,7 @@ export async function POST(req: NextRequest, { params }: RouteContext) {
     );
   }
 
-  let body: { brief?: string; instruction?: string };
+  let body: { brief?: string; instruction?: string; image?: { mimeType: string; data: string } };
   try {
     body = await req.json();
   } catch {
@@ -46,7 +46,7 @@ export async function POST(req: NextRequest, { params }: RouteContext) {
 
   const userPrompt = refinePrompt(brief, instruction);
 
-  const aiStream = createAnalysisStream({ userPrompt });
+  const aiStream = createAnalysisStream({ userPrompt, image: body.image });
   const persistingStream = new ReadableStream<Uint8Array>({
     async start(controller) {
       const reader = aiStream.getReader();
