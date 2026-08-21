@@ -3,7 +3,7 @@ import { GoogleGeminiEffect } from "@/components/ui/google-gemini-effect";
 import { AnimatedGradientText } from "@/components/ui/animated-gradient-text";
 
 export const metadata = {
-  title: "Paste a link, understand it. Create from it.",
+  title: "Recrea8 — Paste a link, understand it. Create from it.",
   description:
     "Paste any link — a video, image, or article — and get an instant breakdown. Then turn it into a ready-to-use creative brief in seconds.",
 };
