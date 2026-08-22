@@ -17,7 +17,7 @@ export async function Navbar() {
           {/* Image logo hidden — CSS text replica shown for Google OAuth branding verification */}
           <Image src="/logo.webp" alt="Recrea8" width={120} height={40} className="hidden" priority />
           <span className="font-bold text-xl tracking-tight text-foreground select-none" aria-label="Recrea8">
-            ReCrea<span className="text-primary">8</span>
+            Recrea<span className="text-primary">8</span>
           </span>
         </Link>
         <div className="flex items-center space-x-4">

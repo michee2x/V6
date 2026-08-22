@@ -30,10 +30,10 @@ export default function HomePage() {
           </div>
           <h1 className="text-display tracking-tight text-foreground">
             See something you like online?{" "}
-            <span className="text-muted-foreground">ReCrea8 it.</span>
+            <span className="text-muted-foreground">Recrea8 it.</span>
           </h1>
           <p className="text-body-lg text-muted-foreground max-w-prose">
-            Paste a link or upload a creative. ReCrea8 reverse-engineers how it
+            Paste a link or upload a creative. Recrea8 reverse-engineers how it
             works, lets you make it yours, and generates the finished version in
             minutes.
           </p>
