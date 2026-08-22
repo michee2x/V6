@@ -24,7 +24,7 @@ what they learned.
 ## 3. Core Loop
 
 ```
-Paste link → Understand → (Advanced Insight) → Creative Brief → Generate/Export
+Paste link → Understand → (Advanced Insight) → Creative Brief → [Variations] → Generate/Export
 ```
 
 Every session moves through the same four phases regardless of content type.
@@ -81,6 +81,20 @@ conversationally — *"no logo," "have them speak Chinese," "warmer color
 grade"* — same refinement loop regardless of content type, until they're
 happy with the final brief.
 
+### Phase 2.5 — Variations (one-click)
+
+After the brief is generated, the user can request **2–3 alternate briefs
+from the same advanced insight in a single click** — each taking a different
+angle, tone, or format (e.g. *"same hook structure, but long-form article
+angle"* / *"same pacing, but lo-fi aesthetic"* / *"reframe for a different
+audience"*). This is not the same as conversational refinement (Phase 2);
+it's parallel exploration, not serial iteration.
+
+v1: offer 3 variations per brief, each independently refineable and
+generatable. The user picks whichever resonates and continues to Phase 3
+from there. This is the feature that turns the app from a one-output utility
+into something marketers run A/B tests through.
+
 ### Phase 3 — Generate
 
 User chooses per-session, every time:
@@ -110,6 +124,12 @@ marketplace. Text/copy has no selector; it's always generated natively.
   a per-session override always available at the point of rendering — same
   spirit as the existing "user chooses per-session, every time" principle
   for render-vs-export.
+- **Output rights are surfaced per plan at the point of rendering** — not
+  buried in a pricing page. The UI shows a single line alongside the model
+  selector: *"Free tier: personal use only · Pro: commercial rights
+  included."* This is a primary purchase decision in this category (users
+  choosing between tools routinely cite commercial rights as the deciding
+  factor) and we should treat it as such — not as a footnote.
 - **Brief/model mismatch (open question, not decided for v1):** not every
   model supports every element of a brief — e.g. a specific spoken
   language, a custom aspect ratio, or a style constraint. Rather than
@@ -202,6 +222,30 @@ page sells a single monthly credit pool per plan, with each model/resolution
 combination priced at its own credit cost, plus a separate free-generation
 quota on specific low-cost models per tier.)*
 
+### 5.2 — Privacy & data handling (must be visible in the UI)
+
+Because users paste arbitrary third-party links and upload files they don't
+own, **data handling is a trust prerequisite, not a footnote.** Competitors
+in this space who handle it well surface the policy directly in the product
+— next to the paste input, not only in a footer or a full privacy policy
+page.
+
+**Stated policy (to be confirmed with legal before shipping):**
+- Submitted links and uploaded files are **processed transiently** — they
+  are used only to generate the requested insight/brief for that session.
+- **No input content is stored beyond the session** — links, media, or
+  extracted content are not retained on our servers after processing
+  completes.
+- Generated outputs (briefs, prompts) *are* saved to the user's History
+  (Section 6), but source inputs are not.
+
+**In the UI:** a single line near the input area (e.g. *"Links and uploads
+are processed in real time and never stored"*) with a link to the full
+privacy policy. This should ship with v1 — it is a conversion-affecting
+trust signal, not a legal-team backlog item.
+
+*(Note: renumber the old 5.2 Paddle section to 5.3.)*
+
 ### 5.2 — Payment processor: Paddle
 
 Paddle (Merchant of Record) will handle checkout, subscriptions, credit-pack
@@ -242,10 +286,18 @@ the retention mechanism, so it should never be paywalled.
 **In v1:**
 - Content types: video (YouTube, TikTok), images, articles/blogs
 - Single dominant item per link (no multi-item disambiguation)
-- Full 4-phase loop, anonymous trial, saved history
+- Full 4-phase loop (including Phase 2.5 Variations), anonymous trial,
+  saved history
 - One default/small curated model list per content type, with static
   per-model capability warnings (not full brief-adaptation)
 - Paddle-based payments with an internal model-weighted credit ledger
+- Output rights labelled per plan at the point of rendering (Section 4.1)
+- Privacy trust copy visible in the UI at the paste input (Section 5.2)
+- **Inspiration gallery** — a curated set of 8–12 worked examples
+  (link → insight → brief), each clickable and browsable before the user
+  has their own link to paste. Solves the cold-start/blank-page problem
+  and doubles as indexable SEO content. v1: hardcoded/curated examples.
+  v2+: dynamic, trending, user-contributed.
 
 **Explicitly deferred to v2+:**
 - PDFs/documents, podcasts/audio, code repositories
@@ -254,6 +306,16 @@ the retention mechanism, so it should never be paywalled.
 - Automatic brief-adaptation per model (auto-adjusting prompts to fit each
   model's actual capabilities, rather than warning the user)
 - Expanded/open model marketplace beyond the initial curated list
+- **Brief/template library** — saving a brief as a reusable template
+  independent of any specific source link (personal asset library,
+  stickier than session history alone)
+- **Daily/recurring free quota** — a small standing free allowance for
+  signed-in free-tier users (separate from the one-time anonymous trial),
+  as a recurring reason to return before they ever pay
+- **API / programmatic access** — letting power users drive the full loop
+  (link → insight → brief) from a script or external pipeline. Every
+  serious competitor in this space has shipped this. Belongs here as an
+  acknowledged roadmap item, not as an absent afterthought.
 
 ---
 

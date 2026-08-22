@@ -29,14 +29,13 @@ export default function HomePage() {
             </AnimatedGradientText>
           </div>
           <h1 className="text-display tracking-tight text-foreground">
-            Paste a link.
-            <br />
-            <span className="text-muted-foreground">Understand it. Create from it.</span>
+            See something you like online?{" "}
+            <span className="text-muted-foreground">ReCrea8 it.</span>
           </h1>
           <p className="text-body-lg text-muted-foreground max-w-prose">
-            Drop in any video, image, or article. Get an instant breakdown of
-            what makes it work — then turn that into a creative brief you can
-            render or export anywhere.
+            Paste a link or upload a creative. ReCrea8 reverse-engineers how it
+            works, lets you make it yours, and generates the finished version in
+            minutes.
           </p>
         </div>
 
