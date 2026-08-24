@@ -90,3 +90,69 @@ export async function updateSession(id: string, patch: Partial<Session>): Promis
     console.error("Error updating session in Supabase:", error);
   }
 }
+
+// ─── Generations ─────────────────────────────────────────────────────────────
+
+export interface SessionGeneration {
+  id: string;
+  sessionId: string;
+  type: string;
+  model: string;
+  data: string;
+  mimeType?: string;
+  createdAt: Date;
+  expiresAt?: Date | null;
+}
+
+export async function saveGeneration(generation: Omit<SessionGeneration, "id" | "createdAt">): Promise<SessionGeneration> {
+  const supabase = await createClient();
+  const { data, error } = await supabase.from("session_generations").insert({
+    session_id: generation.sessionId,
+    type: generation.type,
+    model: generation.model,
+    data: generation.data,
+    mime_type: generation.mimeType || null,
+    expires_at: generation.expiresAt?.toISOString() || null,
+  }).select("*").single();
+
+  if (error) {
+    console.error("Error saving generation to Supabase:", error);
+    throw new Error("Failed to save generation");
+  }
+
+  return {
+    id: data.id,
+    sessionId: data.session_id,
+    type: data.type,
+    model: data.model,
+    data: data.data,
+    mimeType: data.mime_type || undefined,
+    createdAt: new Date(data.created_at),
+    expiresAt: data.expires_at ? new Date(data.expires_at) : null,
+  };
+}
+
+export async function getGenerations(sessionId: string): Promise<SessionGeneration[]> {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("session_generations")
+    .select("*")
+    .eq("session_id", sessionId)
+    .order("created_at", { ascending: false });
+
+  if (error) {
+    console.error("Error fetching generations:", error);
+    return [];
+  }
+
+  return (data || []).map((row) => ({
+    id: row.id,
+    sessionId: row.session_id,
+    type: row.type,
+    model: row.model,
+    data: row.data,
+    mimeType: row.mime_type || undefined,
+    createdAt: new Date(row.created_at),
+    expiresAt: row.expires_at ? new Date(row.expires_at) : null,
+  }));
+}

@@ -1,6 +1,8 @@
 import { InputForm } from "@/components/features/input/input-form";
 import { GoogleGeminiEffect } from "@/components/ui/google-gemini-effect";
 import { AnimatedGradientText } from "@/components/ui/animated-gradient-text";
+import { InspirationGallery } from "@/components/features/inspiration/inspiration-gallery";
+import { BeforeAfterShowcase } from "@/components/features/showcase/before-after-showcase";
 
 export const metadata = {
   title: "Recrea8 — Paste a link, understand it. Create from it.",
@@ -10,13 +12,13 @@ export const metadata = {
 
 export default function HomePage() {
   return (
-    <main className="relative flex flex-col flex-1 items-center justify-center min-h-screen px-4 overflow-hidden">
+    <main className="relative flex flex-col flex-1 items-center px-4 overflow-x-hidden">
       {/* Background Effect */}
       <GoogleGeminiEffect />
 
-      <div className="relative z-10 w-full max-w-2xl flex flex-col items-center gap-10">
+      <section className="relative z-10 w-full max-w-2xl flex flex-col items-center justify-center min-h-screen gap-10">
         {/* Hero */}
-        <div className="flex flex-col items-center text-center gap-4">
+        <div className="flex flex-col items-center text-center gap-4 mt-20">
           <div className="group relative mx-auto flex items-center justify-center rounded-full px-4 py-1.5 shadow-[inset_0_-8px_10px_#8fdfff1f] transition-shadow duration-500 ease-out hover:shadow-[inset_0_-5px_10px_#8fdfff3f]">
             {/* Animated gradient border wrapper */}
             <div className="animate-gradient absolute inset-0 -z-10 block rounded-[inherit] bg-gradient-to-r from-primary/50 via-secondary/50 to-primary/50 bg-[length:300%_100%] p-[1px]">
@@ -46,7 +48,15 @@ export default function HomePage() {
         <p className="text-caption text-muted-foreground">
           No signup needed for your first run · Supports YouTube, TikTok, images &amp; articles
         </p>
-      </div>
+      </section>
+
+      <section className="relative z-10 w-full max-w-2xl flex flex-col items-center gap-10 pb-20">
+        {/* Gallery */}
+        <InspirationGallery />
+      </section>
+
+      {/* Full width showcase */}
+      <BeforeAfterShowcase />
     </main>
   );
 }

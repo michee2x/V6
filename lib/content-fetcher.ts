@@ -3,6 +3,11 @@
  *
  * Fetches and extracts content for each supported type.
  * All functions run server-side only (called from API route handlers).
+ *
+ * Video strategy:
+ *   - YouTube   → pass URL to Gemini natively (no download needed)
+ *   - TikTok    → fetch MP4 via tikwm.com proxy → inline base64 for Gemini
+ *   - Other     → metadata/text only (transcript fallback)
  */
 
 import type { ContentType } from "./session-store";
@@ -70,7 +75,6 @@ export function extractYouTubeVideoId(url: string): string | null {
     if (/youtube\.com/i.test(parsed.hostname)) {
       const v = parsed.searchParams.get("v");
       if (v) return v;
-      // Handle /shorts/ID and /embed/ID paths
       const pathMatch = parsed.pathname.match(/\/(shorts|embed|v)\/([a-zA-Z0-9_-]{11})/);
       if (pathMatch) return pathMatch[2];
     }
@@ -85,9 +89,9 @@ export function extractYouTubeVideoId(url: string): string | null {
 }
 
 /**
- * Fetches YouTube video content.
- * Returns metadata + transcript (for text-based models).
- * Also returns the videoId so callers can use Gemini for richer visual analysis.
+ * Fetches YouTube video metadata + transcript (for context in text prompts).
+ * The actual visual analysis is done by passing the URL directly to Gemini — 
+ * the transcript here is purely supplemental context.
  */
 async function fetchYouTubeContent(url: string): Promise<{
   text: string;
@@ -117,7 +121,7 @@ async function fetchYouTubeContent(url: string): Promise<{
     const transcript = await YoutubeTranscript.fetchTranscript(url);
     transcriptText = transcript.map(t => t.text).join(" ");
   } catch {
-    transcriptText = "[No transcript available or subtitles are disabled for this video.]";
+    transcriptText = "[Transcript not available — Gemini will analyse the video visually.]";
   }
 
   const text = [
@@ -125,10 +129,64 @@ async function fetchYouTubeContent(url: string): Promise<{
     `Channel: ${channel}`,
     `Platform: YouTube`,
     videoId ? `Video ID: ${videoId}` : "",
-    `\nTranscript:\n${transcriptText}`
+    `\nTranscript (supplemental context):\n${transcriptText}`
   ].filter(Boolean).join("\n");
 
   return { text, videoId, thumbnailUrl };
+}
+
+// ─── TikTok video download ────────────────────────────────────────────────────
+
+const MAX_INLINE_VIDEO_BYTES = 20 * 1024 * 1024; // 20 MB Gemini inline limit
+
+export interface VideoData {
+  base64: string;
+  mimeType: string;
+}
+
+/**
+ * Downloads a TikTok video as inline base64 using the tikwm.com public API.
+ * Returns null if the video is too large (>20 MB), unavailable, or the fetch fails.
+ * The video is held in memory only — never written to disk.
+ *
+ * @param url - Public TikTok video URL
+ */
+export async function fetchTikTokVideoData(url: string): Promise<VideoData | null> {
+  try {
+    // Step 1: Resolve direct MP4 URL via tikwm.com
+    const apiRes = await fetch(
+      `https://tikwm.com/api/?url=${encodeURIComponent(url)}`,
+      { headers: { "Accept": "application/json" } }
+    );
+    if (!apiRes.ok) return null;
+
+    const apiData = await apiRes.json();
+    const playUrl: string | undefined = apiData?.data?.play;
+    if (!playUrl) return null;
+
+    // Step 2: Download the MP4 into memory
+    const videoRes = await fetch(playUrl);
+    if (!videoRes.ok) return null;
+
+    const contentLength = parseInt(videoRes.headers.get("content-length") ?? "0", 10);
+    if (contentLength > MAX_INLINE_VIDEO_BYTES) {
+      console.warn(`[TikTok] Video too large for inline (${contentLength} bytes), skipping download.`);
+      return null;
+    }
+
+    const arrayBuffer = await videoRes.arrayBuffer();
+    // Double-check actual size in case content-length was missing/wrong
+    if (arrayBuffer.byteLength > MAX_INLINE_VIDEO_BYTES) {
+      console.warn(`[TikTok] Video exceeded 20 MB after download, discarding.`);
+      return null;
+    }
+
+    const base64 = Buffer.from(arrayBuffer).toString("base64");
+    return { base64, mimeType: "video/mp4" };
+  } catch (err) {
+    console.warn("[TikTok] Video download failed:", err);
+    return null;
+  }
 }
 
 async function fetchTikTokOEmbed(url: string): Promise<string> {
@@ -145,8 +203,8 @@ async function fetchTikTokOEmbed(url: string): Promise<string> {
 
 /**
  * Fetches video metadata. Returns an object with:
- * - `text`: the text content to pass to the AI (transcript + metadata)
- * - `videoId`: YouTube video ID if available (for Gemini visual analysis)
+ * - `text`: text content / metadata to include in prompts
+ * - `videoId`: YouTube video ID if available (Gemini uses URL directly, not this ID)
  * - `thumbnailUrl`: URL of the video thumbnail if available
  */
 export async function fetchVideoMetadata(url: string): Promise<{
@@ -155,10 +213,17 @@ export async function fetchVideoMetadata(url: string): Promise<{
   thumbnailUrl: string | null;
 }> {
   if (/youtube\.com|youtu\.be/i.test(url)) return fetchYouTubeContent(url);
+
   if (/tiktok\.com/i.test(url)) {
-    const text = await fetchTikTokOEmbed(url);
+    let text = `Video URL: ${url}\nPlatform: TikTok`;
+    try {
+      text = await fetchTikTokOEmbed(url);
+    } catch {
+      // Fallback to minimal metadata
+    }
     return { text, videoId: null, thumbnailUrl: null };
   }
+
   return { text: `Video URL: ${url}`, videoId: null, thumbnailUrl: null };
 }
 

@@ -5,43 +5,44 @@
  * Swap models here — no changes needed in routes or orchestrator logic.
  *
  * Model routing strategy:
- *   - Claude Sonnet      → deep text analysis, creative briefs, refinement
- *   - Gemini 2.5 Pro     → video analysis (native YouTube URL support, visual + audio, 1M ctx)
- *   - Gemini 3.5 Flash   → fast general-purpose tasks
- *   - Imagen 3 (Vertex)  → image generation from briefs (requires Vertex AI credentials)
- *   - Veo                → video generation (PENDING - not yet in public API)
+ *   - Gemini Flash  → ALL analysis: video (native YouTube URL), image, article, brief, refinement
+ *   - GPT-4o        → Text document recreation from briefs
+ *   - gpt-image-1   → Image generation from briefs
+ *   - Sora          → Video generation (future)
+ *
+ * Claude is NOT used — all analysis has moved to Gemini.
  */
 
-import { anthropic } from "@ai-sdk/anthropic";
 import { google } from "@ai-sdk/google";
+import { openai } from "@ai-sdk/openai";
 
 export const models = {
-  // ── Analysis models ──────────────────────────────────────────────────────
+  // ── Analysis (Gemini) ─────────────────────────────────────────────────────
+  /**
+   * Gemini Flash — used for ALL analysis phases:
+   *   - Video: native YouTube URL visual+audio understanding (no transcript needed)
+   *   - Image: inline base64 vision
+   *   - Article/Text: deep reasoning
+   *   - Brief generation & refinement
+   */
+  gemini: google("gemini-3.6-flash"),
 
-  /** Deep analysis, creative briefs, refinement, article analysis */
-  claude: anthropic("claude-sonnet-5"),
+  // ── Recreation (OpenAI) ───────────────────────────────────────────────────
 
-  /** Native video + image understanding. Supports YouTube URLs directly. */
-  geminiPro: google("gemini-3.5-flash"),
-
-  /** Fast general-purpose tasks */
-  geminiFlash: google("gemini-3.5-flash"),
+  /** Used for creating text documents from briefs */
+  gpt4o: openai("gpt-4o"),
 } as const;
 
 /**
- * Returns the Imagen 3 model via Vertex AI.
- * Lazy getter — only initialises when called so missing Vertex env vars
- * don't crash the build or unrelated routes.
- *
- * Requires: GOOGLE_VERTEX_PROJECT and GOOGLE_VERTEX_LOCATION env vars.
+ * Returns the gpt-image-1 image generation model.
  */
-export function getImagen3Model() {
-  const { vertex } = require("@ai-sdk/google-vertex");
-  return vertex.image("imagen-3.0-generate-002");
+export function getOpenAIImageModel() {
+  return openai.image("dall-e-3");
 }
 
-// Veo (video generation) — PENDING public API access
-// export function getVeoModel() {
-//   const { vertex } = require("@ai-sdk/google-vertex");
-//   return vertex.video("veo-2");
-// }
+/**
+ * Returns the OpenAI video model (Sora).
+ */
+export function getOpenAIVideoModel() {
+  return openai("sora-video");
+}

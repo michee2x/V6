@@ -1,9 +1,10 @@
 /**
  * lib/prompts.ts
  *
- * All Claude prompt templates for v6.
+ * All Gemini prompt templates for v6.
  * Every AI behaviour in the app flows through this file — tune here, not in routes.
  */
+
 
 import type { ContentType } from "../session-store";
 
@@ -205,6 +206,9 @@ export function refinePrompt(
 
 CRITICAL: The brief MUST stay in clean plain text format. No Markdown. No asterisks, no bold (**), no bullet dashes, no hashtag headers. Use the same UPPERCASE LABEL: value format as the original brief.
 
+OPTIONAL INTERACTION: If the user's instruction is ambiguous, or you want to give them choices for the next iteration, you can append ONE JSON question card at the very end of your response using this exact syntax:
+[[QUESTION: {"title": "Question Title", "description": "Optional description", "options": ["Option 1", "Option 2"]}]]
+
 Current brief:
 ---
 ${brief}
@@ -212,5 +216,5 @@ ${brief}
 
 User instruction: "${instruction}"
 
-Return the full updated brief. Do not add commentary — just the brief.`;
+Return the full updated brief (and optionally the question card). Do not add commentary.`;
 }

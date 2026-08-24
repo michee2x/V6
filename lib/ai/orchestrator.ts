@@ -2,17 +2,19 @@
  * lib/ai/orchestrator.ts
  *
  * Central AI orchestrator for v6.
- * Routes tasks to the best model for the job:
+ * ALL analysis is routed through Gemini Flash.
+ * OpenAI handles recreation only (image gen, document gen, video gen).
  *
- *   VIDEO analysis  → Gemini 1.5 Pro (native YouTube URL visual+audio analysis)
- *   IMAGE analysis  → Claude 3.5 Sonnet (best vision quality for stills)
- *   ARTICLE/TEXT    → Claude 3.5 Sonnet (deep reasoning, best writing)
- *   IMAGE generation→ Imagen 3 via Vertex AI
- *   VIDEO generation→ PENDING (Veo — not yet in public API)
+ * Analysis routing:
+ *   YouTube URL  → Gemini Flash with native fileData URL (visual + audio frames)
+ *   Inline video → Gemini Flash with base64 buffer (uploaded files, TikTok downloads)
+ *   Image        → Gemini Flash with inline base64 vision
+ *   Article/Text → Gemini Flash text reasoning
+ *   Brief/Refine → Gemini Flash text (no media)
  */
 
-import { streamText, generateImage, LanguageModel } from "ai";
-import { models, getImagen3Model } from "./providers";
+import { streamText, generateText, experimental_generateVideo } from "ai";
+import { models, getOpenAIVideoModel } from "./providers";
 import { SYSTEM_PROMPT } from "./prompts";
 import type { ImageData } from "../content-fetcher";
 import type { ContentType } from "../session-store";
@@ -41,45 +43,60 @@ interface AnalyzeOptions {
   contentType?: ContentType;
   /** For image analysis: base64 encoded image data */
   image?: ImageData;
-  /** For video analysis: public YouTube video URL for Gemini native processing */
-  youtubeUrl?: string;
+  /** For YouTube: pass the public URL directly — Gemini reads frames natively */
+  videoUrl?: string;
+  /** For uploaded or downloaded videos: raw base64 bytes (no data URI prefix) */
+  videoBase64?: string;
+  /** MIME type of the inline video e.g. "video/mp4" */
+  videoMimeType?: string;
 }
 
 /**
- * Creates a streaming SSE response from the best model for the given content type.
+ * Creates a streaming SSE response using Gemini Flash for all content types.
  *
  * Routing:
- *  - YouTube videos  → Gemini 1.5 Pro with native video URL (visual + audio + speech)
- *  - Image stills    → Claude 3.5 Sonnet with base64 vision
- *  - Articles/text   → Claude 3.5 Sonnet
+ *  - YouTube URL  → fileData native URL (Gemini watches video frame-by-frame)
+ *  - Inline video → base64 Buffer (uploaded files & TikTok downloads)
+ *  - Image        → inline base64 vision
+ *  - Text/article → plain text prompt
  */
 export function createAnalysisStream({
   userPrompt,
   contentType,
   image,
-  youtubeUrl,
+  videoUrl,
+  videoBase64,
+  videoMimeType,
 }: AnalyzeOptions): ReadableStream<Uint8Array> {
   return new ReadableStream({
     async start(controller) {
       try {
-        let selectedModel: LanguageModel;
         let content: any[];
 
-        // ── Route: YouTube video → Gemini native video understanding ──
-        if (youtubeUrl && contentType === "video") {
-          selectedModel = models.geminiPro;
+        // ── Route 1: YouTube (or any direct video URL) → Gemini native URL ──
+        if (videoUrl && contentType === "video") {
           content = [
             { type: "text", text: userPrompt },
             {
               type: "file",
-              data: youtubeUrl,  // must be a plain string URL, not an object
+              data: videoUrl,         // plain URL string — Gemini handles it natively
               mediaType: "video/mp4",
             },
           ];
         }
-        // ── Route: Image → Claude vision ──────────────────────────────
+        // ── Route 2: Inline video bytes (uploaded file or TikTok download) ──
+        else if (videoBase64 && videoMimeType) {
+          content = [
+            { type: "text", text: userPrompt },
+            {
+              type: "file",
+              data: Buffer.from(videoBase64, "base64"),
+              mediaType: videoMimeType as any,
+            },
+          ];
+        }
+        // ── Route 3: Image → Gemini inline vision ────────────────────────────
         else if (image) {
-          selectedModel = models.claude;
           let safeMediaType = image.mimeType || "image/jpeg";
           const validTypes = ["image/jpeg", "image/png", "image/gif", "image/webp"];
           if (!validTypes.includes(safeMediaType)) safeMediaType = "image/jpeg";
@@ -91,34 +108,17 @@ export function createAnalysisStream({
             { type: "text", text: userPrompt },
           ];
         }
-        // ── Route: Text/Article → Claude reasoning ────────────────────
+        // ── Route 4: Text / Article ───────────────────────────────────────────
         else {
-          selectedModel = models.claude;
           content = [{ type: "text", text: userPrompt }];
         }
 
-        let result;
-        try {
-          result = await streamText({
-            model: selectedModel,
-            system: SYSTEM_PROMPT,
-            messages: [{ role: "user", content }],
-            maxOutputTokens: 2048,
-          });
-        } catch (primaryErr) {
-          // If native YouTube/Gemini call fails (quota, unsupported), fall back to
-          // Claude with the transcript text already embedded in userPrompt
-          if (youtubeUrl && contentType === "video") {
-            result = await streamText({
-              model: models.claude,
-              system: SYSTEM_PROMPT,
-              messages: [{ role: "user", content: [{ type: "text", text: userPrompt }] }],
-              maxOutputTokens: 2048,
-            });
-          } else {
-            throw primaryErr;
-          }
-        }
+        const result = await streamText({
+          model: models.gemini,
+          system: SYSTEM_PROMPT,
+          messages: [{ role: "user", content }],
+          maxOutputTokens: 2048,
+        });
 
         let fullText = "";
         for await (const textPart of result.textStream) {
@@ -151,7 +151,7 @@ export interface GeneratedImage {
 }
 
 /**
- * Generates an image using Google Imagen 3 via Vertex AI.
+ * Generates an image using OpenAI gpt-image-1.
  * Returns an array of generated images as base64 strings.
  */
 export async function generateImageFromBrief(
@@ -159,15 +159,73 @@ export async function generateImageFromBrief(
 ): Promise<GeneratedImage[]> {
   const { prompt, aspectRatio = "1:1", numberOfImages = 1 } = options;
 
-  const result = await generateImage({
-    model: getImagen3Model(),
-    prompt,
-    aspectRatio,
-    n: numberOfImages,
+  const sizeMap: Record<string, string> = {
+    "1:1":  "1024x1024",
+    "16:9": "1536x1024",
+    "9:16": "1024x1536",
+    "4:3":  "1024x1024",
+    "3:4":  "1024x1024",
+  };
+  const size = sizeMap[aspectRatio] ?? "1024x1024";
+
+  const response = await fetch("https://api.openai.com/v1/images/generations", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "Authorization": `Bearer ${process.env.OPENAI_API_KEY}`,
+    },
+    body: JSON.stringify({
+      model: "gpt-image-1",
+      prompt,
+      n: numberOfImages,
+      size,
+      output_format: "png",
+    }),
   });
 
-  return result.images.map((img) => ({
-    base64: img.base64,
-    mimeType: (img as { base64: string; mimeType?: string }).mimeType ?? "image/png",
+  if (!response.ok) {
+    const err = await response.json().catch(() => ({}));
+    const msg = (err as any)?.error?.message ?? "Image generation failed.";
+    console.error("[generate/image] OpenAI error:", msg);
+    throw new Error(msg);
+  }
+
+  const data = await response.json() as { data: { b64_json: string }[] };
+  return data.data.map((img) => ({
+    base64: img.b64_json,
+    mimeType: "image/png",
   }));
+}
+
+// ─── Document generation ──────────────────────────────────────────────────────
+
+export async function generateTextDocumentFromBrief(
+  prompt: string,
+  docType: string = "document"
+): Promise<string> {
+  const result = await generateText({
+    model: models.gpt4o,
+    system: `You are an expert creative director and writer. Turn the provided creative brief into a detailed and polished ${docType}. Output only the final document, beautifully formatted in Markdown.`,
+    prompt,
+  });
+  return result.text;
+}
+
+// ─── Video generation ─────────────────────────────────────────────────────────
+
+export interface GenerateVideoOptions {
+  prompt: string;
+}
+
+export async function generateVideoFromBrief(
+  options: GenerateVideoOptions
+) {
+  const { prompt } = options;
+
+  const result = await experimental_generateVideo({
+    model: getOpenAIVideoModel() as any,
+    prompt,
+  });
+
+  return result;
 }

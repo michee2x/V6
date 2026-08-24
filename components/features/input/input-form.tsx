@@ -4,8 +4,9 @@ import * as React from "react";
 import { useRouter } from "next/navigation";
 import {
   Link2, FileImage, Video, Newspaper, X, ZoomIn,
-  FileText, Plus, Target,
+  FileText, Plus, Target, Lock,
 } from "lucide-react";
+import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
@@ -436,6 +437,13 @@ export function InputForm() {
             "Understand this →"
           )}
         </Button>
+        <p className="text-center text-xs text-muted-foreground/80 mt-1 flex items-center justify-center gap-1.5">
+          <Lock className="w-3 h-3" />
+          Links and uploads are processed in real time and never stored.{" "}
+          <Link href="/policy" className="underline underline-offset-2 hover:text-foreground">
+            Privacy Policy
+          </Link>
+        </p>
       </form>
 
       {/* ── Lightbox — image or video ───────────────────────────────────────── */}

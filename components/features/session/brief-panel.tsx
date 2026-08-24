@@ -4,7 +4,7 @@ import * as React from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import {
-  Copy, Download, Wand2, CheckCheck, AlertCircle, RefreshCw, ArrowLeft, Settings2, ArrowUp, Paperclip, X
+  Copy, Download, Wand2, CheckCheck, AlertCircle, RefreshCw, ArrowLeft, Settings2, ArrowUp, Paperclip, X, Loader2, Image as ImageIcon, Video, FileText, Undo2, Redo2
 } from "lucide-react";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -13,18 +13,25 @@ import { toast } from "sonner";
 import { useSSEStream } from "@/hooks/use-sse-stream";
 import { cn } from "@/lib/utils";
 import ReactMarkdown from "react-markdown";
+import { ChatThread, Message } from "./chat-thread";
 
 interface BriefPanelProps {
   sessionId: string;
   contentType: string;
 }
 
+// Only real models backed by our OpenAI integration
 const modelOptions: Record<string, string[]> = {
-  image:   ["Flux Pro", "DALL·E 3"],
-  video:   ["Kling 2.0", "Runway Gen-4"],
-  article: [],
-  auto:    ["Flux Pro", "DALL·E 3"],
+  image:   ["GPT Image 1"],
+  video:   ["ChatGPT Video"],
+  article: ["GPT-4o"],
+  auto:    ["GPT Image 1"],
 };
+
+type GenerationResult =
+  | { type: "image"; images: { base64: string; mimeType: string }[] }
+  | { type: "video"; video: { url?: string; base64?: string; mimeType?: string } }
+  | { type: "document"; document: string };
 
 export function BriefPanel({ sessionId, contentType }: BriefPanelProps) {
   const searchParams = useSearchParams();
@@ -36,6 +43,14 @@ export function BriefPanel({ sessionId, contentType }: BriefPanelProps) {
   const [refinement, setRefinement] = React.useState("");
   const [refinementImage, setRefinementImage] = React.useState<{ mimeType: string; base64: string } | null>(null);
   const [hastriggered, setHasTriggered] = React.useState(false);
+  const [isRendering, setIsRendering] = React.useState(false);
+  const [generationResult, setGenerationResult] = React.useState<GenerationResult | null>(null);
+  
+  const [chatMessages, setChatMessages] = React.useState<Message[]>([]);
+  const [history, setHistory] = React.useState<string[]>([]);
+  const [historyIndex, setHistoryIndex] = React.useState(-1);
+  const [changedParagraphs, setChangedParagraphs] = React.useState<Set<number>>(new Set());
+
   const fileInputRef = React.useRef<HTMLInputElement>(null);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -48,7 +63,7 @@ export function BriefPanel({ sessionId, contentType }: BriefPanelProps) {
     const reader = new FileReader();
     reader.onload = (event) => {
       const base64Url = event.target?.result as string;
-      const base64Data = base64Url.split(',')[1];
+      const base64Data = base64Url.split(",")[1];
       setRefinementImage({ mimeType: file.type, base64: base64Data });
     };
     reader.readAsDataURL(file);
@@ -64,9 +79,87 @@ export function BriefPanel({ sessionId, contentType }: BriefPanelProps) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sessionId]);
 
-  const liveBrief  = refineStream.text || briefStream.text;
+  // Undo/Redo keyboard shortcuts
+  React.useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.ctrlKey || e.metaKey) {
+        if (e.key === 'z' && !e.shiftKey) {
+          e.preventDefault();
+          setHistoryIndex(prev => Math.max(0, prev - 1));
+        } else if ((e.key === 'z' && e.shiftKey) || e.key === 'y') {
+          e.preventDefault();
+          setHistoryIndex(prev => Math.min(history.length - 1, prev + 1));
+        }
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [history.length]);
+
+  // Initial brief load -> history
+  React.useEffect(() => {
+    if (briefStream.isDone && briefStream.text && history.length === 0) {
+      setHistory([briefStream.text]);
+      setHistoryIndex(0);
+      setChatMessages([{
+        id: "init", role: "assistant", content: "I've drafted an initial creative brief based on your insights. How would you like to refine it?"
+      }]);
+    }
+  }, [briefStream.isDone, briefStream.text, history.length]);
+
+  // Refine stream done -> diff & history
+  React.useEffect(() => {
+    if (refineStream.isDone && refineStream.text) {
+      const newText = refineStream.text;
+      
+      setHistory(prev => {
+        const currentText = prev[historyIndex] || "";
+        const oldLines = currentText.split("\n\n");
+        const newLines = newText.split("\n\n");
+        const changed = new Set<number>();
+        newLines.forEach((line, i) => {
+          if (line !== oldLines[i]) changed.add(i);
+        });
+        setChangedParagraphs(changed);
+        setTimeout(() => setChangedParagraphs(new Set()), 3000);
+
+        const newStack = prev.slice(0, historyIndex + 1);
+        newStack.push(newText);
+        if (newStack.length > 20) newStack.shift();
+        setHistoryIndex(newStack.length - 1);
+        return newStack;
+      });
+
+      const match = newText.match(/\[\[QUESTION:\s*(\{.*?\})\s*\]\]/);
+      const aiReply = match ? match[0] : "I've updated the brief. What else should we change?";
+
+      setChatMessages(prev => [
+        ...prev,
+        { id: Date.now().toString(), role: "assistant", content: aiReply }
+      ]);
+    }
+  }, [refineStream.isDone, refineStream.text]);
+
+  let rawBrief = "";
+  if (historyIndex >= 0 && historyIndex < history.length) {
+    rawBrief = history[historyIndex];
+  } else if (briefStream.text) {
+    rawBrief = briefStream.text;
+  }
+  if (refineStream.isStreaming) {
+    rawBrief = refineStream.text;
+  }
+
+  const liveBrief = rawBrief.replace(/\[\[QUESTION:\s*(\{.*?\})\s*\]\]/g, "").trim();
   const isRefining = refineStream.isStreaming;
   const models     = modelOptions[contentType] ?? modelOptions.auto;
+
+  // Auto-select the only model when there is just one option
+  React.useEffect(() => {
+    if (models.length === 1 && !selectedModel) {
+      setSelectedModel(models[0]);
+    }
+  }, [models, selectedModel]);
 
   // Insights back link — preserve search params
   const params       = searchParams.toString() ? `?${searchParams.toString()}` : "";
@@ -80,13 +173,16 @@ export function BriefPanel({ sessionId, contentType }: BriefPanelProps) {
     setTimeout(() => setCopied(false), 2000);
   };
 
-  const submitRefinement = () => {
-    if (!refinement.trim() || isRefining) return;
-    const instruction = refinement.trim();
+  const submitRefinement = (customInstruction?: string) => {
+    const instruction = typeof customInstruction === 'string' ? customInstruction.trim() : refinement.trim();
+    if (!instruction || isRefining) return;
+    
     setRefinement("");
+    setChatMessages(prev => [...prev, { id: Date.now().toString(), role: "user", content: instruction }]);
+    
     refineStream.reset();
     refineStream.trigger(`/api/v1/sessions/${sessionId}/refine`, {
-      brief: liveBrief,
+      brief: rawBrief,
       instruction,
       image: refinementImage,
     });
@@ -97,6 +193,43 @@ export function BriefPanel({ sessionId, contentType }: BriefPanelProps) {
     if (e.key === "Enter") {
       e.preventDefault();
       submitRefinement();
+    }
+  };
+
+  const handleRenderInApp = async () => {
+    if (!liveBrief || isRendering) return;
+
+    setIsRendering(true);
+    setGenerationResult(null);
+
+    try {
+      // Route to the correct endpoint based on content type
+      const effectiveType = contentType === "auto" ? "image" : contentType;
+      let endpoint = "/api/v1/generate/image";
+      if (effectiveType === "video") endpoint = "/api/v1/generate/video";
+      if (effectiveType === "article") endpoint = "/api/v1/generate/document";
+
+      const res = await fetch(endpoint, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ sessionId }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok || !data.success) {
+        throw new Error(data.error?.message ?? "Generation failed.");
+      }
+
+      // Navigate to the output tab
+      const queryParams = searchParams.toString() ? `?${searchParams.toString()}` : "";
+      window.location.href = `/session/${sessionId}/output${queryParams}`;
+
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Generation failed.";
+      toast.error(message);
+    } finally {
+      setIsRendering(false);
     }
   };
 
@@ -147,6 +280,26 @@ export function BriefPanel({ sessionId, contentType }: BriefPanelProps) {
         <h1 className="text-h3 text-foreground">Creative Brief</h1>
         <div className="ml-auto flex items-center gap-2">
           <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setHistoryIndex(i => Math.max(0, i - 1))}
+            disabled={historyIndex <= 0}
+            title="Undo (Ctrl+Z)"
+          >
+            <Undo2 className="w-4 h-4" />
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setHistoryIndex(i => Math.min(history.length - 1, i + 1))}
+            disabled={historyIndex >= history.length - 1}
+            title="Redo (Ctrl+Shift+Z)"
+          >
+            <Redo2 className="w-4 h-4" />
+          </Button>
+          <div className="w-px h-4 bg-border mx-1" />
+          
+          <Button
             id="copy-brief-btn"
             variant="ghost"
             size="sm"
@@ -162,16 +315,16 @@ export function BriefPanel({ sessionId, contentType }: BriefPanelProps) {
           </Button>
 
           <Popover>
-            <PopoverTrigger 
-              className={cn(buttonVariants({ variant: "ghost", size: "sm" }))} 
-              aria-label="Actions" 
+            <PopoverTrigger
+              className={cn(buttonVariants({ variant: "ghost", size: "sm" }))}
+              aria-label="Actions"
               disabled={!liveBrief}
             >
               <Settings2 className="w-4 h-4" />
             </PopoverTrigger>
             <PopoverContent align="end" className="w-72 p-4 flex flex-col gap-3 border-border shadow-xl">
               <p className="text-label font-medium text-foreground">Generation Options</p>
-              
+
               {models.length > 0 && (
                 <div className="flex flex-col gap-1.5 mt-1">
                   <p className="text-caption text-muted-foreground">Select model:</p>
@@ -200,11 +353,20 @@ export function BriefPanel({ sessionId, contentType }: BriefPanelProps) {
                 <Button
                   id="render-in-app-btn"
                   className="w-full"
-                  disabled={(!selectedModel && models.length > 0) || briefStream.isStreaming}
-                  onClick={() => toast.info("In-app rendering requires an account — coming soon.")}
+                  disabled={!liveBrief || isRendering}
+                  onClick={handleRenderInApp}
                 >
-                  <Wand2 className="w-4 h-4 mr-2" />
-                  Render in-app
+                  {isRendering ? (
+                    <>
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      Generating...
+                    </>
+                  ) : (
+                    <>
+                      <Wand2 className="w-4 h-4 mr-2" />
+                      Render in-app
+                    </>
+                  )}
                 </Button>
                 <Button
                   id="export-prompt-btn"
@@ -234,82 +396,173 @@ export function BriefPanel({ sessionId, contentType }: BriefPanelProps) {
             <Skeleton className="h-4 w-2/3" />
           </div>
         ) : (
-          <div className="prose prose-sm dark:prose-invert max-w-none text-body text-foreground leading-relaxed font-sans">
-            <ReactMarkdown>{liveBrief + (briefStream.isStreaming || isRefining ? " ▋" : "")}</ReactMarkdown>
+          <div className="prose prose-sm dark:prose-invert max-w-none text-body text-foreground leading-relaxed font-sans flex flex-col gap-4">
+            {liveBrief.split("\n\n").map((para, idx) => (
+              <div 
+                key={idx}
+                className={cn(
+                  "transition-colors duration-1000 p-2 -mx-2 rounded-md border-l-2 border-transparent",
+                  changedParagraphs.has(idx) && "bg-amber-50 border-amber-300 ring-1 ring-amber-100 dark:bg-amber-950/30 dark:border-amber-700"
+                )}
+              >
+                <ReactMarkdown>{para + (idx === liveBrief.split("\n\n").length - 1 && (briefStream.isStreaming || isRefining) ? " ▋" : "")}</ReactMarkdown>
+              </div>
+            ))}
           </div>
         )}
       </div>
 
-      {/* Refinement input (Floating Pill) */}
-      <div className="fixed bottom-4 left-4 right-4 md:left-1/2 md:-translate-x-1/2 md:w-[calc(100%-2rem)] md:max-w-2xl bg-muted/90 backdrop-blur-xl border border-border/80 shadow-2xl rounded-full p-1.5 flex items-center gap-2 z-50 focus-within:ring-2 focus-within:ring-primary/50 transition-all">
-        {isRefining ? (
-          <div className="pl-3 py-2 flex items-center justify-center shrink-0">
-            <span className="animate-spin h-4 w-4 border-2 border-muted-foreground border-t-transparent rounded-full inline-block" />
-          </div>
-        ) : (
-          <div className="flex items-center shrink-0">
-            <Button
-              type="button"
-              variant="ghost"
-              size="icon"
-              className="rounded-full h-9 w-9 text-muted-foreground hover:text-foreground shrink-0 ml-1"
-              onClick={() => fileInputRef.current?.click()}
-              aria-label="Upload image"
-            >
-              <Paperclip className="h-4 w-4" />
-            </Button>
-            <input
-              type="file"
-              ref={fileInputRef}
-              onChange={handleFileChange}
-              accept="image/*"
-              className="hidden"
-            />
-            {refinementImage && (
-              <div className="relative ml-1 shrink-0">
-                <img
-                  src={`data:${refinementImage.mimeType};base64,${refinementImage.base64}`}
-                  alt="Attachment"
-                  className="h-8 w-8 rounded-md object-cover border border-border"
-                />
-                <button
-                  onClick={() => setRefinementImage(null)}
-                  className="absolute -top-2 -right-2 bg-destructive text-destructive-foreground rounded-full h-4 w-4 flex items-center justify-center shadow-sm hover:bg-destructive/90"
-                  aria-label="Remove image"
-                >
-                  <X className="h-3 w-3" />
-                </button>
+      {/* Generation Result Overlay */}
+      {generationResult && (
+        <div className="fixed inset-0 z-50 bg-background/80 backdrop-blur-sm flex items-center justify-center p-6">
+          <div className="relative bg-background border border-border rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] flex flex-col overflow-hidden">
+            {/* Header */}
+            <div className="flex items-center justify-between px-6 py-4 border-b border-border">
+              <div className="flex items-center gap-2">
+                {generationResult.type === "image" && <ImageIcon className="w-4 h-4 text-primary" />}
+                {generationResult.type === "video" && <Video className="w-4 h-4 text-primary" />}
+                {generationResult.type === "document" && <FileText className="w-4 h-4 text-primary" />}
+                <p className="text-label font-medium text-foreground capitalize">
+                  Generated {generationResult.type}
+                </p>
               </div>
-            )}
+              <button
+                onClick={() => setGenerationResult(null)}
+                className="text-muted-foreground hover:text-foreground transition-colors"
+                aria-label="Close"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            {/* Content */}
+            <div className="flex-1 overflow-y-auto p-6">
+              {generationResult.type === "image" && (
+                <div className="flex flex-col gap-4">
+                  {generationResult.images.map((img, i) => (
+                    <img
+                      key={i}
+                      src={`data:${img.mimeType};base64,${img.base64}`}
+                      alt={`Generated image ${i + 1}`}
+                      className="w-full rounded-xl border border-border object-contain"
+                    />
+                  ))}
+                  <a
+                    href={`data:${generationResult.images[0].mimeType};base64,${generationResult.images[0].base64}`}
+                    download="generated-image.png"
+                    className={cn(buttonVariants({ variant: "outline" }), "w-full mt-2")}
+                  >
+                    <Download className="w-4 h-4 mr-2" />
+                    Download image
+                  </a>
+                </div>
+              )}
+              {generationResult.type === "video" && (
+                <div className="flex flex-col gap-4">
+                  {generationResult.video.url ? (
+                    <video
+                      src={generationResult.video.url}
+                      controls
+                      className="w-full rounded-xl border border-border"
+                    />
+                  ) : generationResult.video.base64 ? (
+                    <video
+                      src={`data:${generationResult.video.mimeType ?? "video/mp4"};base64,${generationResult.video.base64}`}
+                      controls
+                      className="w-full rounded-xl border border-border"
+                    />
+                  ) : (
+                    <p className="text-body text-muted-foreground">Video generated. Check the server response.</p>
+                  )}
+                </div>
+              )}
+              {generationResult.type === "document" && (
+                <div className="prose prose-sm dark:prose-invert max-w-none text-body text-foreground leading-relaxed font-sans">
+                  <ReactMarkdown>{generationResult.document}</ReactMarkdown>
+                </div>
+              )}
+            </div>
           </div>
-        )}
-        <input
-          id="brief-refinement-input"
-          type="text"
-          value={refinement}
-          onChange={(e) => setRefinement(e.target.value)}
-          onKeyDown={handleRefinement}
-          placeholder='Message AI to refine (e.g. "make it warmer")...'
-          className="flex-1 bg-transparent text-body text-foreground placeholder:text-muted-foreground outline-none px-2 py-2.5"
-          disabled={isRefining || briefStream.isStreaming}
+        </div>
+      )}
+
+      {/* Refinement input (Expandable Chat) */}
+      <div className="fixed bottom-4 left-4 right-4 md:left-1/2 md:-translate-x-1/2 md:w-[calc(100%-2rem)] md:max-w-2xl bg-background/95 backdrop-blur-xl border border-border shadow-2xl rounded-2xl flex flex-col overflow-hidden z-40 transition-all">
+        <ChatThread 
+          messages={chatMessages} 
+          onSelectOption={submitRefinement} 
+          isStreaming={isRefining} 
         />
-        <Button 
-          type="button"
-          size="icon"
-          className="rounded-full shrink-0 h-9 w-9 bg-foreground text-background hover:bg-foreground/90 transition-colors disabled:opacity-30 disabled:bg-muted-foreground"
-          onClick={submitRefinement}
-          disabled={!refinement.trim() || isRefining || briefStream.isStreaming}
-          aria-label="Send message"
-        >
-          <ArrowUp className="h-4 w-4" />
-        </Button>
-        {refineStream.error && (
-          <div className="absolute -top-12 left-1/2 -translate-x-1/2 w-max max-w-full px-4">
-            <p className="text-caption text-destructive bg-destructive/10 px-3 py-1.5 rounded-full backdrop-blur-md border border-destructive/20 shadow-sm truncate">
-              {refineStream.error}
-            </p>
-          </div>
-        )}
+        
+        <div className="p-1.5 flex items-center gap-2 focus-within:bg-muted/30 transition-colors bg-muted/50">
+          {isRefining ? (
+            <div className="pl-3 py-2 flex items-center justify-center shrink-0">
+              <span className="animate-spin h-4 w-4 border-2 border-muted-foreground border-t-transparent rounded-full inline-block" />
+            </div>
+          ) : (
+            <div className="flex items-center shrink-0">
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                className="rounded-full h-9 w-9 text-muted-foreground hover:text-foreground shrink-0 ml-1"
+                onClick={() => fileInputRef.current?.click()}
+                aria-label="Upload image"
+              >
+                <Paperclip className="h-4 w-4" />
+              </Button>
+              <input
+                type="file"
+                ref={fileInputRef}
+                onChange={handleFileChange}
+                accept="image/*"
+                className="hidden"
+              />
+              {refinementImage && (
+                <div className="relative ml-1 shrink-0">
+                  <img
+                    src={`data:${refinementImage.mimeType};base64,${refinementImage.base64}`}
+                    alt="Attachment"
+                    className="h-8 w-8 rounded-md object-cover border border-border"
+                  />
+                  <button
+                    onClick={() => setRefinementImage(null)}
+                    className="absolute -top-2 -right-2 bg-destructive text-destructive-foreground rounded-full h-4 w-4 flex items-center justify-center shadow-sm hover:bg-destructive/90"
+                    aria-label="Remove image"
+                  >
+                    <X className="h-3 w-3" />
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
+          <input
+            id="brief-refinement-input"
+            type="text"
+            value={refinement}
+            onChange={(e) => setRefinement(e.target.value)}
+            onKeyDown={handleRefinement}
+            placeholder='Message AI to refine (e.g. "make it warmer")...'
+            className="flex-1 bg-transparent text-body text-foreground placeholder:text-muted-foreground outline-none px-2 py-2.5"
+            disabled={isRefining || briefStream.isStreaming}
+          />
+          <Button
+            type="button"
+            size="icon"
+            className="rounded-full shrink-0 h-9 w-9 bg-foreground text-background hover:bg-foreground/90 transition-colors disabled:opacity-30 disabled:bg-muted-foreground"
+            onClick={() => submitRefinement()}
+            disabled={!refinement.trim() || isRefining || briefStream.isStreaming}
+            aria-label="Send message"
+          >
+            <ArrowUp className="h-4 w-4" />
+          </Button>
+          {refineStream.error && (
+            <div className="absolute -top-12 left-1/2 -translate-x-1/2 w-max max-w-full px-4">
+              <p className="text-caption text-destructive bg-destructive/10 px-3 py-1.5 rounded-full backdrop-blur-md border border-destructive/20 shadow-sm truncate">
+                {refineStream.error}
+              </p>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );

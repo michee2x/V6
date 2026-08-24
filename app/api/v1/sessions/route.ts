@@ -60,7 +60,11 @@ export async function POST(req: NextRequest) {
         id: sessionId,
         url: pseudoUrl,
         contentType: resolvedType,
-        fetchedContent: resolvedType === "image" ? `IMAGE_BASE64:${dataUrl}` : dataUrl,
+        fetchedContent: resolvedType === "image"
+        ? `IMAGE_BASE64:${dataUrl}`
+        : resolvedType === "video"
+        ? `VIDEO_BASE64:${dataUrl}`
+        : dataUrl,
         focusHint,
         userId,
       });

@@ -1,32 +1,29 @@
 /**
- * app/api/v1/generate/image/route.ts
- * POST — generates an image from a creative brief using Imagen 3
+ * app/api/v1/generate/document/route.ts
+ * POST — text-based document generation from a creative brief using OpenAI
  *
  * Body: {
- *   sessionId: string        — the session whose brief to use
- *   customPrompt?: string    — optional override prompt
- *   aspectRatio?: "1:1" | "16:9" | "9:16" | "4:3" | "3:4"
+ *   sessionId: string
+ *   customPrompt?: string
+ *   docType?: string (e.g. "blog", "script", "summary")
  * }
- *
- * Returns: { success: true, data: { images: Array<{ base64: string, mimeType: string }> } }
  */
 
 import { NextRequest, NextResponse } from "next/server";
 import { getSession, saveGeneration } from "@/lib/session-store";
-import { generateImageFromBrief } from "@/lib/ai/orchestrator";
+import { generateTextDocumentFromBrief } from "@/lib/ai/orchestrator";
 
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const { sessionId, customPrompt, aspectRatio } = body as {
+    const { sessionId, customPrompt, docType = "document" } = body as {
       sessionId?: string;
       customPrompt?: string;
-      aspectRatio?: "1:1" | "16:9" | "9:16" | "4:3" | "3:4";
+      docType?: string;
     };
 
     let prompt = customPrompt?.trim() ?? "";
 
-    // If a sessionId is provided, pull the brief from the session as the base prompt
     if (sessionId && !prompt) {
       const session = await getSession(sessionId);
       if (!session) {
@@ -60,42 +57,36 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const images = await generateImageFromBrief({
-      prompt,
-      aspectRatio: aspectRatio ?? "1:1",
-      numberOfImages: 1,
-    });
+    const documentResult = await generateTextDocumentFromBrief(prompt, docType);
 
     let savedGenerationId: string | undefined;
 
-    if (sessionId && images.length > 0) {
-      // Free plan = 24hr expiry, Paid = null (forever)
+    if (sessionId && documentResult) {
       const isPaidPlan = process.env.NEXT_PUBLIC_PAID_PLAN === "true";
       const expiresAt = isPaidPlan ? null : new Date(Date.now() + 24 * 60 * 60 * 1000);
       
       try {
         const saved = await saveGeneration({
           sessionId,
-          type: "image",
-          model: "gpt-image-1",
-          data: images[0].base64,
-          mimeType: images[0].mimeType,
+          type: "document",
+          model: "GPT-4o",
+          data: documentResult,
+          mimeType: "text/markdown",
           expiresAt,
         });
         savedGenerationId = saved.id;
       } catch (err) {
         console.error("Failed to save generation to DB:", err);
-        // We still return the image even if saving failed
       }
     }
 
     return NextResponse.json({
       success: true,
-      data: { images, generationId: savedGenerationId },
+      data: { document: documentResult, generationId: savedGenerationId },
     });
   } catch (err) {
-    const message = err instanceof Error ? err.message : "Image generation failed.";
-    console.error("[generate/image]", message);
+    const message = err instanceof Error ? err.message : "Document generation failed.";
+    console.error("[generate/document]", message);
     return NextResponse.json(
       { success: false, error: { code: "SERVER_ERROR", message } },
       { status: 500 }

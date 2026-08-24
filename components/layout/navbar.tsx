@@ -3,6 +3,7 @@ import Image from "next/image";
 import { createClient } from "@/utils/supabase/server";
 import { logout } from "@/app/login/actions";
 import { Button } from "@/components/ui/button";
+import { ContactModal } from "@/components/features/contact/contact-modal";
 
 export async function Navbar() {
   const supabase = await createClient();
@@ -20,7 +21,8 @@ export async function Navbar() {
             Recrea<span className="text-primary">8</span>
           </span>
         </Link>
-        <div className="flex items-center space-x-4">
+        <div className="flex items-center space-x-2 sm:space-x-4">
+          <ContactModal />
           {user ? (
             <>
               <Link href="/history" className="text-sm font-medium text-muted-foreground hover:text-foreground">

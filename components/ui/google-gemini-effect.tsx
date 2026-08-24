@@ -20,7 +20,7 @@ export const GoogleGeminiEffect = ({
   const duration = isMobile ? 6 : 3;
 
   return (
-    <div className={cn("absolute inset-0 w-full h-full flex items-center justify-center overflow-hidden pointer-events-none -z-10", className)}>
+    <div className={cn("absolute top-0 left-0 w-full h-[100vh] flex items-center justify-center overflow-hidden pointer-events-none -z-10", className)}>
       <svg
         width="1440"
         height="890"
