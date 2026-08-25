@@ -8,14 +8,16 @@
  *   - Gemini Flash  → ALL analysis: video (native YouTube URL), image, article, brief, refinement
  *   - GPT-4o        → Text document recreation from briefs
  *   - gpt-image-1   → Image generation from briefs
- *   - Sora          → Video generation (future)
+ *   - Veo 3.1 Fast  → Video generation via Vertex AI (2–3 sec clips)
  *
- * Claude is NOT used — all analysis has moved to Gemini.
+ * Vertex AI auth: credentials are read from GOOGLE_APPLICATION_CREDENTIALS_JSON
+ * (a single-line JSON string in env vars) rather than a physical file.
+ * This works locally (.env.local) and on Vercel (dashboard env vars).
  */
 
 import { google } from "@ai-sdk/google";
 import { openai } from "@ai-sdk/openai";
-import { vertex } from "@ai-sdk/google-vertex";
+import { createVertex } from "@ai-sdk/google-vertex";
 
 export const models = {
   // ── Analysis (Gemini) ─────────────────────────────────────────────────────
@@ -42,11 +44,31 @@ export function getOpenAIImageModel() {
 }
 
 /**
- * Returns the Google Veo video generation model via Vertex AI.
- * Veo is only accessible through Vertex AI, not the standard Gemini API.
- * Requires: GOOGLE_VERTEX_PROJECT + GOOGLE_VERTEX_LOCATION in .env.local
- * Model: veo-3.1-fast-generate-001 — cheapest stable 3.1 tier on Vertex
+ * Builds a Vertex AI provider instance authenticated from the
+ * GOOGLE_APPLICATION_CREDENTIALS_JSON env var (compact JSON string).
+ * Works identically locally and on Vercel — no file on disk required.
+ */
+function buildVertexProvider() {
+  const raw = process.env.GOOGLE_APPLICATION_CREDENTIALS_JSON;
+  if (!raw) {
+    throw new Error(
+      "GOOGLE_APPLICATION_CREDENTIALS_JSON is not set. " +
+      "Add the service-account JSON (minified, single line) to your env vars."
+    );
+  }
+  const credentials = JSON.parse(raw);
+  return createVertex({
+    project: process.env.GOOGLE_VERTEX_PROJECT ?? credentials.project_id,
+    location: process.env.GOOGLE_VERTEX_LOCATION ?? "us-central1",
+    googleAuthOptions: { credentials },
+  });
+}
+
+/**
+ * Returns the Veo 3.1 Fast video generation model via Vertex AI.
+ * Videos are capped at 2–3 seconds max to keep costs under control (~$0.45–$0.90/video).
+ * Model: veo-3.1-fast-generate-001
  */
 export function getGoogleVideoModel() {
-  return vertex.video("veo-3.1-fast-generate-001");
+  return buildVertexProvider().video("veo-3.1-fast-generate-001");
 }
