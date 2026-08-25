@@ -15,6 +15,7 @@
 
 import { google } from "@ai-sdk/google";
 import { openai } from "@ai-sdk/openai";
+import { vertex } from "@ai-sdk/google-vertex";
 
 export const models = {
   // ── Analysis (Gemini) ─────────────────────────────────────────────────────
@@ -41,8 +42,11 @@ export function getOpenAIImageModel() {
 }
 
 /**
- * Returns the OpenAI video model (Sora).
+ * Returns the Google Veo video generation model via Vertex AI.
+ * Veo is only accessible through Vertex AI, not the standard Gemini API.
+ * Requires: GOOGLE_VERTEX_PROJECT + GOOGLE_VERTEX_LOCATION in .env.local
+ * Model: veo-3.1-fast-generate-001 — cheapest stable 3.1 tier on Vertex
  */
-export function getOpenAIVideoModel() {
-  return openai("sora-video");
+export function getGoogleVideoModel() {
+  return vertex.video("veo-3.1-fast-generate-001");
 }

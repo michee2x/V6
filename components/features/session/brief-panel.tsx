@@ -4,7 +4,7 @@ import * as React from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import {
-  Copy, Download, Wand2, CheckCheck, AlertCircle, RefreshCw, ArrowLeft, Settings2, ArrowUp, Paperclip, X, Loader2, Image as ImageIcon, Video, FileText, Undo2, Redo2
+  Copy, Download, Wand2, CheckCheck, AlertCircle, RefreshCw, ArrowLeft, Settings2, ArrowUp, Paperclip, X, Loader2, Image as ImageIcon, Video, FileText, Undo2, Redo2, ChevronDown, ChevronUp, MessageSquare
 } from "lucide-react";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -20,10 +20,10 @@ interface BriefPanelProps {
   contentType: string;
 }
 
-// Only real models backed by our OpenAI integration
+// Only real models backed by our integrations
 const modelOptions: Record<string, string[]> = {
   image:   ["GPT Image 1"],
-  video:   ["ChatGPT Video"],
+  video:   ["Veo 3 Lite Video"],
   article: ["GPT-4o"],
   auto:    ["GPT Image 1"],
 };
@@ -50,6 +50,7 @@ export function BriefPanel({ sessionId, contentType }: BriefPanelProps) {
   const [history, setHistory] = React.useState<string[]>([]);
   const [historyIndex, setHistoryIndex] = React.useState(-1);
   const [changedParagraphs, setChangedParagraphs] = React.useState<Set<number>>(new Set());
+  const [isChatCollapsed, setIsChatCollapsed] = React.useState(false);
 
   const fileInputRef = React.useRef<HTMLInputElement>(null);
 
@@ -485,84 +486,145 @@ export function BriefPanel({ sessionId, contentType }: BriefPanelProps) {
         </div>
       )}
 
-      {/* Refinement input (Expandable Chat) */}
-      <div className="fixed bottom-4 left-4 right-4 md:left-1/2 md:-translate-x-1/2 md:w-[calc(100%-2rem)] md:max-w-2xl bg-background/95 backdrop-blur-xl border border-border shadow-2xl rounded-2xl flex flex-col overflow-hidden z-40 transition-all">
-        <ChatThread 
-          messages={chatMessages} 
-          onSelectOption={submitRefinement} 
-          isStreaming={isRefining} 
-        />
-        
-        <div className="p-1.5 flex items-center gap-2 focus-within:bg-muted/30 transition-colors bg-muted/50">
-          {isRefining ? (
-            <div className="pl-3 py-2 flex items-center justify-center shrink-0">
-              <span className="animate-spin h-4 w-4 border-2 border-muted-foreground border-t-transparent rounded-full inline-block" />
-            </div>
-          ) : (
-            <div className="flex items-center shrink-0">
+      {/* Refinement input (Collapsible Chat) */}
+      <div className={cn(
+        "fixed bottom-4 left-4 right-4 md:left-1/2 md:-translate-x-1/2 md:w-[calc(100%-2rem)] md:max-w-2xl bg-background/95 backdrop-blur-xl border border-border shadow-2xl rounded-2xl flex flex-col overflow-hidden z-40 transition-all duration-300",
+        isChatCollapsed && "shadow-lg"
+      )}>
+        {/* Chat header toggle bar */}
+        <div
+          className={cn(
+            "flex items-center justify-between px-3 py-2 cursor-pointer select-none group transition-colors",
+            isChatCollapsed
+              ? "bg-primary/10 hover:bg-primary/15 border-b-0"
+              : "bg-muted/40 hover:bg-muted/60 border-b border-border"
+          )}
+          onClick={() => setIsChatCollapsed(prev => !prev)}
+          role="button"
+          aria-expanded={!isChatCollapsed}
+          aria-label={isChatCollapsed ? "Expand chat" : "Collapse chat"}
+          id="chat-toggle-btn"
+        >
+          <div className="flex items-center gap-2">
+            <MessageSquare className={cn(
+              "w-3.5 h-3.5 transition-colors",
+              isChatCollapsed ? "text-primary" : "text-muted-foreground"
+            )} />
+            <span className={cn(
+              "text-label font-medium transition-colors",
+              isChatCollapsed ? "text-primary" : "text-muted-foreground"
+            )}>
+              Chat
+            </span>
+            {chatMessages.length > 0 && (
+              <span className={cn(
+                "text-[10px] font-semibold px-1.5 py-0.5 rounded-full leading-none transition-colors",
+                isChatCollapsed
+                  ? "bg-primary text-primary-foreground"
+                  : "bg-muted text-muted-foreground"
+              )}>
+                {chatMessages.length}
+              </span>
+            )}
+            {isChatCollapsed && (
+              <span className="text-[10px] text-primary/70 font-normal ml-0.5">
+                · click to expand
+              </span>
+            )}
+          </div>
+          <div className={cn(
+            "flex items-center gap-1 text-muted-foreground group-hover:text-foreground transition-colors",
+            isChatCollapsed && "text-primary group-hover:text-primary"
+          )}>
+            {isChatCollapsed ? (
+              <ChevronUp className="w-4 h-4" />
+            ) : (
+              <ChevronDown className="w-4 h-4" />
+            )}
+          </div>
+        </div>
+
+        {/* Collapsible body */}
+        {!isChatCollapsed && (
+          <>
+            <ChatThread
+              messages={chatMessages}
+              onSelectOption={submitRefinement}
+              isStreaming={isRefining}
+            />
+
+            <div className="p-1.5 flex items-center gap-2 focus-within:bg-muted/30 transition-colors bg-muted/50">
+              {isRefining ? (
+                <div className="pl-3 py-2 flex items-center justify-center shrink-0">
+                  <span className="animate-spin h-4 w-4 border-2 border-muted-foreground border-t-transparent rounded-full inline-block" />
+                </div>
+              ) : (
+                <div className="flex items-center shrink-0">
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    className="rounded-full h-9 w-9 text-muted-foreground hover:text-foreground shrink-0 ml-1"
+                    onClick={() => fileInputRef.current?.click()}
+                    aria-label="Upload image"
+                  >
+                    <Paperclip className="h-4 w-4" />
+                  </Button>
+                  <input
+                    type="file"
+                    ref={fileInputRef}
+                    onChange={handleFileChange}
+                    accept="image/*"
+                    className="hidden"
+                  />
+                  {refinementImage && (
+                    <div className="relative ml-1 shrink-0">
+                      <img
+                        src={`data:${refinementImage.mimeType};base64,${refinementImage.base64}`}
+                        alt="Attachment"
+                        className="h-8 w-8 rounded-md object-cover border border-border"
+                      />
+                      <button
+                        onClick={() => setRefinementImage(null)}
+                        className="absolute -top-2 -right-2 bg-destructive text-destructive-foreground rounded-full h-4 w-4 flex items-center justify-center shadow-sm hover:bg-destructive/90"
+                        aria-label="Remove image"
+                      >
+                        <X className="h-3 w-3" />
+                      </button>
+                    </div>
+                  )}
+                </div>
+              )}
+              <input
+                id="brief-refinement-input"
+                type="text"
+                value={refinement}
+                onChange={(e) => setRefinement(e.target.value)}
+                onKeyDown={handleRefinement}
+                placeholder='Message AI to refine (e.g. "make it warmer")...'
+                className="flex-1 bg-transparent text-body text-foreground placeholder:text-muted-foreground outline-none px-2 py-2.5"
+                disabled={isRefining || briefStream.isStreaming}
+              />
               <Button
                 type="button"
-                variant="ghost"
                 size="icon"
-                className="rounded-full h-9 w-9 text-muted-foreground hover:text-foreground shrink-0 ml-1"
-                onClick={() => fileInputRef.current?.click()}
-                aria-label="Upload image"
+                className="rounded-full shrink-0 h-9 w-9 bg-foreground text-background hover:bg-foreground/90 transition-colors disabled:opacity-30 disabled:bg-muted-foreground"
+                onClick={() => submitRefinement()}
+                disabled={!refinement.trim() || isRefining || briefStream.isStreaming}
+                aria-label="Send message"
               >
-                <Paperclip className="h-4 w-4" />
+                <ArrowUp className="h-4 w-4" />
               </Button>
-              <input
-                type="file"
-                ref={fileInputRef}
-                onChange={handleFileChange}
-                accept="image/*"
-                className="hidden"
-              />
-              {refinementImage && (
-                <div className="relative ml-1 shrink-0">
-                  <img
-                    src={`data:${refinementImage.mimeType};base64,${refinementImage.base64}`}
-                    alt="Attachment"
-                    className="h-8 w-8 rounded-md object-cover border border-border"
-                  />
-                  <button
-                    onClick={() => setRefinementImage(null)}
-                    className="absolute -top-2 -right-2 bg-destructive text-destructive-foreground rounded-full h-4 w-4 flex items-center justify-center shadow-sm hover:bg-destructive/90"
-                    aria-label="Remove image"
-                  >
-                    <X className="h-3 w-3" />
-                  </button>
+              {refineStream.error && (
+                <div className="absolute -top-12 left-1/2 -translate-x-1/2 w-max max-w-full px-4">
+                  <p className="text-caption text-destructive bg-destructive/10 px-3 py-1.5 rounded-full backdrop-blur-md border border-destructive/20 shadow-sm truncate">
+                    {refineStream.error}
+                  </p>
                 </div>
               )}
             </div>
-          )}
-          <input
-            id="brief-refinement-input"
-            type="text"
-            value={refinement}
-            onChange={(e) => setRefinement(e.target.value)}
-            onKeyDown={handleRefinement}
-            placeholder='Message AI to refine (e.g. "make it warmer")...'
-            className="flex-1 bg-transparent text-body text-foreground placeholder:text-muted-foreground outline-none px-2 py-2.5"
-            disabled={isRefining || briefStream.isStreaming}
-          />
-          <Button
-            type="button"
-            size="icon"
-            className="rounded-full shrink-0 h-9 w-9 bg-foreground text-background hover:bg-foreground/90 transition-colors disabled:opacity-30 disabled:bg-muted-foreground"
-            onClick={() => submitRefinement()}
-            disabled={!refinement.trim() || isRefining || briefStream.isStreaming}
-            aria-label="Send message"
-          >
-            <ArrowUp className="h-4 w-4" />
-          </Button>
-          {refineStream.error && (
-            <div className="absolute -top-12 left-1/2 -translate-x-1/2 w-max max-w-full px-4">
-              <p className="text-caption text-destructive bg-destructive/10 px-3 py-1.5 rounded-full backdrop-blur-md border border-destructive/20 shadow-sm truncate">
-                {refineStream.error}
-              </p>
-            </div>
-          )}
-        </div>
+          </>
+        )}
       </div>
     </div>
   );

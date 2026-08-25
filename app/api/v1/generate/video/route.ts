@@ -73,7 +73,7 @@ export async function POST(req: NextRequest) {
         const saved = await saveGeneration({
           sessionId,
           type: "video",
-          model: "ChatGPT Video",
+          model: "Veo 3 Lite Video",
           data: stringData,
           mimeType: (videoData as any)?.mimeType || "video/mp4",
           expiresAt,

@@ -14,7 +14,7 @@
  */
 
 import { streamText, generateText, experimental_generateVideo } from "ai";
-import { models, getOpenAIVideoModel } from "./providers";
+import { models, getGoogleVideoModel } from "./providers";
 import { SYSTEM_PROMPT } from "./prompts";
 import type { ImageData } from "../content-fetcher";
 import type { ContentType } from "../session-store";
@@ -222,9 +222,11 @@ export async function generateVideoFromBrief(
 ) {
   const { prompt } = options;
 
+  const enhancedPrompt = `${prompt}\n\nCRITICAL CONSTRAINT: Generate a maximum of 2-3 seconds of video only. Do not exceed 3 seconds.`;
+
   const result = await experimental_generateVideo({
-    model: getOpenAIVideoModel() as any,
-    prompt,
+    model: getGoogleVideoModel(),
+    prompt: enhancedPrompt,
   });
 
   return result;
