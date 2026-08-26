@@ -3,6 +3,7 @@ import { GoogleGeminiEffect } from "@/components/ui/google-gemini-effect";
 import { AnimatedGradientText } from "@/components/ui/animated-gradient-text";
 import { InspirationGallery } from "@/components/features/inspiration/inspiration-gallery";
 import { BeforeAfterShowcase } from "@/components/features/showcase/before-after-showcase";
+import { PricingSection } from "@/components/pricing/pricing-section";
 
 export const metadata = {
   title: "Recrea8 — Paste a link, understand it. Create from it.",
@@ -57,6 +58,9 @@ export default function HomePage() {
 
       {/* Full width showcase */}
       <BeforeAfterShowcase />
+
+      {/* Pricing Section */}
+      <PricingSection />
     </main>
   );
 }

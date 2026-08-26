@@ -23,7 +23,7 @@ export async function Navbar() {
           </span>
         </Link>
         <div className="flex items-center space-x-2 sm:space-x-4">
-          <Link href="/pricing" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
+          <Link href="/#pricing" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
             Pricing
           </Link>
           <ContactModal />

@@ -3,7 +3,7 @@
 import * as React from "react";
 import Link from "next/link";
 import { motion, AnimatePresence } from "motion/react";
-import { Zap, X, Sparkles, ArrowRight } from "lucide-react";
+import { Zap, X, ArrowRight } from "lucide-react";
 
 interface OutOfCreditsModalProps {
   open: boolean;
@@ -32,55 +32,35 @@ export function OutOfCreditsModal({ open, onClose }: OutOfCreditsModalProps) {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.2 }}
-            className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm"
+            className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm"
             onClick={onClose}
           />
 
           {/* Modal */}
           <motion.div
             key="ooc-modal"
-            initial={{ opacity: 0, scale: 0.88, y: 30 }}
+            initial={{ opacity: 0, scale: 0.95, y: 10 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.92, y: 16 }}
-            transition={{ type: "spring", stiffness: 320, damping: 26 }}
+            exit={{ opacity: 0, scale: 0.95, y: 10 }}
+            transition={{ type: "spring", stiffness: 400, damping: 30 }}
             className="fixed inset-0 z-50 flex items-center justify-center p-4 pointer-events-none"
           >
             <div className="relative w-full max-w-sm pointer-events-auto">
-              {/* Glow */}
-              <div className="absolute -inset-1 rounded-3xl bg-gradient-to-br from-amber-500/25 via-orange-500/15 to-rose-500/20 blur-xl" />
-
               {/* Card */}
-              <div className="relative rounded-2xl border border-white/10 bg-[hsl(var(--background))] overflow-hidden shadow-2xl">
-                {/* Gradient top strip */}
-                <div className="h-1.5 w-full bg-gradient-to-r from-amber-400 via-orange-500 to-rose-500" />
-
+              <div className="relative rounded-2xl border border-border bg-background overflow-hidden shadow-xl">
                 {/* Close */}
                 <button
                   onClick={onClose}
-                  className="absolute top-4 right-4 p-1.5 rounded-full text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors"
+                  className="absolute top-4 right-4 p-1.5 rounded-full text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
                   aria-label="Close"
                 >
                   <X className="w-4 h-4" />
                 </button>
 
-                <div className="px-7 pb-7 pt-6 flex flex-col items-center text-center gap-5">
-                  {/* Icon */}
-                  <div className="relative flex items-center justify-center w-20 h-20">
-                    <motion.div
-                      className="absolute inset-0 rounded-full bg-gradient-to-br from-amber-400/20 to-orange-500/20"
-                      animate={{ scale: [1, 1.14, 1] }}
-                      transition={{ duration: 2.2, repeat: Infinity, ease: "easeInOut" }}
-                    />
-                    <div className="relative z-10 flex items-center justify-center w-14 h-14 rounded-2xl bg-gradient-to-br from-amber-400 to-orange-500 shadow-lg shadow-amber-400/30">
-                      <Zap className="w-7 h-7 text-white" strokeWidth={2} />
-                    </div>
-                    <motion.div
-                      className="absolute -top-1 -right-1"
-                      animate={{ y: [-2, 2, -2], rotate: [0, 12, 0] }}
-                      transition={{ duration: 1.8, repeat: Infinity, ease: "easeInOut" }}
-                    >
-                      <Sparkles className="w-4 h-4 text-amber-400" />
-                    </motion.div>
+                <div className="px-6 pb-6 pt-8 flex flex-col items-center text-center gap-6">
+                  {/* Simple Icon */}
+                  <div className="flex items-center justify-center w-14 h-14 rounded-full bg-primary/10 text-primary">
+                    <Zap className="w-6 h-6" strokeWidth={2.5} />
                   </div>
 
                   {/* Text */}
@@ -89,39 +69,38 @@ export function OutOfCreditsModal({ open, onClose }: OutOfCreditsModalProps) {
                       Out of credits
                     </h2>
                     <p className="text-muted-foreground text-sm leading-relaxed">
-                      You've used all your credits for this period. Upgrade to a paid plan to keep creating — or wait for your next reset.
+                      You've used all your credits. Upgrade to a paid plan to keep creating, or wait for your next billing cycle.
                     </p>
                   </div>
 
                   {/* Credit costs hint */}
-                  <div className="w-full rounded-xl border border-border bg-muted/30 p-3 text-left flex flex-col gap-1.5">
-                    <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-0.5">Credit costs</p>
-                    <div className="flex justify-between text-xs text-muted-foreground">
-                      <span>📄 Document</span><span className="font-medium text-foreground">5 credits</span>
+                  <div className="w-full rounded-xl border border-border bg-muted/50 p-3 text-left flex flex-col gap-2">
+                    <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">Cost Guide</p>
+                    <div className="flex justify-between text-sm text-muted-foreground">
+                      <span>Document Analysis</span><span className="font-medium text-foreground">5 cr</span>
                     </div>
-                    <div className="flex justify-between text-xs text-muted-foreground">
-                      <span>🖼️ Image</span><span className="font-medium text-foreground">40 credits</span>
+                    <div className="flex justify-between text-sm text-muted-foreground">
+                      <span>Standard Image</span><span className="font-medium text-foreground">40 cr</span>
                     </div>
-                    <div className="flex justify-between text-xs text-muted-foreground">
-                      <span>🎬 Video</span><span className="font-medium text-foreground">150 credits</span>
+                    <div className="flex justify-between text-sm text-muted-foreground">
+                      <span>Video Generation</span><span className="font-medium text-foreground">150 cr</span>
                     </div>
                   </div>
 
                   {/* CTAs */}
-                  <div className="flex flex-col gap-2.5 w-full">
+                  <div className="flex flex-col gap-3 w-full mt-2">
                     <Link
-                      href="/pricing"
+                      href={`/#pricing?returnUrl=${encodeURIComponent(typeof window !== "undefined" ? window.location.pathname + window.location.search : "")}`}
                       onClick={onClose}
-                      className="flex items-center justify-center gap-2 w-full px-5 py-2.5 rounded-xl bg-gradient-to-r from-violet-600 to-fuchsia-600 hover:from-violet-500 hover:to-fuchsia-500 text-sm font-semibold text-white shadow-lg shadow-violet-500/25 transition-all hover:shadow-violet-500/40 hover:scale-[1.02] active:scale-[0.98]"
+                      className="flex items-center justify-center gap-2 w-full px-5 py-2.5 rounded-xl bg-primary hover:bg-primary/90 text-sm font-semibold text-primary-foreground shadow-sm transition-all"
                       id="out-of-credits-upgrade-btn"
                     >
-                      <Sparkles className="w-4 h-4" />
-                      Upgrade Plan
+                      View Plans
                       <ArrowRight className="w-4 h-4" />
                     </Link>
                     <button
                       onClick={onClose}
-                      className="text-xs text-muted-foreground hover:text-foreground transition-colors"
+                      className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
                     >
                       Maybe later
                     </button>

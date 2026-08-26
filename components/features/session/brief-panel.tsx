@@ -386,7 +386,7 @@ export function BriefPanel({ sessionId, contentType, isLoggedIn, userPlan }: Bri
                     </div>
                     <Link
                       id="upgrade-for-video-btn"
-                      href="/pricing"
+                      href={`/#pricing?returnUrl=${encodeURIComponent(typeof window !== "undefined" ? window.location.pathname + window.location.search : "")}`}
                       className={cn(buttonVariants({ variant: "default" }), "w-full bg-gradient-to-r from-violet-600 to-fuchsia-600 hover:from-violet-500 hover:to-fuchsia-500")}
                     >
                       <Sparkles className="w-4 h-4 mr-2" />

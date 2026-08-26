@@ -24,7 +24,7 @@ export async function CreditCounter() {
 
   return (
     <Link
-      href="/pricing"
+      href="/#pricing"
       title={`${credits} credits remaining — click to upgrade`}
       className={[
         "flex items-center gap-1.5 px-2.5 py-1 rounded-full border text-xs font-semibold transition-colors",

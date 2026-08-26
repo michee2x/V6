@@ -24,7 +24,9 @@ export function CheckoutButton({ priceId, userId, email, planName, className, au
         customData: { user_id: userId },
       });
       // Clean up URL so it doesn't pop open again if they refresh
-      window.history.replaceState({}, '', '/pricing');
+      const currentUrl = new URL(window.location.href);
+      currentUrl.searchParams.delete('checkout');
+      window.history.replaceState({}, '', currentUrl.toString());
     }
   }, [paddleInitialized, autoOpen, priceId, userId, email]);
 
@@ -42,7 +44,12 @@ export function CheckoutButton({ priceId, userId, email, planName, className, au
               token: process.env.NEXT_PUBLIC_PADDLE_CLIENT_TOKEN!,
               eventCallback: function(data: any) {
                 if (data.name === "checkout.completed") {
-                  window.location.href = "/subscribed";
+                  const urlParams = new URLSearchParams(window.location.search);
+                  const returnUrl = urlParams.get("returnUrl") || "/history";
+                  
+                  // Optionally, you can pass a success parameter to show a toast on the return page
+                  const separator = returnUrl.includes("?") ? "&" : "?";
+                  window.location.href = `${returnUrl}${separator}upgrade_success=1`;
                 }
               }
             });
