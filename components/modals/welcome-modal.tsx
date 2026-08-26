@@ -3,7 +3,7 @@
 import * as React from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { Zap, X, ArrowRight } from "lucide-react";
-import { setWelcomeModalSeen } from "@/app/actions/user";
+import { markWelcomeModalSeen, getWelcomeModalStatus } from "@/app/actions/user";
 import { useRouter } from "next/navigation";
 
 const FREE_CREDITS = 30;
@@ -14,18 +14,12 @@ export function WelcomeModal() {
   const router = useRouter();
 
   React.useEffect(() => {
-    // Check if user has seen the modal yet via an API call or user state.
-    // For this example, we assume there's an endpoint that tells us if it's a new sign-up
-    // Or we simply show it if a URL param `?welcome=true` is present, or check local storage as fallback.
     const checkWelcomeStatus = async () => {
       try {
-        const res = await fetch("/api/user/welcome-status");
-        if (res.ok) {
-          const status = await res.json();
-          if (status.showWelcome) {
-            setCredits(status.credits || FREE_CREDITS);
-            setOpen(true);
-          }
+        const status = await getWelcomeModalStatus();
+        if (status?.shouldShow) {
+          setCredits(status.credits || FREE_CREDITS);
+          setOpen(true);
         }
       } catch (e) {
         // Fallback or ignore
@@ -36,13 +30,13 @@ export function WelcomeModal() {
 
   const handleClose = async () => {
     setOpen(false);
-    await setWelcomeModalSeen();
+    await markWelcomeModalSeen();
     router.refresh(); // Refresh to update navbar credits
   };
 
   const handleUpgrade = async () => {
     setOpen(false);
-    await setWelcomeModalSeen();
+    await markWelcomeModalSeen();
     router.push("/#pricing");
   };
 
