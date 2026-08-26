@@ -14,6 +14,7 @@ import { useSSEStream } from "@/hooks/use-sse-stream";
 import { cn } from "@/lib/utils";
 import ReactMarkdown from "react-markdown";
 import { ChatThread, Message } from "./chat-thread";
+import { OutOfCreditsModal } from "@/components/modals/out-of-credits-modal";
 
 interface BriefPanelProps {
   sessionId: string;
@@ -56,6 +57,7 @@ export function BriefPanel({ sessionId, contentType, isLoggedIn, userPlan }: Bri
   const [hastriggered, setHasTriggered] = React.useState(false);
   const [isRendering, setIsRendering] = React.useState(false);
   const [generationResult, setGenerationResult] = React.useState<GenerationResult | null>(null);
+  const [showOutOfCredits, setShowOutOfCredits] = React.useState(false);
   
   const [chatMessages, setChatMessages] = React.useState<Message[]>([]);
   const [history, setHistory] = React.useState<string[]>([]);
@@ -234,7 +236,12 @@ export function BriefPanel({ sessionId, contentType, isLoggedIn, userPlan }: Bri
 
     } catch (err) {
       const message = err instanceof Error ? err.message : "Generation failed.";
-      toast.error(message);
+      // Check if this is an insufficient credits error
+      if (message.toLowerCase().includes("insufficient credits") || message.toLowerCase().includes("insufficient")) {
+        setShowOutOfCredits(true);
+      } else {
+        toast.error(message);
+      }
     } finally {
       setIsRendering(false);
     }
@@ -275,7 +282,13 @@ export function BriefPanel({ sessionId, contentType, isLoggedIn, userPlan }: Bri
   // ── Main UI ────────────────────────────────────────────────────────────────
   return (
     <div className="flex flex-col flex-1 max-w-3xl w-full mx-auto relative h-full">
+      {/* Out-of-credits modal */}
+      <OutOfCreditsModal
+        open={showOutOfCredits}
+        onClose={() => setShowOutOfCredits(false)}
+      />
       {/* Back link + header */}
+
       <div className="px-8 py-4 border-b border-border bg-muted/30 flex items-center gap-4">
         <Link
           href={insightsHref}

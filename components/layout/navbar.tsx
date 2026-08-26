@@ -4,6 +4,7 @@ import { createClient } from "@/utils/supabase/server";
 import { logout } from "@/app/login/actions";
 import { Button } from "@/components/ui/button";
 import { ContactModal } from "@/components/features/contact/contact-modal";
+import { CreditCounter } from "@/components/layout/credit-counter";
 
 export async function Navbar() {
   const supabase = await createClient();
@@ -28,6 +29,7 @@ export async function Navbar() {
           <ContactModal />
           {user ? (
             <>
+              <CreditCounter />
               <Link href="/history" className="text-sm font-medium text-muted-foreground hover:text-foreground">
                 History
               </Link>
