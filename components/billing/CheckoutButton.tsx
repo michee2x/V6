@@ -3,6 +3,8 @@
 import { useEffect, useState } from 'react';
 import Script from 'next/script';
 import { Button } from '@/components/ui/button';
+import { createClient } from '@/utils/supabase/client';
+import { Loader2 } from 'lucide-react';
 
 interface CheckoutButtonProps {
   priceId: string;
@@ -15,6 +17,8 @@ interface CheckoutButtonProps {
 
 export function CheckoutButton({ priceId, userId, email, planName, className, autoOpen }: CheckoutButtonProps) {
   const [paddleInitialized, setPaddleInitialized] = useState(false);
+  const [isUpgrading, setIsUpgrading] = useState(false);
+  const supabase = createClient();
 
   useEffect(() => {
     if (paddleInitialized && autoOpen && window.Paddle) {
@@ -30,6 +34,36 @@ export function CheckoutButton({ priceId, userId, email, planName, className, au
     }
   }, [paddleInitialized, autoOpen, priceId, userId, email]);
 
+  useEffect(() => {
+    const handleCheckoutCompleted = async () => {
+      setIsUpgrading(true);
+      
+      const urlParams = new URLSearchParams(window.location.search);
+      const returnUrl = urlParams.get("returnUrl") || "/history";
+      const separator = returnUrl.includes("?") ? "&" : "?";
+      const finalUrl = `${returnUrl}${separator}upgrade_success=1`;
+
+      // Poll Supabase until the plan changes from 'free' (max 10 seconds)
+      let attempts = 0;
+      const pollInterval = setInterval(async () => {
+        attempts++;
+        const { data } = await supabase
+          .from('users')
+          .select('plan')
+          .eq('id', userId)
+          .single();
+          
+        if ((data && data.plan !== 'free') || attempts >= 10) {
+          clearInterval(pollInterval);
+          window.location.href = finalUrl;
+        }
+      }, 1000);
+    };
+
+    window.addEventListener("paddle-checkout-completed", handleCheckoutCompleted);
+    return () => window.removeEventListener("paddle-checkout-completed", handleCheckoutCompleted);
+  }, [userId, supabase]);
+
   return (
     <>
       <Script
@@ -44,12 +78,7 @@ export function CheckoutButton({ priceId, userId, email, planName, className, au
               token: process.env.NEXT_PUBLIC_PADDLE_CLIENT_TOKEN!,
               eventCallback: function(data: any) {
                 if (data.name === "checkout.completed") {
-                  const urlParams = new URLSearchParams(window.location.search);
-                  const returnUrl = urlParams.get("returnUrl") || "/history";
-                  
-                  // Optionally, you can pass a success parameter to show a toast on the return page
-                  const separator = returnUrl.includes("?") ? "&" : "?";
-                  window.location.href = `${returnUrl}${separator}upgrade_success=1`;
+                  window.dispatchEvent(new CustomEvent("paddle-checkout-completed"));
                 }
               }
             });
@@ -59,7 +88,7 @@ export function CheckoutButton({ priceId, userId, email, planName, className, au
       />
       <Button
         className={className}
-        disabled={!paddleInitialized}
+        disabled={!paddleInitialized || isUpgrading}
         onClick={() => {
           if (window.Paddle) {
             window.Paddle.Checkout.open({
@@ -74,7 +103,14 @@ export function CheckoutButton({ priceId, userId, email, planName, className, au
           }
         }}
       >
-        Upgrade to {planName}
+        {isUpgrading ? (
+          <>
+            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+            Finalizing upgrade...
+          </>
+        ) : (
+          `Upgrade to ${planName}`
+        )}
       </Button>
     </>
   );
