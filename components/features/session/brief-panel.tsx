@@ -4,7 +4,7 @@ import * as React from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import {
-  Copy, Download, Wand2, CheckCheck, AlertCircle, RefreshCw, ArrowLeft, Settings2, ArrowUp, Paperclip, X, Loader2, Image as ImageIcon, Video, FileText, Undo2, Redo2, ChevronDown, ChevronUp, MessageSquare
+  Copy, Download, Wand2, CheckCheck, AlertCircle, RefreshCw, ArrowLeft, Settings2, ArrowUp, Paperclip, X, Loader2, Image as ImageIcon, Video, FileText, Undo2, Redo2, ChevronDown, ChevronUp, MessageSquare, Lock, Sparkles, LogIn
 } from "lucide-react";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -18,14 +18,26 @@ import { ChatThread, Message } from "./chat-thread";
 interface BriefPanelProps {
   sessionId: string;
   contentType: string;
+  isLoggedIn: boolean;
+  userPlan: string; // "free" | "starter" | "growth" | "pro"
 }
 
-// Only real models backed by our integrations
-const modelOptions: Record<string, string[]> = {
-  image:   ["GPT Image 1"],
-  video:   ["Veo 3 Lite Video"],
-  article: ["GPT-4o"],
-  auto:    ["GPT Image 1"],
+/** Returns true if this plan can generate video */
+function canGenerateVideo(plan: string) {
+  return plan !== "free";
+}
+
+/** Returns true if this user is on a paid plan at all */
+function isPaidPlan(plan: string) {
+  return plan !== "free";
+}
+
+// Content-type label for UX copy
+const contentTypeLabel: Record<string, string> = {
+  image:   "image",
+  video:   "video",
+  article: "document",
+  auto:    "image",
 };
 
 type GenerationResult =
@@ -33,12 +45,11 @@ type GenerationResult =
   | { type: "video"; video: { url?: string; base64?: string; mimeType?: string } }
   | { type: "document"; document: string };
 
-export function BriefPanel({ sessionId, contentType }: BriefPanelProps) {
+export function BriefPanel({ sessionId, contentType, isLoggedIn, userPlan }: BriefPanelProps) {
   const searchParams = useSearchParams();
   const briefStream  = useSSEStream();
   const refineStream = useSSEStream();
 
-  const [selectedModel, setSelectedModel] = React.useState<string | null>(null);
   const [copied, setCopied] = React.useState(false);
   const [refinement, setRefinement] = React.useState("");
   const [refinementImage, setRefinementImage] = React.useState<{ mimeType: string; base64: string } | null>(null);
@@ -153,14 +164,11 @@ export function BriefPanel({ sessionId, contentType }: BriefPanelProps) {
 
   const liveBrief = rawBrief.replace(/\[\[QUESTION:\s*(\{.*?\})\s*\]\]/g, "").trim();
   const isRefining = refineStream.isStreaming;
-  const models     = modelOptions[contentType] ?? modelOptions.auto;
 
-  // Auto-select the only model when there is just one option
-  React.useEffect(() => {
-    if (models.length === 1 && !selectedModel) {
-      setSelectedModel(models[0]);
-    }
-  }, [models, selectedModel]);
+  // Access control derived state
+  const effectiveType = contentType === "auto" ? "image" : contentType;
+  const isVideoContent = effectiveType === "video";
+  const isVideoBocked  = isVideoContent && !canGenerateVideo(userPlan);
 
   // Insights back link — preserve search params
   const params       = searchParams.toString() ? `?${searchParams.toString()}` : "";
@@ -204,8 +212,6 @@ export function BriefPanel({ sessionId, contentType }: BriefPanelProps) {
     setGenerationResult(null);
 
     try {
-      // Route to the correct endpoint based on content type
-      const effectiveType = contentType === "auto" ? "image" : contentType;
       let endpoint = "/api/v1/generate/image";
       if (effectiveType === "video") endpoint = "/api/v1/generate/video";
       if (effectiveType === "article") endpoint = "/api/v1/generate/document";
@@ -326,59 +332,97 @@ export function BriefPanel({ sessionId, contentType }: BriefPanelProps) {
             <PopoverContent align="end" className="w-72 p-4 flex flex-col gap-3 border-border shadow-xl">
               <p className="text-label font-medium text-foreground">Generation Options</p>
 
-              {models.length > 0 && (
-                <div className="flex flex-col gap-1.5 mt-1">
-                  <p className="text-caption text-muted-foreground">Select model:</p>
-                  <div className="flex gap-2 flex-wrap">
-                    {models.map((model) => (
-                      <button
-                        key={model}
-                        type="button"
-                        id={`model-${model.toLowerCase().replace(/\s|\./g, "-")}-btn`}
-                        onClick={() => setSelectedModel(model)}
-                        className={cn(
-                          "px-2.5 py-1 rounded-md text-label border transition-all text-left",
-                          selectedModel === model
-                            ? "border-primary bg-primary text-primary-foreground"
-                            : "border-border text-muted-foreground hover:text-foreground hover:border-foreground/30"
-                        )}
-                      >
-                        {model}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              <div className="flex flex-col gap-2 mt-2">
-                <Button
-                  id="render-in-app-btn"
-                  className="w-full"
-                  disabled={!liveBrief || isRendering}
-                  onClick={handleRenderInApp}
-                >
-                  {isRendering ? (
-                    <>
-                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                      Generating...
-                    </>
-                  ) : (
-                    <>
-                      <Wand2 className="w-4 h-4 mr-2" />
-                      Render in-app
-                    </>
-                  )}
-                </Button>
-                <Button
-                  id="export-prompt-btn"
-                  variant="outline"
-                  className="w-full"
-                  disabled={!liveBrief}
-                  onClick={handleCopy}
-                >
-                  <Download className="w-4 h-4 mr-2" />
-                  Export prompt
-                </Button>
+              {/* Access-control CTA */}
+              <div className="flex flex-col gap-2 mt-1">
+                {!isLoggedIn ? (
+                  /* ── Logged-out: must sign in to generate ── */
+                  <>
+                    <div className="flex items-start gap-2 p-3 rounded-lg bg-muted/50 border border-border">
+                      <LogIn className="w-4 h-4 mt-0.5 shrink-0 text-muted-foreground" />
+                      <p className="text-caption text-muted-foreground leading-snug">
+                        Sign in to unlock generation. Analysis is always free.
+                      </p>
+                    </div>
+                    <Link
+                      id="sign-in-to-recreate-btn"
+                      href="/login"
+                      className={cn(buttonVariants({ variant: "default" }), "w-full")}
+                    >
+                      <LogIn className="w-4 h-4 mr-2" />
+                      Sign in to Recrea8
+                    </Link>
+                    <Button
+                      id="export-prompt-btn"
+                      variant="outline"
+                      className="w-full"
+                      disabled={!liveBrief}
+                      onClick={handleCopy}
+                    >
+                      <Download className="w-4 h-4 mr-2" />
+                      Export prompt
+                    </Button>
+                  </>
+                ) : isVideoBocked ? (
+                  /* ── Free user trying video ── */
+                  <>
+                    <div className="flex items-start gap-2 p-3 rounded-lg bg-amber-500/10 border border-amber-500/25">
+                      <Lock className="w-4 h-4 mt-0.5 shrink-0 text-amber-500" />
+                      <p className="text-caption text-amber-600 dark:text-amber-400 leading-snug">
+                        Video generation is available on paid plans. Upgrade to start creating videos.
+                      </p>
+                    </div>
+                    <Link
+                      id="upgrade-for-video-btn"
+                      href="/pricing"
+                      className={cn(buttonVariants({ variant: "default" }), "w-full bg-gradient-to-r from-violet-600 to-fuchsia-600 hover:from-violet-500 hover:to-fuchsia-500")}
+                    >
+                      <Sparkles className="w-4 h-4 mr-2" />
+                      Upgrade to unlock video
+                    </Link>
+                    <Button
+                      id="export-prompt-btn"
+                      variant="outline"
+                      className="w-full"
+                      disabled={!liveBrief}
+                      onClick={handleCopy}
+                    >
+                      <Download className="w-4 h-4 mr-2" />
+                      Export prompt
+                    </Button>
+                  </>
+                ) : (
+                  /* ── Logged-in with access ── */
+                  <>
+                    <Button
+                      id="recreate-now-btn"
+                      className="w-full font-semibold tracking-wide"
+                      disabled={!liveBrief || isRendering}
+                      onClick={handleRenderInApp}
+                    >
+                      {isRendering ? (
+                        <>
+                          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                          Generating...
+                        </>
+                      ) : (
+                        <>
+                          <Wand2 className="w-4 h-4 mr-2" />
+                          Recrea8 Now
+                        </>
+                      )}
+                    </Button>
+                    <Button
+                      id="export-prompt-btn"
+                      variant="outline"
+                      className="w-full"
+                      disabled={!liveBrief}
+                      onClick={handleCopy}
+                    >
+                      <Download className="w-4 h-4 mr-2" />
+                      Export prompt
+                    </Button>
+                  </>
+                )}
               </div>
             </PopoverContent>
           </Popover>
