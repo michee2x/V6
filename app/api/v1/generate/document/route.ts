@@ -12,6 +12,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getSession, saveGeneration } from "@/lib/session-store";
 import { generateTextDocumentFromBrief } from "@/lib/ai/orchestrator";
+import { consumeCredits, checkAnonymousUsage } from "@/lib/billing";
+import { createClient } from "@/utils/supabase/server";
 
 export async function POST(req: NextRequest) {
   try {
@@ -55,6 +57,34 @@ export async function POST(req: NextRequest) {
         },
         { status: 400 }
       );
+    }
+
+    // Billing check
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+
+    if (user) {
+      // Consume credits
+      try {
+        await consumeCredits(user.id, "document");
+      } catch (err: any) {
+        return NextResponse.json(
+          { success: false, error: { code: "INSUFFICIENT_CREDITS", message: err.message } },
+          { status: 402 }
+        );
+      }
+    } else {
+      // Anonymous rate limiting
+      try {
+        const fingerprint = req.cookies.get("visitor_fingerprint")?.value;
+        const ip = req.headers.get("x-forwarded-for") || req.ip || "";
+        await checkAnonymousUsage(fingerprint, ip);
+      } catch (err: any) {
+        return NextResponse.json(
+          { success: false, error: { code: "TRIAL_LIMIT_REACHED", message: err.message } },
+          { status: 403 }
+        );
+      }
     }
 
     const documentResult = await generateTextDocumentFromBrief(prompt, docType);

@@ -22,8 +22,8 @@ export async function GET(request: Request) {
     
     if (!error) {
       if (type === 'recovery') {
-        // Recovery logic...
-        return NextResponse.redirect(`${origin}/login?verified=true`);
+        // Redirect to password reset form
+        return NextResponse.redirect(`${origin}/update-password`);
       }
       
       const forwardedHost = request.headers.get('x-forwarded-host');

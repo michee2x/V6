@@ -18,8 +18,10 @@ export async function login(formData: FormData) {
     redirect(`/login?error=${encodeURIComponent(error.message || "Could not authenticate user")}`);
   }
 
-  revalidatePath("/", "layout");
-  redirect("/");
+  const nextPath = (formData.get("next") as string) || "/";
+
+  revalidatePath(nextPath, "layout");
+  redirect(nextPath);
 }
 
 export async function signup(formData: FormData) {

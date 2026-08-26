@@ -80,10 +80,14 @@ export function AuthForm() {
     try {
       setIsLoading(true);
       const supabase = createClient();
+      const nextParam = searchParams.get("next");
+      const redirectUrl = new URL(`${window.location.origin}/auth/callback`);
+      if (nextParam) redirectUrl.searchParams.set("next", nextParam);
+
       const { error } = await supabase.auth.signInWithOAuth({
         provider: "google",
         options: {
-          redirectTo: `${window.location.origin}/auth/callback`,
+          redirectTo: redirectUrl.toString(),
         },
       });
       if (error) throw error;
@@ -155,6 +159,7 @@ export function AuthForm() {
             <strong>Action Required:</strong> Please check your email and click the verification link before logging in.
           </div>
           <form onSubmit={(e) => handleEmailAuth(e, "login")} className="flex flex-col gap-4">
+            <input type="hidden" name="next" value={searchParams.get("next") ?? "/"} />
             <div className="flex flex-col gap-2">
               <Label htmlFor="login-email">Email</Label>
               <Input
@@ -192,6 +197,11 @@ export function AuthForm() {
               {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
               Sign In
             </Button>
+            <div className="text-center text-sm">
+              <a href="/forgot-password" className="text-muted-foreground hover:text-foreground">
+                Forgot password?
+              </a>
+            </div>
           </form>
         </TabsContent>
 

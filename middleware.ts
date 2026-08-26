@@ -2,7 +2,20 @@ import { updateSession } from "@/utils/supabase/middleware";
 import { NextRequest } from "next/server";
 
 export async function middleware(request: NextRequest) {
-  return await updateSession(request);
+  let response = await updateSession(request);
+  
+  // Set a visitor fingerprint cookie if it doesn't exist
+  if (!request.cookies.has("visitor_fingerprint")) {
+    const fingerprint = crypto.randomUUID();
+    response.cookies.set("visitor_fingerprint", fingerprint, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax",
+      maxAge: 60 * 60 * 24 * 365, // 1 year
+    });
+  }
+
+  return response;
 }
 
 export const config = {
