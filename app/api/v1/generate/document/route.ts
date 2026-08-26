@@ -77,7 +77,7 @@ export async function POST(req: NextRequest) {
       // Anonymous rate limiting
       try {
         const fingerprint = req.cookies.get("visitor_fingerprint")?.value;
-        const ip = req.headers.get("x-forwarded-for") || req.ip || "";
+        const ip = req.headers.get("x-forwarded-for") || "";
         await checkAnonymousUsage(fingerprint, ip);
       } catch (err: any) {
         return NextResponse.json(

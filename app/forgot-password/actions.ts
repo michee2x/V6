@@ -8,7 +8,7 @@ export async function resetPassword(formData: FormData) {
   const email = formData.get("email") as string;
   const supabase = await createClient();
 
-  const origin = headers().get("origin") || process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
+  const origin = (await headers()).get("origin") || process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
 
   const { error } = await supabase.auth.resetPasswordForEmail(email, {
     redirectTo: `${origin}/auth/callback?type=recovery`,
