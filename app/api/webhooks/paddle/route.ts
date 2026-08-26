@@ -1,8 +1,6 @@
 import { createHmac } from 'crypto';
 import { createAdminClient } from '@/utils/supabase/admin';
 
-const supabaseAdmin = createAdminClient();
-
 // Plan → credits mapping (per month/interval)
 const PLAN_CREDITS: Record<string, number> = {
   starter: 1500, // $15 plan
@@ -67,6 +65,7 @@ function verifyPaddleSignature(
 
 // ── Handlers ──────────────────────────────────────────────────
 async function handleSubscriptionCreated(data: any) {
+  const supabaseAdmin = createAdminClient();
   const customerId    = data.customer_id;
   const subscriptionId = data.id;
   const priceId       = data.items?.[0]?.price?.id;
@@ -116,6 +115,7 @@ async function handleSubscriptionCreated(data: any) {
 }
 
 async function handleSubscriptionUpdated(data: any) {
+  const supabaseAdmin = createAdminClient();
   const customerId    = data.customer_id;
   const subscriptionId = data.id;
   const status        = data.status;
@@ -163,6 +163,7 @@ async function handleSubscriptionUpdated(data: any) {
 }
 
 async function handleTransactionCompleted(data: any) {
+  const supabaseAdmin = createAdminClient();
   // Only handle subscription renewals
   if (!data.subscription_id) return;
   const customerId = data.customer_id;
