@@ -18,7 +18,7 @@ export async function consumeCredits(userId: string, type: "video" | "image" | "
 
   const { data: user, error } = await supabase
     .from("users")
-    .select("id, credits_remaining")
+    .select("id, credits_remaining, plan")
     .eq("id", userId)
     .single();
 
@@ -49,7 +49,7 @@ export async function consumeCredits(userId: string, type: "video" | "image" | "
     note: `Generated ${type}`,
   });
 
-  return newCredits;
+  return { newCredits, plan: user.plan };
 }
 
 export async function checkAnonymousUsage(fingerprint: string | undefined, ip: string | undefined) {

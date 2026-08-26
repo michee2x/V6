@@ -61,10 +61,13 @@ export async function POST(req: NextRequest) {
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
 
+    let userPlan = "free";
+
     if (user) {
       // Consume credits
       try {
-        await consumeCredits(user.id, "video");
+        const { plan } = await consumeCredits(user.id, "video");
+        userPlan = plan || "free";
       } catch (err: any) {
         return NextResponse.json(
           { success: false, error: { code: "INSUFFICIENT_CREDITS", message: err.message } },
@@ -96,7 +99,7 @@ export async function POST(req: NextRequest) {
     const stringData = (videoData as any)?.base64 || (videoData as any)?.url || "";
 
     if (sessionId && stringData) {
-      const isPaidPlan = process.env.NEXT_PUBLIC_PAID_PLAN === "true";
+      const isPaidPlan = userPlan !== "free";
       const expiresAt = isPaidPlan ? null : new Date(Date.now() + 24 * 60 * 60 * 1000);
       
       try {
