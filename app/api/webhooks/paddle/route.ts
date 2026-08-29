@@ -3,19 +3,18 @@ import { createAdminClient } from '@/utils/supabase/admin';
 
 // Plan → credits mapping (per month/interval)
 const PLAN_CREDITS: Record<string, number> = {
-  starter: 1500, // $15 plan
-  growth:  3000, // $29 plan
-  pro:     5500, // $49 plan
+  starter: 500,
+  growth:  2000,
+  pro:     5000,
 };
 
-// Sandbox + Live price IDs → plan name
-// NOTE: Ensure these match your actual Paddle catalog price IDs for recrea8.app
-const PRICE_TO_PLAN: Record<string, string> = {
-  // Add your sandbox / live price IDs here
-  'pri_01kyj6v0qyavxvd9v10c5xf459': 'starter',
-  'pri_01kyj6n8yckwsd2ybzkb80k614': 'growth',
-  'pri_01kyj6f94bvanvps5edphqzywv': 'pro',
-};
+// Map price IDs from env variables to plan names dynamically
+function getPlanFromPriceId(priceId: string): string | null {
+  if (priceId === process.env.NEXT_PUBLIC_PADDLE_PRICE_STARTER) return 'starter';
+  if (priceId === process.env.NEXT_PUBLIC_PADDLE_PRICE_GROWTH) return 'growth';
+  if (priceId === process.env.NEXT_PUBLIC_PADDLE_PRICE_PRO) return 'pro';
+  return null;
+}
 
 // ── Paddle webhook signature verification ─────────────────────
 function parsePaddleSignatureHeader(header: string): { ts: string; h1Values: string[] } | null {
@@ -74,7 +73,7 @@ async function handleSubscriptionUpdated(data: any) {
   const status        = data.status;
   const priceId       = data.items?.[0]?.price?.id;
 
-  const plan = PRICE_TO_PLAN[priceId] ?? null;
+  const plan = getPlanFromPriceId(priceId) ?? null;
 
   const { data: user, error } = await supabaseAdmin
     .from('users')
@@ -112,7 +111,7 @@ async function handleTransactionCompleted(data: any) {
   const userId = data.custom_data?.user_id;
   const priceId = data.items?.[0]?.price?.id;
 
-  const plan = PRICE_TO_PLAN[priceId] ?? 'starter';
+  const plan = getPlanFromPriceId(priceId) ?? 'starter';
   const addedCredits = PLAN_CREDITS[plan] ?? 0;
   if (addedCredits === 0) return;
 
