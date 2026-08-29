@@ -2,7 +2,8 @@ import Link from "next/link";
 import Image from "next/image";
 import { createClient } from "@/utils/supabase/server";
 import { logout } from "@/app/login/actions";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 import { ContactModal } from "@/components/features/contact/contact-modal";
 import { CreditCounter } from "@/components/layout/credit-counter";
 import {
@@ -39,11 +40,9 @@ export async function Navbar() {
             <>
               <CreditCounter />
               <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="icon" className="rounded-full">
-                    <User className="h-5 w-5 text-muted-foreground" />
-                    <span className="sr-only">User menu</span>
-                  </Button>
+                <DropdownMenuTrigger className={cn(buttonVariants({ variant: "ghost", size: "icon" }), "rounded-full outline-none")}>
+                  <User className="h-5 w-5 text-muted-foreground" />
+                  <span className="sr-only">User menu</span>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-56">
                   <div className="flex items-center justify-start gap-2 p-2">
@@ -54,16 +53,16 @@ export async function Navbar() {
                     </div>
                   </div>
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem asChild className="cursor-pointer">
-                    <Link href="/history" className="flex w-full items-center">
+                  <DropdownMenuItem className="cursor-pointer p-0">
+                    <Link href="/history" className="flex w-full items-center px-2 py-1.5">
                       <History className="mr-2 h-4 w-4" />
                       <span>History</span>
                     </Link>
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem asChild className="cursor-pointer text-destructive focus:text-destructive">
+                  <DropdownMenuItem className="cursor-pointer text-destructive focus:text-destructive p-0">
                     <form action={logout} className="w-full">
-                      <button type="submit" className="flex w-full items-center">
+                      <button type="submit" className="flex w-full items-center px-2 py-1.5">
                         <LogOut className="mr-2 h-4 w-4" />
                         <span>Log out</span>
                       </button>
