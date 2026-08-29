@@ -118,20 +118,25 @@ export function ShowcaseManager() {
   const pickSession = React.useCallback(async (session: SessionRow) => {
     setSelectedSession(session);
     setLoadingGens(true);
-    const res = await fetch(`/api/admin/sessions/${session.id}/generations`);
-    if (res.ok) {
-      const json = await res.json();
-      setGenerations(json.generations ?? []);
-      const beforeAsset = extractBeforeAsset({ url: session.url, fetched_content: (json.session as any)?.fetched_content });
-      setEditing(prev => ({
-        ...prev,
-        session_id: session.id,
-        content_type: session.content_type as ShowcaseItem["content_type"],
-        before_asset_url: beforeAsset ?? prev?.before_asset_url ?? null,
-        after_text_preview: session.brief ? session.brief.slice(0, 300) : null,
-      }));
+    try {
+      const res = await fetch(`/api/admin/sessions/${session.id}/generations`);
+      if (res.ok) {
+        const json = await res.json();
+        setGenerations(json.generations ?? []);
+        const beforeAsset = extractBeforeAsset({ url: session.url, fetched_content: (json.session as any)?.fetched_content });
+        setEditing(prev => ({
+          ...prev,
+          session_id: session.id,
+          content_type: session.content_type as ShowcaseItem["content_type"],
+          before_asset_url: beforeAsset ?? prev?.before_asset_url ?? null,
+          after_text_preview: session.brief ? session.brief.slice(0, 300) : null,
+        }));
+      }
+    } catch (error) {
+      console.error("Failed to load generations:", error);
+    } finally {
+      setLoadingGens(false);
     }
-    setLoadingGens(false);
   }, []);
 
   // ── Save item ─────────────────────────────────────────────────────────────
