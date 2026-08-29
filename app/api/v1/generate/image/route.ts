@@ -70,9 +70,10 @@ export async function POST(req: NextRequest) {
     let userPlan = "free";
 
     if (user) {
-      // Consume credits
+      // Consume credits based on quality tier
+      const creditType = `image_${quality ?? "low"}`;
       try {
-        const { plan } = await consumeCredits(user.id, "image");
+        const { plan } = await consumeCredits(user.id, creditType);
         userPlan = plan || "free";
       } catch (err: any) {
         return NextResponse.json(

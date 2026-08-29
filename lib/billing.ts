@@ -1,16 +1,19 @@
 import { createAdminClient } from "@/utils/supabase/admin";
 
 export const MODEL_CREDIT_COSTS: Record<string, number> = {
-  "video": 150,    // ~$0.50 cost -> $1.50 retail
-  "image": 40,     // $0.17 cost -> $0.40 retail
-  "document": 5,   // ~$0.02 cost -> $0.05 retail
+  "video":        150,  // ~$0.50 cost → $1.50 retail
+  "image_low":    3,    // matches pricing page: standard image = 3 credits
+  "image_medium": 5,   // mid quality
+  "image_high":   8,   // matches pricing page: 4K image = 8 credits
+  "image":        3,   // fallback
+  "document":     1,   // matches pricing page: text brief (basic) = 1 credit
 };
 
 /**
  * Checks if user has enough credits and deducts them.
  * Throws an error if insufficient credits or user not found.
  */
-export async function consumeCredits(userId: string, type: "video" | "image" | "document") {
+export async function consumeCredits(userId: string, type: string) {
   const supabase = createAdminClient();
   const cost = MODEL_CREDIT_COSTS[type];
 
