@@ -64,55 +64,8 @@ function verifyPaddleSignature(
 }
 
 // ── Handlers ──────────────────────────────────────────────────
-async function handleSubscriptionCreated(data: any) {
-  const supabaseAdmin = createAdminClient();
-  const customerId    = data.customer_id;
-  const subscriptionId = data.id;
-  const priceId       = data.items?.[0]?.price?.id;
-  const status        = data.status; // 'trialing' or 'active'
-  const userId        = data.custom_data?.user_id;
-
-  const plan = PRICE_TO_PLAN[priceId] ?? 'starter';
-  const credits = PLAN_CREDITS[plan] ?? 50;
-
-  // Find user
-  let userQuery = supabaseAdmin.from('users').select('id, email, credits_remaining');
-  if (userId) {
-    userQuery = userQuery.eq('id', userId) as any;
-  } else {
-    const customerEmail = data.customer?.email;
-    if (!customerEmail) return;
-    userQuery = userQuery.eq('email', customerEmail) as any;
-  }
-
-  const { data: user, error } = await (userQuery as any).single();
-  if (error || !user) return;
-
-  // Update user record
-  const newCreditsRemaining = (user.credits_remaining || 0) + credits;
-  
-  await supabaseAdmin
-    .from('users')
-    .update({
-      plan,
-      paddle_customer_id:    customerId,
-      paddle_subscription_id: subscriptionId,
-      subscription_status:   status,
-      credits_remaining:     newCreditsRemaining,
-      credits_total:         newCreditsRemaining, // In V6 total acts as the high water mark
-      credits_reset_at:      new Date().toISOString(),
-    })
-    .eq('id', user.id);
-
-  // Log initial credit grant
-  await supabaseAdmin.from('credit_transactions').insert({
-    user_id:       user.id,
-    type:          'subscription_created',
-    amount:        credits,
-    balance_after: newCreditsRemaining,
-    note:          `Initial grant for ${plan} plan (${status})`,
-  });
-}
+// Removed handleSubscriptionCreated to avoid duplicate grants and race conditions.
+// We handle all initial grants and renewals in handleTransactionCompleted.
 
 async function handleSubscriptionUpdated(data: any) {
   const supabaseAdmin = createAdminClient();
@@ -142,21 +95,9 @@ async function handleSubscriptionUpdated(data: any) {
     updatePayload.credits_remaining = 0;
     updatePayload.credits_total     = 0;
   } else if (plan && plan !== user.plan) {
-    // If plan changed
+    // If plan changed, just update the plan.
+    // The actual credit grant is handled by handleTransactionCompleted.
     updatePayload.plan = plan;
-    const addedCredits = PLAN_CREDITS[plan] ?? 0;
-    const newCredits = (user.credits_remaining || 0) + addedCredits;
-    updatePayload.credits_remaining = newCredits;
-    updatePayload.credits_total     = newCredits;
-    updatePayload.credits_reset_at  = new Date().toISOString();
-
-    await supabaseAdmin.from('credit_transactions').insert({
-      user_id:       user.id,
-      type:          'plan_changed',
-      amount:        addedCredits,
-      balance_after: newCredits,
-      note:          `Plan changed to ${plan}`,
-    });
   }
 
   await supabaseAdmin.from('users').update(updatePayload).eq('id', user.id);
@@ -164,39 +105,53 @@ async function handleSubscriptionUpdated(data: any) {
 
 async function handleTransactionCompleted(data: any) {
   const supabaseAdmin = createAdminClient();
-  // Only handle subscription renewals
+  // We handle initial purchases and renewals here
   if (!data.subscription_id) return;
   const customerId = data.customer_id;
+  const subscriptionId = data.subscription_id;
+  const userId = data.custom_data?.user_id;
+  const priceId = data.items?.[0]?.price?.id;
 
-  const { data: user, error } = await supabaseAdmin
-    .from('users')
-    .select('id, plan, credits_remaining')
-    .eq('paddle_customer_id', customerId)
-    .single();
-
-  if (error || !user) return;
-
-  const plan = user.plan as string;
+  const plan = PRICE_TO_PLAN[priceId] ?? 'starter';
   const addedCredits = PLAN_CREDITS[plan] ?? 0;
   if (addedCredits === 0) return;
+
+  // Find user by userId (first purchase) or customerId (renewals)
+  let userQuery = supabaseAdmin.from('users').select('id, plan, credits_remaining');
+  if (userId) {
+    userQuery = userQuery.eq('id', userId) as any;
+  } else {
+    userQuery = userQuery.eq('paddle_customer_id', customerId) as any;
+  }
+
+  const { data: user, error } = await (userQuery as any).single();
+  if (error || !user) return;
 
   const newCredits = (user.credits_remaining || 0) + addedCredits;
 
   await supabaseAdmin
     .from('users')
     .update({
+      plan,
+      paddle_customer_id: customerId,
+      paddle_subscription_id: subscriptionId,
+      subscription_status: 'active',
       credits_remaining: newCredits,
-      credits_total:     newCredits,
-      credits_reset_at:  new Date().toISOString(),
+      credits_total: newCredits,
+      credits_reset_at: new Date().toISOString(),
     })
     .eq('id', user.id);
 
+  let txType = 'monthly_reset';
+  if (data.origin === 'web') txType = 'subscription_created';
+  else if (data.origin === 'subscription_update') txType = 'plan_changed';
+
   await supabaseAdmin.from('credit_transactions').insert({
     user_id:       user.id,
-    type:          'monthly_reset',
+    type:          txType,
     amount:        addedCredits,
     balance_after: newCredits,
-    note:          `Monthly renewal — ${plan} plan`,
+    note:          `Payment completed — ${plan} plan`,
   });
 }
 
@@ -221,9 +176,9 @@ export async function POST(req: Request) {
 
   try {
     switch (event_type) {
-      case 'subscription.created':
-        await handleSubscriptionCreated(data);
-        break;
+      // case 'subscription.created':
+      //   We rely on transaction.completed for initial setup to avoid race conditions.
+      //   break;
       case 'subscription.updated':
         await handleSubscriptionUpdated(data);
         break;
