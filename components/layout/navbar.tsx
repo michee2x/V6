@@ -5,6 +5,14 @@ import { logout } from "@/app/login/actions";
 import { Button } from "@/components/ui/button";
 import { ContactModal } from "@/components/features/contact/contact-modal";
 import { CreditCounter } from "@/components/layout/credit-counter";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { User, History, LogOut } from "lucide-react";
 
 export async function Navbar() {
   const supabase = await createClient();
@@ -22,7 +30,7 @@ export async function Navbar() {
             Recrea<span className="text-primary">8</span>
           </span>
         </Link>
-        <div className="flex items-center space-x-2 sm:space-x-4">
+        <div className="flex items-center space-x-3 sm:space-x-6">
           <Link href="/#pricing" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
             Pricing
           </Link>
@@ -30,14 +38,39 @@ export async function Navbar() {
           {user ? (
             <>
               <CreditCounter />
-              <Link href="/history" className="text-sm font-medium text-muted-foreground hover:text-foreground">
-                History
-              </Link>
-              <form action={logout}>
-                <Button variant="ghost" size="sm" type="submit">
-                  Log out
-                </Button>
-              </form>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size="icon" className="rounded-full">
+                    <User className="h-5 w-5 text-muted-foreground" />
+                    <span className="sr-only">User menu</span>
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-56">
+                  <div className="flex items-center justify-start gap-2 p-2">
+                    <div className="flex flex-col space-y-1 leading-none">
+                      {user.email && (
+                        <p className="font-medium text-sm text-muted-foreground truncate">{user.email}</p>
+                      )}
+                    </div>
+                  </div>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem asChild className="cursor-pointer">
+                    <Link href="/history" className="flex w-full items-center">
+                      <History className="mr-2 h-4 w-4" />
+                      <span>History</span>
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem asChild className="cursor-pointer text-destructive focus:text-destructive">
+                    <form action={logout} className="w-full">
+                      <button type="submit" className="flex w-full items-center">
+                        <LogOut className="mr-2 h-4 w-4" />
+                        <span>Log out</span>
+                      </button>
+                    </form>
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             </>
           ) : (
             <Link href="/login">

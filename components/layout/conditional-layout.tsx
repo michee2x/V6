@@ -3,9 +3,7 @@
 import { usePathname } from "next/navigation";
 
 export function ConditionalHeader({ children }: { children: React.ReactNode }) {
-  const pathname = usePathname();
-  // Hide on session routes
-  if (pathname?.startsWith("/session")) return null;
+  // Always show header on all routes
   return <>{children}</>;
 }
 
