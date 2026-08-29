@@ -111,11 +111,6 @@ export async function PricingSection() {
     <section id="pricing" className="w-full flex-col flex bg-background relative z-10 pt-20 border-t border-border">
       {/* Hero */}
       <div className="relative w-full overflow-hidden pb-16">
-        <div
-          aria-hidden="true"
-          className="pointer-events-none absolute -top-40 left-1/2 -translate-x-1/2 w-[800px] h-[500px] rounded-full opacity-20"
-          style={{ background: "radial-gradient(ellipse at center, oklch(0.65 0.2 280) 0%, transparent 70%)" }}
-        />
         <div className="relative z-10 max-w-4xl mx-auto px-4 text-center">
           <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-primary/30 bg-primary/10 text-primary text-sm font-medium mb-6">
             <span className="relative flex h-2 w-2">

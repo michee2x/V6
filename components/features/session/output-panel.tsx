@@ -41,19 +41,21 @@ export function OutputPanel({ sessionId }: OutputPanelProps) {
   return (
     <div className="flex flex-col flex-1 max-w-5xl w-full mx-auto relative h-full">
       {/* Header */}
-      <div className="px-8 py-4 border-b border-border bg-muted/30 flex items-center gap-4 shrink-0">
-        <Link
-          href={`/session/${sessionId}`}
-          className="flex items-center gap-1.5 text-label text-muted-foreground hover:text-foreground transition-colors"
-        >
-          <ArrowLeft className="w-3.5 h-3.5" />
-          Insights
-        </Link>
-        <h1 className="text-h3 text-foreground">Output History</h1>
-        <div className="ml-auto">
+      <div className="px-4 md:px-8 py-3 md:py-4 border-b border-border bg-muted/30 flex items-center justify-between gap-2 md:gap-4 shrink-0">
+        <div className="flex items-center gap-2 md:gap-4 overflow-hidden">
+          <Link
+            href={`/session/${sessionId}`}
+            className="flex items-center gap-1.5 text-label text-muted-foreground hover:text-foreground transition-colors shrink-0"
+          >
+            <ArrowLeft className="w-4 h-4 md:w-3.5 md:h-3.5" />
+            <span className="hidden sm:inline">Insights</span>
+          </Link>
+          <h1 className="text-h4 md:text-h3 text-foreground truncate">Output History</h1>
+        </div>
+        <div className="shrink-0">
           <Button variant="ghost" size="sm" onClick={fetchGenerations} disabled={isLoading}>
-            <RefreshCw className={cn("w-4 h-4 mr-2", isLoading && "animate-spin")} />
-            Refresh
+            <RefreshCw className={cn("w-4 h-4 sm:mr-2", isLoading && "animate-spin")} />
+            <span className="hidden sm:inline">Refresh</span>
           </Button>
         </div>
       </div>
