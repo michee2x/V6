@@ -4,7 +4,7 @@ import * as React from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import {
-  Copy, Download, Wand2, CheckCheck, AlertCircle, RefreshCw, ArrowLeft, Settings2, ArrowUp, Paperclip, X, Loader2, Image as ImageIcon, Video, FileText, Undo2, Redo2, ChevronDown, ChevronUp, MessageSquare, Lock, Sparkles, LogIn
+  Copy, Download, Wand2, CheckCheck, AlertCircle, RefreshCw, ArrowLeft, Settings2, ArrowUp, Paperclip, X, Loader2, Image as ImageIcon, Video, FileText, Undo2, Redo2, ChevronDown, ChevronUp, MessageSquare, Lock, Sparkles, LogIn, Check
 } from "lucide-react";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -28,6 +28,11 @@ function canGenerateVideo(plan: string) {
   return plan !== "free";
 }
 
+/** Returns true if this plan can use medium or high quality images */
+function canUseHighQuality(plan: string) {
+  return plan !== "free";
+}
+
 /** Returns true if this user is on a paid plan at all */
 function isPaidPlan(plan: string) {
   return plan !== "free";
@@ -40,6 +45,9 @@ const contentTypeLabel: Record<string, string> = {
   article: "document",
   auto:    "image",
 };
+
+type AspectRatio = "1:1" | "16:9" | "9:16" | "4:3" | "3:4";
+type ImageQuality = "low" | "medium" | "high";
 
 type GenerationResult =
   | { type: "image"; images: { base64: string; mimeType: string }[] }
@@ -58,6 +66,9 @@ export function BriefPanel({ sessionId, contentType, isLoggedIn, userPlan }: Bri
   const [isRendering, setIsRendering] = React.useState(false);
   const [generationResult, setGenerationResult] = React.useState<GenerationResult | null>(null);
   const [showOutOfCredits, setShowOutOfCredits] = React.useState(false);
+  const [aspectRatio, setAspectRatio] = React.useState<AspectRatio>("1:1");
+  const [imageQuality, setImageQuality] = React.useState<ImageQuality>("low");
+  const [showMoreAspect, setShowMoreAspect] = React.useState(false);
   
   const [chatMessages, setChatMessages] = React.useState<Message[]>([]);
   const [history, setHistory] = React.useState<string[]>([]);
@@ -218,10 +229,16 @@ export function BriefPanel({ sessionId, contentType, isLoggedIn, userPlan }: Bri
       if (effectiveType === "video") endpoint = "/api/v1/generate/video";
       if (effectiveType === "article") endpoint = "/api/v1/generate/document";
 
+      const bodyPayload: Record<string, any> = { sessionId };
+      if (effectiveType === "image") {
+        bodyPayload.aspectRatio = aspectRatio;
+        bodyPayload.quality = imageQuality;
+      }
+
       const res = await fetch(endpoint, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ sessionId }),
+        body: JSON.stringify(bodyPayload),
       });
 
       const data = await res.json();
@@ -342,7 +359,7 @@ export function BriefPanel({ sessionId, contentType, isLoggedIn, userPlan }: Bri
             >
               <Settings2 className="w-4 h-4" />
             </PopoverTrigger>
-            <PopoverContent align="end" className="w-72 p-4 flex flex-col gap-3 border-border shadow-xl">
+            <PopoverContent align="end" className="w-80 p-4 flex flex-col gap-3 border-border shadow-xl">
               <p className="text-label font-medium text-foreground">Generation Options</p>
 
               {/* Access-control CTA */}
@@ -406,6 +423,96 @@ export function BriefPanel({ sessionId, contentType, isLoggedIn, userPlan }: Bri
                 ) : (
                   /* ── Logged-in with access ── */
                   <>
+                    {/* Image-specific settings */}
+                    {effectiveType === "image" && (
+                      <div className="flex flex-col gap-3">
+                        {/* Aspect Ratio */}
+                        <div>
+                          <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider mb-2">Aspect Ratio</p>
+                          <div className="grid grid-cols-4 gap-1.5">
+                            {([
+                              { ratio: "1:1" as AspectRatio, label: "Square", w: 28, h: 28 },
+                              { ratio: "16:9" as AspectRatio, label: "Landscape", w: 36, h: 20 },
+                              { ratio: "9:16" as AspectRatio, label: "Portrait", w: 20, h: 36 },
+                              { ratio: "4:3" as AspectRatio, label: "4:3", w: 32, h: 24 },
+                            ]).map(({ ratio, label, w, h }) => (
+                              <button
+                                key={ratio}
+                                onClick={() => setAspectRatio(ratio)}
+                                className={cn(
+                                  "flex flex-col items-center gap-1 py-2 px-1 rounded-xl border transition-all duration-150 hover:border-primary/60",
+                                  aspectRatio === ratio
+                                    ? "border-primary bg-primary/10 text-primary"
+                                    : "border-border bg-muted/40 text-muted-foreground"
+                                )}
+                              >
+                                <span
+                                  className={cn(
+                                    "rounded-sm border-2 transition-colors",
+                                    aspectRatio === ratio ? "border-primary" : "border-muted-foreground/50"
+                                  )}
+                                  style={{ width: w / 2.5, height: h / 2.5, display: "block" }}
+                                />
+                                <span className="text-[10px] font-medium leading-none">{label}</span>
+                              </button>
+                            ))}
+                          </div>
+                          {/* 3:4 toggle */}
+                          <button
+                            onClick={() => setAspectRatio("3:4")}
+                            className={cn(
+                              "mt-1.5 w-full flex items-center justify-between px-3 py-1.5 rounded-lg border text-[11px] font-medium transition-all",
+                              aspectRatio === "3:4"
+                                ? "border-primary bg-primary/10 text-primary"
+                                : "border-border text-muted-foreground hover:border-primary/40"
+                            )}
+                          >
+                            <span>Tall Portrait (3:4)</span>
+                            {aspectRatio === "3:4" && <Check className="w-3 h-3" />}
+                          </button>
+                        </div>
+
+                        {/* Quality */}
+                        <div>
+                          <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider mb-2">Quality</p>
+                          <div className="flex gap-1.5">
+                            {([
+                              { value: "low" as ImageQuality, label: "Low", requiresPaid: false },
+                              { value: "medium" as ImageQuality, label: "Medium", requiresPaid: true },
+                              { value: "high" as ImageQuality, label: "High", requiresPaid: true },
+                            ]).map(({ value, label, requiresPaid }) => {
+                              const locked = requiresPaid && !canUseHighQuality(userPlan);
+                              return (
+                                <button
+                                  key={value}
+                                  disabled={locked}
+                                  title={locked ? "Requires Starter plan or above" : undefined}
+                                  onClick={() => !locked && setImageQuality(value)}
+                                  className={cn(
+                                    "flex-1 flex items-center justify-center gap-1 py-1.5 rounded-lg border text-[11px] font-semibold transition-all",
+                                    locked
+                                      ? "border-border text-muted-foreground/40 cursor-not-allowed opacity-60"
+                                      : imageQuality === value
+                                        ? "border-primary bg-primary/10 text-primary"
+                                        : "border-border text-muted-foreground hover:border-primary/40"
+                                  )}
+                                >
+                                  {locked && <Lock className="w-3 h-3" />}
+                                  {label}
+                                </button>
+                              );
+                            })}
+                          </div>
+                          {!canUseHighQuality(userPlan) && (
+                            <p className="text-[10px] text-muted-foreground mt-1.5 leading-snug">
+                              Medium &amp; High quality require{" "}
+                              <Link href="/#pricing" className="text-primary underline underline-offset-2">Starter+</Link>
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                    )}
+
                     <Button
                       id="recreate-now-btn"
                       className="w-full font-semibold tracking-wide"

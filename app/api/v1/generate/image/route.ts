@@ -20,10 +20,11 @@ import { createClient } from "@/utils/supabase/server";
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const { sessionId, customPrompt, aspectRatio } = body as {
+    const { sessionId, customPrompt, aspectRatio, quality } = body as {
       sessionId?: string;
       customPrompt?: string;
       aspectRatio?: "1:1" | "16:9" | "9:16" | "4:3" | "3:4";
+      quality?: "low" | "medium" | "high";
     };
 
     let prompt = customPrompt?.trim() ?? "";
@@ -79,6 +80,22 @@ export async function POST(req: NextRequest) {
           { status: 402 }
         );
       }
+
+      // Enforce quality gating: free users can only use low quality
+      const requestedQuality = quality ?? "low";
+      const isPaid = userPlan !== "free";
+      if (!isPaid && requestedQuality !== "low") {
+        return NextResponse.json(
+          {
+            success: false,
+            error: {
+              code: "PLAN_LIMIT",
+              message: `${requestedQuality.charAt(0).toUpperCase() + requestedQuality.slice(1)} quality images require a Starter plan or above. Upgrade to unlock.`,
+            },
+          },
+          { status: 403 }
+        );
+      }
     } else {
       // Anonymous rate limiting
       try {
@@ -96,6 +113,7 @@ export async function POST(req: NextRequest) {
     const images = await generateImageFromBrief({
       prompt,
       aspectRatio: aspectRatio ?? "1:1",
+      quality: (quality ?? "low") as "low" | "medium" | "high",
       numberOfImages: 1,
     });
 

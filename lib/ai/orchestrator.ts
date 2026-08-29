@@ -143,6 +143,7 @@ export interface GenerateImageOptions {
   prompt: string;
   aspectRatio?: "1:1" | "16:9" | "9:16" | "4:3" | "3:4";
   numberOfImages?: number;
+  quality?: "low" | "medium" | "high";
 }
 
 export interface GeneratedImage {
@@ -157,14 +158,14 @@ export interface GeneratedImage {
 export async function generateImageFromBrief(
   options: GenerateImageOptions
 ): Promise<GeneratedImage[]> {
-  const { prompt, aspectRatio = "1:1", numberOfImages = 1 } = options;
+  const { prompt, aspectRatio = "1:1", numberOfImages = 1, quality = "low" } = options;
 
   const sizeMap: Record<string, string> = {
     "1:1":  "1024x1024",
     "16:9": "1536x1024",
     "9:16": "1024x1536",
-    "4:3":  "1024x1024",
-    "3:4":  "1024x1024",
+    "4:3":  "1365x1024",
+    "3:4":  "1024x1365",
   };
   const size = sizeMap[aspectRatio] ?? "1024x1024";
 
@@ -179,6 +180,7 @@ export async function generateImageFromBrief(
       prompt,
       n: numberOfImages,
       size,
+      quality,
       output_format: "png",
     }),
   });
