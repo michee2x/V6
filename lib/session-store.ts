@@ -6,6 +6,7 @@
  */
 
 import { createClient } from "@/utils/supabase/server";
+import { createAdminClient } from "@/utils/supabase/admin";
 
 export type ContentType = "video" | "image" | "article";
 
@@ -155,4 +156,51 @@ export async function getGenerations(sessionId: string): Promise<SessionGenerati
     createdAt: new Date(row.created_at),
     expiresAt: row.expires_at ? new Date(row.expires_at) : null,
   }));
+}
+
+// ─── Chat Persistence ──────────────────────────────────────────────────
+
+export interface PersistedMessage {
+  id: string;
+  role: "user" | "assistant";
+  content: string;
+}
+
+/** Persist the full chat thread for a session (admin-initiated, uses service key). */
+export async function saveChatMessages(
+  sessionId: string,
+  messages: PersistedMessage[]
+): Promise<void> {
+  const admin = createAdminClient();
+  const { error } = await admin
+    .from("sessions")
+    .update({ chat_messages: messages })
+    .eq("id", sessionId);
+  if (error) console.error("Error saving chat messages:", error);
+}
+
+/** Load persisted chat for a public/admin session. */
+export async function getChatMessages(
+  sessionId: string
+): Promise<PersistedMessage[]> {
+  const supabase = await createClient();
+  const { data } = await supabase
+    .from("sessions")
+    .select("chat_messages")
+    .eq("id", sessionId)
+    .single();
+  return (data?.chat_messages as PersistedMessage[]) ?? [];
+}
+
+/** Mark a session as public (read-only viewable by anyone). Admin only. */
+export async function setSessionPublic(
+  sessionId: string,
+  isPublic: boolean
+): Promise<void> {
+  const admin = createAdminClient();
+  const { error } = await admin
+    .from("sessions")
+    .update({ is_public: isPublic })
+    .eq("id", sessionId);
+  if (error) console.error("Error updating session visibility:", error);
 }
