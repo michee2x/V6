@@ -32,11 +32,13 @@ export default function HomePage() {
             </AnimatedGradientText>
           </div>
           <h1 className="text-display tracking-tight text-foreground">
-            Paste a link.{" "}
+            See something you like online?{" "}
             <span className="text-muted-foreground">Recrea8 it.</span>
           </h1>
           <p className="text-body-lg text-muted-foreground max-w-prose">
-            Paste a TikTok, YouTube video, or Image. Our AI analyzes it and generates a new version inspired by it.
+            Paste a link or upload a creative. Recrea8 reverse-engineers how it
+            works, lets you make it yours, and generates the finished version in
+            minutes.
           </p>
         </div>
 

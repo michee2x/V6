@@ -96,7 +96,7 @@ export function InsightPanel({
           <details className="group border border-border rounded-lg overflow-hidden">
             <summary className="flex items-center gap-2 p-4 bg-muted/30 cursor-pointer hover:bg-muted/50 transition-colors select-none list-none [&::-webkit-details-marker]:hidden">
               <Sparkles className="w-4 h-4 text-primary" />
-              <h2 className="text-label text-foreground uppercase tracking-wide">Advanced Analysis</h2>
+              <h2 className="text-label text-foreground uppercase tracking-wide">Advanced Insights</h2>
               <div className="ml-auto flex items-center gap-2">
                 {isStreamingAdvanced && (
                   <span className="text-caption text-muted-foreground animate-pulse">Analysing...</span>

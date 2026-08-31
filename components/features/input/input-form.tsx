@@ -24,6 +24,14 @@ const contentTypes: {
   { value: "article", label: "Article", icon: Newspaper },
 ];
 
+// ── Focus hint placeholder copy per content type ──────────────────────────────
+const focusHintPlaceholders: Record<ContentType, string> = {
+  auto:    "What should the AI focus on? (optional)",
+  video:   "e.g. \"Focus on the hook and editing style\"",
+  image:   "e.g. \"Focus on the composition and colour palette\"",
+  article: "e.g. \"Focus on the argument structure\"",
+};
+
 // ── Confirmation badge copy ───────────────────────────────────────────────────
 const confirmationCopy: Partial<Record<ContentType, string>> = {
   video:   "AI will focus on the video in this link",
@@ -87,6 +95,7 @@ export function InputForm() {
   const router = useRouter();
   const [url, setUrl] = React.useState("");
   const [contentType, setContentType] = React.useState<ContentType>("auto");
+  const [focusHint, setFocusHint] = React.useState("");
   const [isDragging, setIsDragging] = React.useState(false);
   const [uploadedFile, setUploadedFile] = React.useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = React.useState<string | null>(null);
@@ -155,6 +164,7 @@ export function InputForm() {
         const form = new FormData();
         form.append("file", uploadedFile);
         form.append("contentType", contentType);
+        if (focusHint.trim()) form.append("focusHint", focusHint.trim());
         res = await fetch("/api/v1/sessions", { method: "POST", body: form });
       } else {
         res = await fetch("/api/v1/sessions", {
@@ -163,6 +173,7 @@ export function InputForm() {
           body: JSON.stringify({
             url: url.trim(),
             contentType,
+            ...(focusHint.trim() ? { focusHint: focusHint.trim() } : {}),
           }),
         });
       }
@@ -226,6 +237,32 @@ export function InputForm() {
   return (
     <>
       <form onSubmit={handleSubmit} className="w-full flex flex-col gap-3">
+
+        {/* ── Content type pill selector ─────────────────────────────────── */}
+        <div
+          role="group"
+          aria-label="Content type"
+          className="flex items-center gap-1 p-1 rounded-xl bg-muted/60 border border-border/60 w-full"
+        >
+          {contentTypes.map(({ value, label, icon: Icon }) => (
+            <button
+              key={value}
+              type="button"
+              id={`content-type-${value}-btn`}
+              onClick={() => handleTypeSelect(value)}
+              className={cn(
+                "flex items-center gap-1 sm:gap-1.5 px-1.5 sm:px-3 py-1.5 rounded-lg text-[11px] sm:text-sm font-medium transition-all duration-150 flex-1 justify-center",
+                contentType === value
+                  ? "bg-background text-foreground shadow-sm border border-border/50"
+                  : "text-muted-foreground hover:text-foreground hover:bg-background/40"
+              )}
+              aria-pressed={contentType === value}
+            >
+              <Icon className="w-3 h-3 sm:w-3.5 sm:h-3.5 shrink-0" />
+              <span className="tracking-tight">{label}</span>
+            </button>
+          ))}
+        </div>
 
         {/* ── Main input + focus hint area ───────────────────────────────── */}
         <div
@@ -340,7 +377,24 @@ export function InputForm() {
             </div>
           )}
 
-          {/* Divider removed as well as focus hint */}
+          {/* Divider */}
+          <div className="h-px bg-border/60 mx-3" />
+
+          {/* Focus hint row */}
+          <div className="flex items-center gap-2 px-4 py-2">
+            <Target className="w-3.5 h-3.5 text-muted-foreground/60 shrink-0" />
+            <input
+              id="focus-hint-input"
+              type="text"
+              value={focusHint}
+              onChange={(e) => setFocusHint(e.target.value)}
+              placeholder={focusHintPlaceholders[contentType]}
+              className="flex-1 bg-transparent text-caption text-foreground placeholder:text-muted-foreground/60 outline-none min-w-0 py-1"
+              autoComplete="off"
+              spellCheck={false}
+              maxLength={200}
+            />
+          </div>
 
           <input
             ref={fileInputRef}
@@ -373,43 +427,14 @@ export function InputForm() {
           </div>
         )}
 
-        {/* ── 1-Click Examples ───────────────────────────────────────────── */}
-        {!hasInput && (
-          <div className="flex flex-wrap items-center justify-center gap-2 mt-1">
-            <span className="text-[11px] text-muted-foreground mr-1">Try it:</span>
-            <button
-              type="button"
-              onClick={() => {
-                const sampleUrl = "https://www.youtube.com/shorts/5H6E45gHwF0"; // Viral TikTok/Short example
-                setUrl(sampleUrl);
-                setContentType("video");
-              }}
-              className="px-2.5 py-1 text-[11px] font-medium rounded-full bg-muted/50 border border-border hover:bg-muted transition-colors text-muted-foreground hover:text-foreground"
-            >
-              Viral Short
-            </button>
-            <button
-              type="button"
-              onClick={() => {
-                const sampleUrl = "https://images.unsplash.com/photo-1682687220063-4742bd7fd538?q=80&w=1000&auto=format&fit=crop"; // High quality image
-                setUrl(sampleUrl);
-                setContentType("image");
-              }}
-              className="px-2.5 py-1 text-[11px] font-medium rounded-full bg-muted/50 border border-border hover:bg-muted transition-colors text-muted-foreground hover:text-foreground"
-            >
-              Cinematic Image
-            </button>
-          </div>
-        )}
-
-        <Button type="submit" size="lg" className="w-full mt-2 font-semibold tracking-wide" disabled={!hasInput || isLoading}>
+        <Button type="submit" size="lg" className="w-full" disabled={!hasInput || isLoading}>
           {isLoading ? (
             <>
               <span className="animate-spin mr-2 h-4 w-4 border-2 border-current border-t-transparent rounded-full inline-block" />
-              Analyzing...
+              Analysing...
             </>
           ) : (
-            "Analyze & Recreate →"
+            "Understand this →"
           )}
         </Button>
         <p className="text-center text-xs text-muted-foreground/80 mt-1 flex items-center justify-center gap-1.5">

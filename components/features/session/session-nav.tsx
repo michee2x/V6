@@ -41,7 +41,7 @@ export function SessionNav() {
             aria-current={isInsights ? "page" : undefined}
           >
             <Lightbulb className="w-3.5 h-3.5" />
-            <span className="hidden sm:inline">Analysis</span>
+            <span className="hidden sm:inline">Insights</span>
           </Link>
 
           <Link

@@ -341,7 +341,7 @@ export function BriefPanel({ sessionId, contentType, isLoggedIn, userPlan }: Bri
             className="flex items-center gap-1.5 text-label text-muted-foreground hover:text-foreground transition-colors shrink-0"
           >
             <ArrowLeft className="w-4 h-4 md:w-3.5 md:h-3.5" />
-            <span className="hidden sm:inline">Analysis</span>
+            <span className="hidden sm:inline">Insights</span>
           </Link>
           <h1 className="text-h4 md:text-h3 text-foreground truncate hidden xs:block">Master Prompt</h1>
         </div>
