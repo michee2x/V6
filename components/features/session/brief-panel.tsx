@@ -211,24 +211,6 @@ export function BriefPanel({ sessionId, contentType, isLoggedIn, userPlan }: Bri
     toast.success("Exported as JSON");
   };
 
-  const exportAsMarkdown = () => {
-    let md = "# Master Prompt\n\n";
-    try {
-      const p = JSON.parse(liveBrief);
-      Object.entries(p).forEach(([k, v]) => {
-        const label = k.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase());
-        md += `## ${label}\n\n${v}\n\n`;
-      });
-    } catch {
-      md += liveBrief;
-    }
-    const blob = new Blob([md], { type: "text/markdown" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a"); a.href = url; a.download = "master-prompt.md"; a.click();
-    URL.revokeObjectURL(url);
-    toast.success("Exported as Markdown");
-  };
-
   const exportAsText = () => {
     let text = "";
     try {
@@ -467,9 +449,6 @@ export function BriefPanel({ sessionId, contentType, isLoggedIn, userPlan }: Bri
                       <Button id="export-text-btn" variant="outline" className="w-full justify-start" disabled={!liveBrief} onClick={exportAsText}>
                         <FileText className="w-4 h-4 mr-2" />Export plain text
                       </Button>
-                      <Button id="export-md-btn" variant="outline" className="w-full justify-start" disabled={!liveBrief} onClick={exportAsMarkdown}>
-                        <Copy className="w-4 h-4 mr-2" />Export as Markdown
-                      </Button>
                     </div>
                   </>
                 ) : isVideoBocked ? (
@@ -599,9 +578,6 @@ export function BriefPanel({ sessionId, contentType, isLoggedIn, userPlan }: Bri
                       </Button>
                       <Button id="export-text-btn-main" variant="outline" className="w-full justify-start" disabled={!liveBrief} onClick={exportAsText}>
                         <FileText className="w-4 h-4 mr-2" />Export plain text
-                      </Button>
-                      <Button id="export-md-btn-main" variant="outline" className="w-full justify-start" disabled={!liveBrief} onClick={exportAsMarkdown}>
-                        <Copy className="w-4 h-4 mr-2" />Export as Markdown
                       </Button>
                       <Button
                         id="copy-prompt-mobile-btn"
