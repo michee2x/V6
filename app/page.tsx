@@ -1,6 +1,7 @@
 import { InputForm } from "@/components/features/input/input-form";
 import { GoogleGeminiEffect } from "@/components/ui/google-gemini-effect";
 import { AnimatedGradientText } from "@/components/ui/animated-gradient-text";
+import { HowItWorks } from "@/components/features/onboarding/how-it-works";
 import { InspirationGallery } from "@/components/features/inspiration/inspiration-gallery";
 import { BeforeAfterShowcase } from "@/components/features/showcase/before-after-showcase";
 import { PricingSection } from "@/components/pricing/pricing-section";
@@ -51,9 +52,14 @@ export default function HomePage() {
         </p>
       </section>
 
-      <section className="relative z-10 w-full max-w-2xl flex flex-col items-center gap-10 pb-20">
+      <section className="relative z-10 w-full flex flex-col items-center gap-10 pb-20">
+        {/* How it Works */}
+        <HowItWorks />
+
         {/* Gallery */}
-        <InspirationGallery />
+        <div className="w-full max-w-2xl flex flex-col items-center gap-10 px-4">
+          <InspirationGallery />
+        </div>
       </section>
 
       {/* Full width showcase */}
