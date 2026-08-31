@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import Link from "next/link";
-import { ArrowRight, Play, FileText, ExternalLink } from "lucide-react";
+import { ArrowRight, Play, FileText, Image as ImageIcon, ExternalLink } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { ShowcaseItem } from "./before-after-showcase";
 
@@ -26,20 +26,16 @@ function ShowcaseCard({ item }: { item: ShowcaseItem }) {
         <div className="relative bg-muted border-r border-border overflow-hidden flex items-center justify-center">
           {item.before_asset_url ? (
             // eslint-disable-next-line @next/next/no-img-element
-            <img
-              src={item.before_asset_url}
-              alt={item.before_label}
-              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-            />
+            <img src={item.before_asset_url} alt="Before" className="absolute inset-0 w-full h-full object-cover" />
           ) : (
-            <div className="flex flex-col items-center gap-2 p-4 text-center">
-              <FileText className="w-8 h-8 text-muted-foreground/40" />
+            <div className="flex flex-col items-center justify-center text-muted-foreground/50">
+              <ImageIcon className="w-6 h-6 mb-1" />
               <span className="text-[10px] text-muted-foreground">Source</span>
             </div>
           )}
           {/* Before label */}
           <div className="absolute top-2 left-2 px-2 py-0.5 rounded-md bg-black/60 backdrop-blur-sm text-[10px] font-bold text-white/90 uppercase tracking-wider">
-            {item.before_label}
+            {item.before_label || "Original"}
           </div>
         </div>
 
@@ -56,7 +52,7 @@ function ShowcaseCard({ item }: { item: ShowcaseItem }) {
               <img
                 src={item.after_asset_url}
                 alt={item.after_label}
-                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
               />
               {item.content_type === "video" && (
                 <div className="absolute inset-0 flex items-center justify-center bg-black/30">
@@ -76,7 +72,7 @@ function ShowcaseCard({ item }: { item: ShowcaseItem }) {
           )}
           {/* After label */}
           <div className="absolute top-2 right-2 px-2 py-0.5 rounded-md bg-primary/80 backdrop-blur-sm text-[10px] font-bold text-white uppercase tracking-wider">
-            {item.after_label}
+            {item.after_label || "Recrea8'd"}
           </div>
         </div>
       </div>

@@ -2,7 +2,7 @@ import { createClient } from "@/utils/supabase/server";
 import { isAdmin } from "@/lib/admin";
 import { redirect } from "next/navigation";
 import Link from "next/link";
-import { LayoutDashboard, Image, LogOut } from "lucide-react";
+import { LayoutDashboard, Image, LogOut, Mail, Users, Star } from "lucide-react";
 
 export default async function AdminLayout({
   children,
@@ -35,6 +35,20 @@ export default async function AdminLayout({
             className="flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm font-medium text-foreground hover:bg-muted transition-colors"
           >
             <LayoutDashboard className="w-4 h-4 text-muted-foreground" />
+            Overview
+          </Link>
+          <Link
+            href="/admin/users"
+            className="flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm font-medium text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
+          >
+            <Users className="w-4 h-4 text-muted-foreground" />
+            Users
+          </Link>
+          <Link
+            href="/admin/showcase"
+            className="flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm font-medium text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
+          >
+            <Star className="w-4 h-4 text-muted-foreground" />
             Showcase
           </Link>
           <Link
@@ -43,6 +57,13 @@ export default async function AdminLayout({
           >
             <Image className="w-4 h-4" />
             All Sessions
+          </Link>
+          <Link
+            href="/admin/contact"
+            className="flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm font-medium text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
+          >
+            <Mail className="w-4 h-4" />
+            Contact Messages
           </Link>
         </nav>
 

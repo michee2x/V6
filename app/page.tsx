@@ -20,7 +20,7 @@ export default function HomePage() {
 
       <section className="relative z-10 w-full max-w-2xl flex flex-col items-center justify-center min-h-screen gap-10">
         {/* Hero */}
-        <div className="flex flex-col items-center text-center gap-4 mt-20">
+        <div className="flex flex-col items-center text-center gap-4 mt-20 z-10">
           <div className="group relative mx-auto flex items-center justify-center rounded-full px-4 py-1.5 shadow-[inset_0_-8px_10px_#8fdfff1f] transition-shadow duration-500 ease-out hover:shadow-[inset_0_-5px_10px_#8fdfff3f]">
             {/* Animated gradient border wrapper */}
             <div className="animate-gradient absolute inset-0 -z-10 block rounded-[inherit] bg-gradient-to-r from-primary/50 via-secondary/50 to-primary/50 bg-[length:300%_100%] p-[1px]">
@@ -34,7 +34,7 @@ export default function HomePage() {
           </div>
           <h1 className="text-display tracking-tight text-foreground">
             See something you like online?{" "}
-            <span className="text-muted-foreground">Recrea8 it.</span>
+            <span className="text-brand-gradient">Recrea8 it.</span>
           </h1>
           <p className="text-body-lg text-muted-foreground max-w-prose">
             Paste a link or upload a creative. Recrea8 reverse-engineers how it
@@ -57,9 +57,7 @@ export default function HomePage() {
         <HowItWorks />
 
         {/* Gallery */}
-        <div className="w-full max-w-2xl flex flex-col items-center gap-10 px-4">
-          <InspirationGallery />
-        </div>
+        <InspirationGallery />
       </section>
 
       {/* Full width showcase */}

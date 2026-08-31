@@ -48,11 +48,7 @@ export async function BeforeAfterShowcase() {
       className="w-full py-20 border-t border-border/40 mt-8 flex flex-col items-center gap-12"
     >
       {/* Heading */}
-      <div className="flex flex-col items-center text-center gap-4 px-4 max-w-2xl">
-        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full border border-primary/30 bg-primary/5 text-primary text-xs font-semibold tracking-wide">
-          <span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
-          Real transformations
-        </span>
+      <div className="flex flex-col items-center text-center gap-3 px-4 max-w-2xl">
         <h2 className="text-3xl sm:text-4xl font-bold tracking-tight text-foreground">
           See what&apos;s possible
         </h2>

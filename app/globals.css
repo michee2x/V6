@@ -14,6 +14,16 @@
     }
   }
 
+  @keyframes drift1 {
+    from { transform: translate(0, 0); }
+    to { transform: translate(-24px, 26px); }
+  }
+
+  @keyframes drift2 {
+    from { transform: translate(0, 0); }
+    to { transform: translate(20px, -18px); }
+  }
+
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --font-sans: var(--font-sans);
@@ -206,3 +216,10 @@
   line-height: 1.125rem;
   font-weight: 500;
 }
+
+@utility text-brand-gradient {
+  background: linear-gradient(120deg, #7036FC 0%, #3B71FC 55%, #06BCFD 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
