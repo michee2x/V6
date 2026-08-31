@@ -68,10 +68,11 @@ export async function POST(req: NextRequest) {
     const { data: { user } } = await supabase.auth.getUser();
 
     let userPlan = "free";
+    const requestedQuality = quality ?? "medium";
 
     if (user) {
       // Consume credits based on quality tier
-      const requestedQuality = quality ?? "medium";
+      // Consume credits based on quality tier
       const creditType = `image_${requestedQuality}`;
       try {
         const { plan } = await consumeCredits(user.id, creditType);
@@ -114,7 +115,7 @@ export async function POST(req: NextRequest) {
     const images = await generateImageFromBrief({
       prompt,
       aspectRatio: aspectRatio ?? "1:1",
-      quality: (quality ?? "low") as "low" | "medium" | "high",
+      quality: requestedQuality as "low" | "medium" | "high",
       numberOfImages: 1,
     });
 
