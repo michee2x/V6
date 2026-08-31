@@ -350,14 +350,11 @@ export default function AdminUsersDashboard() {
                     {/* Dropdown */}
                     <td className="px-6 py-4 text-right">
                       <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button
-                            variant="ghost"
-                            className="h-8 w-8 p-0 text-muted-foreground hover:text-foreground hover:bg-muted rounded-md"
+                        <DropdownMenuTrigger
+                            className="h-8 w-8 p-0 flex items-center justify-center rounded-md text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
                           >
                             <span className="sr-only">Open menu</span>
                             <MoreVertical className="h-5 w-5" />
-                          </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end" className="w-44 bg-card border border-border shadow-lg rounded-xl">
                           <DropdownMenuItem
