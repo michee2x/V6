@@ -3,7 +3,7 @@ import { BriefPanel } from "@/components/features/session/brief-panel";
 import { createClient } from "@/utils/supabase/server";
 
 export const metadata: Metadata = {
-  title: "Creative Brief",
+  title: "Master Prompt",
 };
 
 interface BriefPageProps {

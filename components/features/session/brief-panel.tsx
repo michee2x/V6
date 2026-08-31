@@ -75,6 +75,7 @@ export function BriefPanel({ sessionId, contentType, isLoggedIn, userPlan }: Bri
   const [historyIndex, setHistoryIndex] = React.useState(-1);
   const [changedParagraphs, setChangedParagraphs] = React.useState<Set<number>>(new Set());
   const [isChatCollapsed, setIsChatCollapsed] = React.useState(false);
+  const [showJsonView, setShowJsonView] = React.useState(false);
 
   const fileInputRef = React.useRef<HTMLInputElement>(null);
 
@@ -121,13 +122,13 @@ export function BriefPanel({ sessionId, contentType, isLoggedIn, userPlan }: Bri
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [history.length]);
 
-  // Initial brief load -> history
+  // Initial Master Prompt load -> history
   React.useEffect(() => {
     if (briefStream.isDone && briefStream.text && history.length === 0) {
       setHistory([briefStream.text]);
       setHistoryIndex(0);
       setChatMessages([{
-        id: "init", role: "assistant", content: "I've drafted an initial creative brief based on your insights. How would you like to refine it?"
+        id: "init", role: "assistant", content: "Your Master Prompt is ready. Refine it by telling me your subject, colours, style changes, or anything else."
       }]);
     }
   }, [briefStream.isDone, briefStream.text, history.length]);
@@ -156,7 +157,7 @@ export function BriefPanel({ sessionId, contentType, isLoggedIn, userPlan }: Bri
       });
 
       const match = newText.match(/\[\[QUESTION:\s*(\{.*?\})\s*\]\]/);
-      const aiReply = match ? match[0] : "I've updated the brief. What else should we change?";
+      const aiReply = match ? match[0] : "Master Prompt updated. What else would you like to change?";
 
       setChatMessages(prev => [
         ...prev,
@@ -187,12 +188,58 @@ export function BriefPanel({ sessionId, contentType, isLoggedIn, userPlan }: Bri
   const params       = searchParams.toString() ? `?${searchParams.toString()}` : "";
   const insightsHref = `/session/${sessionId}${params}`;
 
+  /** Copy the final_prompt (for JSON) or full text to clipboard */
   const handleCopy = async () => {
     if (!liveBrief) return;
-    await navigator.clipboard.writeText(liveBrief);
+    let textToCopy = liveBrief;
+    try {
+      const parsed = JSON.parse(liveBrief);
+      if (parsed.final_prompt) textToCopy = parsed.final_prompt;
+    } catch { /* not JSON — use raw */ }
+    await navigator.clipboard.writeText(textToCopy);
     setCopied(true);
-    toast.success("Brief copied to clipboard");
+    toast.success("Final prompt copied to clipboard");
     setTimeout(() => setCopied(false), 2000);
+  };
+
+  /** Export helpers */
+  const exportAsJson = () => {
+    const blob = new Blob([liveBrief], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a"); a.href = url; a.download = "master-prompt.json"; a.click();
+    URL.revokeObjectURL(url);
+    toast.success("Exported as JSON");
+  };
+
+  const exportAsMarkdown = () => {
+    let md = "# Master Prompt\n\n";
+    try {
+      const p = JSON.parse(liveBrief);
+      Object.entries(p).forEach(([k, v]) => {
+        const label = k.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase());
+        md += `## ${label}\n\n${v}\n\n`;
+      });
+    } catch {
+      md += liveBrief;
+    }
+    const blob = new Blob([md], { type: "text/markdown" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a"); a.href = url; a.download = "master-prompt.md"; a.click();
+    URL.revokeObjectURL(url);
+    toast.success("Exported as Markdown");
+  };
+
+  const exportAsText = () => {
+    let text = "";
+    try {
+      const p = JSON.parse(liveBrief);
+      text = p.final_prompt ?? liveBrief;
+    } catch { text = liveBrief; }
+    const blob = new Blob([text], { type: "text/plain" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a"); a.href = url; a.download = "master-prompt.txt"; a.click();
+    URL.revokeObjectURL(url);
+    toast.success("Exported as plain text");
   };
 
   const submitRefinement = (customInstruction?: string) => {
@@ -314,7 +361,7 @@ export function BriefPanel({ sessionId, contentType, isLoggedIn, userPlan }: Bri
             <ArrowLeft className="w-4 h-4 md:w-3.5 md:h-3.5" />
             <span className="hidden sm:inline">Insights</span>
           </Link>
-          <h1 className="text-h4 md:text-h3 text-foreground truncate hidden xs:block">Creative Brief</h1>
+          <h1 className="text-h4 md:text-h3 text-foreground truncate hidden xs:block">Master Prompt</h1>
         </div>
         
         <div className="flex items-center gap-1.5 md:gap-2 shrink-0">
@@ -412,16 +459,18 @@ export function BriefPanel({ sessionId, contentType, isLoggedIn, userPlan }: Bri
                       <LogIn className="w-4 h-4 mr-2" />
                       Sign in to Recrea8
                     </Link>
-                    <Button
-                      id="export-prompt-btn"
-                      variant="outline"
-                      className="w-full"
-                      disabled={!liveBrief}
-                      onClick={handleCopy}
-                    >
-                      <Download className="w-4 h-4 mr-2" />
-                      Export prompt
-                    </Button>
+                    <div className="flex flex-col gap-1.5">
+                      <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">Export Master Prompt</p>
+                      <Button id="export-json-btn" variant="outline" className="w-full justify-start" disabled={!liveBrief} onClick={exportAsJson}>
+                        <Download className="w-4 h-4 mr-2" />Export as JSON
+                      </Button>
+                      <Button id="export-text-btn" variant="outline" className="w-full justify-start" disabled={!liveBrief} onClick={exportAsText}>
+                        <FileText className="w-4 h-4 mr-2" />Export plain text
+                      </Button>
+                      <Button id="export-md-btn" variant="outline" className="w-full justify-start" disabled={!liveBrief} onClick={exportAsMarkdown}>
+                        <Copy className="w-4 h-4 mr-2" />Export as Markdown
+                      </Button>
+                    </div>
                   </>
                 ) : isVideoBocked ? (
                   /* ── Free user trying video ── */
@@ -440,16 +489,15 @@ export function BriefPanel({ sessionId, contentType, isLoggedIn, userPlan }: Bri
                       <Sparkles className="w-4 h-4 mr-2" />
                       Upgrade to unlock video
                     </Link>
-                    <Button
-                      id="export-prompt-btn"
-                      variant="outline"
-                      className="w-full"
-                      disabled={!liveBrief}
-                      onClick={handleCopy}
-                    >
-                      <Download className="w-4 h-4 mr-2" />
-                      Export prompt
-                    </Button>
+                    <div className="flex flex-col gap-1.5">
+                      <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">Export Master Prompt</p>
+                      <Button id="export-json-btn-video" variant="outline" className="w-full justify-start" disabled={!liveBrief} onClick={exportAsJson}>
+                        <Download className="w-4 h-4 mr-2" />Export as JSON
+                      </Button>
+                      <Button id="export-text-btn-video" variant="outline" className="w-full justify-start" disabled={!liveBrief} onClick={exportAsText}>
+                        <FileText className="w-4 h-4 mr-2" />Export plain text
+                      </Button>
+                    </div>
                   </>
                 ) : (
                   /* ── Logged-in with access ── */
@@ -544,26 +592,28 @@ export function BriefPanel({ sessionId, contentType, isLoggedIn, userPlan }: Bri
                       </div>
                     )}
 
-                    <Button
-                      id="export-prompt-btn"
-                      variant="outline"
-                      className="w-full"
-                      disabled={!liveBrief}
-                      onClick={handleCopy}
-                    >
-                      <Download className="w-4 h-4 mr-2" />
-                      Export prompt
-                    </Button>
-                    <Button
-                      id="copy-prompt-mobile-btn"
-                      variant="outline"
-                      className="w-full sm:hidden"
-                      disabled={!liveBrief}
-                      onClick={handleCopy}
-                    >
-                      {copied ? <CheckCheck className="w-4 h-4 mr-2 text-green-500" /> : <Copy className="w-4 h-4 mr-2" />}
-                      {copied ? "Copied" : "Copy to clipboard"}
-                    </Button>
+                    <div className="flex flex-col gap-1.5">
+                      <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">Export Master Prompt</p>
+                      <Button id="export-json-btn-main" variant="outline" className="w-full justify-start" disabled={!liveBrief} onClick={exportAsJson}>
+                        <Download className="w-4 h-4 mr-2" />Export as JSON
+                      </Button>
+                      <Button id="export-text-btn-main" variant="outline" className="w-full justify-start" disabled={!liveBrief} onClick={exportAsText}>
+                        <FileText className="w-4 h-4 mr-2" />Export plain text
+                      </Button>
+                      <Button id="export-md-btn-main" variant="outline" className="w-full justify-start" disabled={!liveBrief} onClick={exportAsMarkdown}>
+                        <Copy className="w-4 h-4 mr-2" />Export as Markdown
+                      </Button>
+                      <Button
+                        id="copy-prompt-mobile-btn"
+                        variant="outline"
+                        className="w-full sm:hidden justify-start"
+                        disabled={!liveBrief}
+                        onClick={handleCopy}
+                      >
+                        {copied ? <CheckCheck className="w-4 h-4 mr-2 text-green-500" /> : <Copy className="w-4 h-4 mr-2" />}
+                        {copied ? "Copied" : "Copy final prompt"}
+                      </Button>
+                    </div>
                   </>
                 )}
               </div>
@@ -582,21 +632,94 @@ export function BriefPanel({ sessionId, contentType, isLoggedIn, userPlan }: Bri
             <Skeleton className="h-4 w-full" />
             <Skeleton className="h-4 w-2/3" />
           </div>
-        ) : (
-          <div className="prose prose-sm dark:prose-invert max-w-none text-body text-foreground leading-relaxed font-sans flex flex-col gap-4">
-            {liveBrief.split("\n\n").map((para, idx) => (
-              <div 
-                key={idx}
-                className={cn(
-                  "transition-colors duration-1000 p-2 -mx-2 rounded-md border-l-2 border-transparent",
-                  changedParagraphs.has(idx) && "bg-amber-50 border-amber-300 ring-1 ring-amber-100 dark:bg-amber-950/30 dark:border-amber-700"
+        ) : (() => {
+          // Try to parse as JSON Master Prompt
+          let parsed: Record<string, string> | null = null;
+          const isStreaming = briefStream.isStreaming || isRefining;
+          try {
+            if (!isStreaming) parsed = JSON.parse(liveBrief);
+          } catch { /* still streaming or plain text */ }
+
+          if (parsed) {
+            // ── JSON Master Prompt: pretty card view ─────────────────────
+            const fieldLabels: Record<string, string> = {
+              subject: "Subject", style: "Style", composition: "Composition",
+              lighting: "Lighting", color_palette: "Colour Palette", mood: "Mood",
+              technical: "Technical", negative_prompt: "Negative Prompt", final_prompt: "Final Prompt",
+              // Video
+              format: "Format", hook: "Hook", structure: "Structure",
+              visual_style: "Visual Style", audio: "Audio", tone: "Tone",
+              // Article
+              topic: "Topic", rhetorical_techniques: "Rhetorical Techniques",
+              target_audience: "Target Audience",
+            };
+            const fieldColors: Record<string, string> = {
+              final_prompt: "border-primary/40 bg-primary/5",
+              negative_prompt: "border-destructive/30 bg-destructive/5",
+            };
+            return (
+              <div className="flex flex-col gap-2">
+                {/* View toggle */}
+                <div className="flex items-center justify-between mb-2">
+                  <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">Master Prompt</p>
+                  <button
+                    onClick={() => setShowJsonView(v => !v)}
+                    className="text-[11px] font-medium text-muted-foreground hover:text-foreground transition-colors px-2 py-1 rounded border border-border bg-muted/30 hover:bg-muted/60"
+                  >
+                    {showJsonView ? "Card view" : "JSON view"}
+                  </button>
+                </div>
+
+                {showJsonView ? (
+                  // Raw JSON view
+                  <pre className="text-[11px] font-mono bg-muted/30 border border-border rounded-xl p-4 overflow-x-auto leading-relaxed text-foreground whitespace-pre-wrap break-words">
+                    {JSON.stringify(parsed, null, 2)}
+                  </pre>
+                ) : (
+                  // Card view
+                  Object.entries(parsed).map(([key, value]) => (
+                    <div
+                      key={key}
+                      className={cn(
+                        "rounded-xl border p-4 flex flex-col gap-1.5 transition-colors duration-700",
+                        fieldColors[key] ?? "border-border bg-card",
+                        changedParagraphs.size > 0 && "bg-amber-50/60 border-amber-300 dark:bg-amber-950/20 dark:border-amber-700"
+                      )}
+                    >
+                      <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+                        {fieldLabels[key] ?? key.replace(/_/g, " ")}
+                      </p>
+                      <p className={cn(
+                        "text-body text-foreground leading-relaxed",
+                        key === "final_prompt" && "font-medium",
+                        key === "negative_prompt" && "text-muted-foreground",
+                      )}>
+                        {String(value)}
+                      </p>
+                    </div>
+                  ))
                 )}
-              >
-                <ReactMarkdown>{para + (idx === liveBrief.split("\n\n").length - 1 && (briefStream.isStreaming || isRefining) ? " ▋" : "")}</ReactMarkdown>
               </div>
-            ))}
-          </div>
-        )}
+            );
+          }
+
+          // ── Plain text / streaming fallback ────────────────────────────
+          return (
+            <div className="prose prose-sm dark:prose-invert max-w-none text-body text-foreground leading-relaxed font-sans flex flex-col gap-4">
+              {liveBrief.split("\n\n").map((para, idx) => (
+                <div
+                  key={idx}
+                  className={cn(
+                    "transition-colors duration-1000 p-2 -mx-2 rounded-md border-l-2 border-transparent",
+                    changedParagraphs.has(idx) && "bg-amber-50 border-amber-300 ring-1 ring-amber-100 dark:bg-amber-950/30 dark:border-amber-700"
+                  )}
+                >
+                  <ReactMarkdown>{para + (idx === liveBrief.split("\n\n").length - 1 && (briefStream.isStreaming || isRefining) ? " ▋" : "")}</ReactMarkdown>
+                </div>
+              ))}
+            </div>
+          );
+        })()}
       </div>
 
       {/* Generation Result Overlay */}

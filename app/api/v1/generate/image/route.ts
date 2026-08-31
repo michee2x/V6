@@ -44,13 +44,20 @@ export async function POST(req: NextRequest) {
             success: false,
             error: {
               code: "VALIDATION_ERROR",
-              message: "Session has no creative brief yet. Generate a brief first.",
+              message: "Session has no Master Prompt yet. Generate a Master Prompt first.",
             },
           },
           { status: 422 }
         );
       }
-      prompt = session.brief;
+      // If the brief is a JSON Master Prompt, extract the final_prompt field
+      // which is the rich, fused generation-ready string
+      try {
+        const parsed = JSON.parse(session.brief);
+        prompt = parsed.final_prompt ?? session.brief;
+      } catch {
+        prompt = session.brief;
+      }
     }
 
     if (!prompt) {
