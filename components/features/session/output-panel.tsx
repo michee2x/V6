@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import Link from "next/link";
-import { ArrowLeft, Download, ImageIcon, Video, FileText, Loader2, RefreshCw } from "lucide-react";
+import { ArrowLeft, Download, ImageIcon, Video, FileText, Loader2, RefreshCw, Lock } from "lucide-react";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import ReactMarkdown from "react-markdown";
@@ -10,9 +10,22 @@ import { SessionGeneration } from "@/lib/session-store";
 
 interface OutputPanelProps {
   sessionId: string;
+  userPlan: string;
 }
 
-export function OutputPanel({ sessionId }: OutputPanelProps) {
+/** Extract the quality tier from the model string, e.g. "gpt-image-1 (medium)" → "medium" */
+function getGenerationQuality(model: string): "low" | "medium" | "high" {
+  const match = model.match(/\((low|medium|high)\)/);
+  return (match?.[1] as "low" | "medium" | "high") ?? "low";
+}
+
+/** Returns true if a free user is allowed to download this generation */
+function freeUserCanDownload(gen: SessionGeneration): boolean {
+  if (gen.type !== "image") return true;
+  return getGenerationQuality(gen.model) === "low";
+}
+
+export function OutputPanel({ sessionId, userPlan }: OutputPanelProps) {
   const [generations, setGenerations] = React.useState<SessionGeneration[]>([]);
   const [isLoading, setIsLoading] = React.useState(true);
   const [error, setError] = React.useState<string | null>(null);
@@ -104,13 +117,18 @@ export function OutputPanel({ sessionId }: OutputPanelProps) {
                 </div>
                 
                 <div className="p-4 flex-1 flex flex-col justify-center bg-muted/5 min-h-[300px]">
-                  {gen.type === "image" && (
-                    <img 
-                      src={`data:${gen.mimeType || "image/png"};base64,${gen.data}`} 
-                      alt="Generated" 
-                      className="w-full h-auto rounded-md object-contain max-h-[400px]"
-                    />
-                  )}
+                  {gen.type === "image" && (() => {
+                    const canDownload = userPlan !== "free" || freeUserCanDownload(gen);
+                    return (
+                      <img
+                        src={`data:${gen.mimeType || "image/png"};base64,${gen.data}`}
+                        alt="Generated"
+                        className="w-full h-auto rounded-md object-contain max-h-[400px] select-none"
+                        onContextMenu={!canDownload ? (e) => e.preventDefault() : undefined}
+                        draggable={canDownload}
+                      />
+                    );
+                  })()}
                   {gen.type === "video" && (
                     <video 
                       src={gen.data.startsWith("http") ? gen.data : `data:${gen.mimeType || "video/mp4"};base64,${gen.data}`}
@@ -136,16 +154,24 @@ export function OutputPanel({ sessionId }: OutputPanelProps) {
                       <span className="text-caption text-muted-foreground">Saved permanently</span>
                     )}
                     
-                    {gen.type === "image" && (
-                      <a
-                        href={`data:${gen.mimeType || "image/png"};base64,${gen.data}`}
-                        download={`recrea8-${gen.id.slice(0,6)}.png`}
-                        className={cn(buttonVariants({ variant: "outline", size: "sm" }), "ml-auto")}
-                      >
-                        <Download className="w-3.5 h-3.5 mr-1.5" />
-                        Download
-                      </a>
-                    )}
+                    {gen.type === "image" && (() => {
+                      const canDownload = userPlan !== "free" || freeUserCanDownload(gen);
+                      return canDownload ? (
+                        <a
+                          href={`data:${gen.mimeType || "image/png"};base64,${gen.data}`}
+                          download={`recrea8-${gen.id.slice(0,6)}.png`}
+                          className={cn(buttonVariants({ variant: "outline", size: "sm" }), "ml-auto")}
+                        >
+                          <Download className="w-3.5 h-3.5 mr-1.5" />
+                          Download
+                        </a>
+                      ) : (
+                        <div className="ml-auto flex items-center gap-1.5 text-xs text-muted-foreground bg-muted/40 px-2 py-1 rounded-md border border-border">
+                          <Lock className="w-3 h-3" />
+                          <span>Upgrade to download</span>
+                        </div>
+                      );
+                    })()}
                   </div>
                 </div>
               </div>

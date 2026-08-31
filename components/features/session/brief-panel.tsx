@@ -28,7 +28,7 @@ function canGenerateVideo(plan: string) {
   return plan !== "free";
 }
 
-/** Returns true if this plan can use medium or high quality images */
+/** Returns true if this plan can use max (high) quality images */
 function canUseHighQuality(plan: string) {
   return plan !== "free";
 }
@@ -67,7 +67,7 @@ export function BriefPanel({ sessionId, contentType, isLoggedIn, userPlan }: Bri
   const [generationResult, setGenerationResult] = React.useState<GenerationResult | null>(null);
   const [showOutOfCredits, setShowOutOfCredits] = React.useState(false);
   const [aspectRatio, setAspectRatio] = React.useState<AspectRatio>("1:1");
-  const [imageQuality, setImageQuality] = React.useState<ImageQuality>("low");
+  const [imageQuality, setImageQuality] = React.useState<ImageQuality>("medium");
   const [showMoreAspect, setShowMoreAspect] = React.useState(false);
   
   const [chatMessages, setChatMessages] = React.useState<Message[]>([]);
@@ -509,7 +509,7 @@ export function BriefPanel({ sessionId, contentType, isLoggedIn, userPlan }: Bri
                           <div className="flex gap-1.5">
                             {([
                               { value: "low" as ImageQuality, label: "Low", requiresPaid: false },
-                              { value: "medium" as ImageQuality, label: "Medium", requiresPaid: true },
+                              { value: "medium" as ImageQuality, label: "Medium", requiresPaid: false },
                               { value: "high" as ImageQuality, label: "High", requiresPaid: true },
                             ]).map(({ value, label, requiresPaid }) => {
                               const locked = requiresPaid && !canUseHighQuality(userPlan);
@@ -536,7 +536,7 @@ export function BriefPanel({ sessionId, contentType, isLoggedIn, userPlan }: Bri
                           </div>
                           {!canUseHighQuality(userPlan) && (
                             <p className="text-[10px] text-muted-foreground mt-1.5 leading-snug">
-                              Medium &amp; High quality require{" "}
+                              High quality requires{" "}
                               <Link href="/#pricing" className="text-primary underline underline-offset-2">Starter+</Link>
                             </p>
                           )}
@@ -623,26 +623,39 @@ export function BriefPanel({ sessionId, contentType, isLoggedIn, userPlan }: Bri
             </div>
             {/* Content */}
             <div className="flex-1 overflow-y-auto p-6">
-              {generationResult.type === "image" && (
-                <div className="flex flex-col gap-4">
-                  {generationResult.images.map((img, i) => (
-                    <img
-                      key={i}
-                      src={`data:${img.mimeType};base64,${img.base64}`}
-                      alt={`Generated image ${i + 1}`}
-                      className="w-full rounded-xl border border-border object-contain"
-                    />
-                  ))}
-                  <a
-                    href={`data:${generationResult.images[0].mimeType};base64,${generationResult.images[0].base64}`}
-                    download="generated-image.png"
-                    className={cn(buttonVariants({ variant: "outline" }), "w-full mt-2")}
-                  >
-                    <Download className="w-4 h-4 mr-2" />
-                    Download image
-                  </a>
-                </div>
-              )}
+              {generationResult.type === "image" && (() => {
+                // Free users may download only their own low-quality results
+                const canDownload = isPaidPlan(userPlan) || imageQuality === "low";
+                return (
+                  <div className="flex flex-col gap-4">
+                    {generationResult.images.map((img, i) => (
+                      <img
+                        key={i}
+                        src={`data:${img.mimeType};base64,${img.base64}`}
+                        alt={`Generated image ${i + 1}`}
+                        className="w-full rounded-xl border border-border object-contain select-none"
+                        onContextMenu={!canDownload ? (e) => e.preventDefault() : undefined}
+                        draggable={canDownload}
+                      />
+                    ))}
+                    {canDownload ? (
+                      <a
+                        href={`data:${generationResult.images[0].mimeType};base64,${generationResult.images[0].base64}`}
+                        download="generated-image.png"
+                        className={cn(buttonVariants({ variant: "outline" }), "w-full mt-2")}
+                      >
+                        <Download className="w-4 h-4 mr-2" />
+                        Download image
+                      </a>
+                    ) : (
+                      <div className="mt-2 text-center text-xs text-muted-foreground bg-muted/30 py-2 rounded-md border border-border">
+                        <p>Downloading high-quality images requires a paid plan.</p>
+                        <Link href="/#pricing" className="text-primary hover:underline ml-1">Upgrade now</Link>
+                      </div>
+                    )}
+                  </div>
+                );
+              })()}
               {generationResult.type === "video" && (
                 <div className="flex flex-col gap-4">
                   {generationResult.video.url ? (

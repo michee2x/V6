@@ -71,7 +71,8 @@ export async function POST(req: NextRequest) {
 
     if (user) {
       // Consume credits based on quality tier
-      const creditType = `image_${quality ?? "low"}`;
+      const requestedQuality = quality ?? "medium";
+      const creditType = `image_${requestedQuality}`;
       try {
         const { plan } = await consumeCredits(user.id, creditType);
         userPlan = plan || "free";
@@ -82,16 +83,15 @@ export async function POST(req: NextRequest) {
         );
       }
 
-      // Enforce quality gating: free users can only use low quality
-      const requestedQuality = quality ?? "low";
+      // Enforce quality gating: free users can use up to medium quality
       const isPaid = userPlan !== "free";
-      if (!isPaid && requestedQuality !== "low") {
+      if (!isPaid && requestedQuality === "high") {
         return NextResponse.json(
           {
             success: false,
             error: {
               code: "PLAN_LIMIT",
-              message: `${requestedQuality.charAt(0).toUpperCase() + requestedQuality.slice(1)} quality images require a Starter plan or above. Upgrade to unlock.`,
+              message: `High quality images require a Starter plan or above. Upgrade to unlock.`,
             },
           },
           { status: 403 }
@@ -129,7 +129,7 @@ export async function POST(req: NextRequest) {
         const saved = await saveGeneration({
           sessionId,
           type: "image",
-          model: "gpt-image-1",
+          model: `gpt-image-1 (${requestedQuality})`,
           data: images[0].base64,
           mimeType: images[0].mimeType,
           expiresAt,
