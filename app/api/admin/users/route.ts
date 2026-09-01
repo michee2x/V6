@@ -15,7 +15,7 @@ export async function GET() {
   const admin = createAdminClient();
   const { data: users, error } = await admin
     .from("users")
-    .select("id, name, email, plan, credits_remaining, created_at, subscription_status")
+    .select("id, email, plan, credits_remaining, created_at, subscription_status")
     .order("created_at", { ascending: false });
 
   if (error) {
@@ -53,7 +53,6 @@ export async function POST(req: Request) {
     const { error: dbError } = await admin.from("users").insert({
       id: authData.user.id,
       email,
-      name,
       plan: role === "admin" ? "pro" : "free",
       credits_remaining: role === "admin" ? 99999 : 500,
       credits_total: role === "admin" ? 99999 : 500,

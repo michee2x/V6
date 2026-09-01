@@ -63,7 +63,6 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
     const { error: dbError } = await admin
       .from("users")
       .update({
-        name,
         plan,
         credits_total,
       })
