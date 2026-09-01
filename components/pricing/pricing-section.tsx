@@ -149,53 +149,103 @@ export async function PricingSection() {
         </div>
       </div>
 
-      {/* Credit Usage Table */}
-      <div className="max-w-3xl w-full mx-auto px-4 pb-16">
-        <div className="rounded-2xl border border-border shadow-sm overflow-hidden bg-card">
-          <div className="px-6 py-5 border-b border-border/60">
-            <h3 className="text-h3 font-semibold text-foreground">How credits work</h3>
-            <p className="text-body text-muted-foreground mt-1">Each action costs credits. Here&apos;s a rough guide:</p>
-          </div>
-          <div className="divide-y divide-border/60">
-            {[
-              { action: "Analyse a video / article", cost: "2–5 credits" },
-              { action: "Generate a standard image", cost: "3 credits" },
-              { action: "Generate a 4K image", cost: "8 credits" },
-              { action: "Generate a video clip", cost: "10–20 credits" },
-              { action: "Generate a text brief (basic)", cost: "1 credit" },
-              { action: "Generate a text brief (extended)", cost: "3 credits" },
-            ].map((row) => (
-              <div
-                key={row.action}
-                className="flex items-center justify-between px-6 py-3 hover:bg-muted/40 transition-colors duration-150"
-              >
-                <span className="text-body text-foreground">{row.action}</span>
-                <span className="text-body font-medium text-primary">{row.cost}</span>
-              </div>
-            ))}
-          </div>
+      {/* Credits + FAQ unified section */}
+      <div className="max-w-5xl w-full mx-auto px-4 pb-24">
+        {/* Section header */}
+        <div className="text-center mb-10">
+          <h3 className="text-h2 font-bold text-foreground">Credits &amp; common questions</h3>
+          <p className="text-body text-muted-foreground mt-2">Everything you need to know before you get started.</p>
         </div>
-      </div>
 
-      {/* FAQ */}
-      <div className="max-w-3xl w-full mx-auto px-4 pb-24">
-        <h3 className="text-h2 font-bold text-foreground text-center mb-10">Common questions</h3>
-        <div className="space-y-4">
-          {[
-            { q: "Do my credits roll over?", a: "No — unused credits reset at the start of each billing cycle. Use them or lose them!" },
-            { q: "Can I switch plans at any time?", a: "Yes. You can upgrade or downgrade at any time. Changes take effect immediately and are prorated." },
-            { q: "What happens when I run out of credits?", a: "You will be prompted to upgrade your plan. You won't lose your account or history." },
-            { q: "Is the Free tier really free forever?", a: "Yes. You get 30 one-time credits with no time limit and no credit card required. They just don't top up each month." },
-            { q: "What payment methods do you accept?", a: "We accept all major credit and debit cards, as well as PayPal, via Paddle — our trusted payment processor." },
-          ].map((faq) => (
-            <details key={faq.q} className="group rounded-xl border border-border/60 overflow-hidden">
-              <summary className="flex items-center justify-between gap-4 px-5 py-4 cursor-pointer select-none hover:bg-muted/40 transition-colors duration-150 list-none">
-                <span className="text-body font-medium text-foreground">{faq.q}</span>
-                <span className="text-muted-foreground transition-transform duration-200 group-open:rotate-45 shrink-0 text-xl leading-none">+</span>
-              </summary>
-              <div className="px-5 pb-4 text-body text-muted-foreground">{faq.a}</div>
-            </details>
-          ))}
+        <div className="flex flex-col lg:flex-row gap-12 items-start">
+          {/* Left — How credits work */}
+          <div className="w-full lg:w-72 lg:shrink-0">
+            <div className="rounded-2xl border border-border shadow-sm overflow-hidden bg-card sticky top-8">
+              <div className="px-6 py-5 border-b border-border/60">
+                <h4 className="text-h3 font-semibold text-foreground">How credits work</h4>
+                <p className="text-body text-muted-foreground mt-1">Each action costs credits. Here&apos;s a rough guide:</p>
+              </div>
+              <div className="divide-y divide-border/60">
+                {[
+                  { action: "Analyse a video / article", cost: "2–5 cr" },
+                  { action: "Generate a standard image", cost: "3 cr" },
+                  { action: "Generate a 4K image", cost: "8 cr" },
+                  { action: "Generate a video clip", cost: "10–20 cr" },
+                  { action: "Text brief (basic)", cost: "1 cr" },
+                  { action: "Text brief (extended)", cost: "3 cr" },
+                ].map((row) => (
+                  <div
+                    key={row.action}
+                    className="flex items-center justify-between px-6 py-3 hover:bg-muted/40 transition-colors duration-150"
+                  >
+                    <span className="text-sm text-foreground">{row.action}</span>
+                    <span className="text-sm font-medium text-primary shrink-0 ml-3">{row.cost}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {/* Vertical divider — desktop only */}
+          <div className="hidden lg:block w-px self-stretch bg-border/50 shrink-0" />
+
+          {/* Right — FAQ */}
+          <div className="flex-1 min-w-0 space-y-8">
+            {/* Group: About ReCrea8 */}
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground mb-3 px-1">About ReCrea8</p>
+              <div className="space-y-2">
+                {[
+                  {
+                    q: "What exactly does ReCrea8 do?",
+                    a: "ReCrea8 analyzes something you found online — an image, video, URL, or article — breaks down how it was made, and turns it into a Power Prompt you can customize and generate.",
+                  },
+                  {
+                    q: "Does ReCrea8 make exact copies?",
+                    a: "No. ReCrea8 recreates the creative approach — the layout, pacing, tone, and structure — not the protected brand assets themselves. Logos and trademarks are automatically detected and replaced, not reproduced. You customize the result to make it yours before you generate.",
+                  },
+                  {
+                    q: "Do I need to know how to write AI prompts?",
+                    a: "No. ReCrea8 generates the Power Prompt from your reference automatically, and you can shape the result further just by chatting with the ReCrea8 Agent in plain language.",
+                  },
+                  {
+                    q: "Which AI models does ReCrea8 use?",
+                    a: "ReCrea8 automatically selects the right model for each job — including OpenAI, Claude, Gemini, Flux, and specialized video models — so you never have to choose one yourself.",
+                  },
+                ].map((faq) => (
+                  <details key={faq.q} className="group rounded-xl border border-border/60 overflow-hidden">
+                    <summary className="flex items-center justify-between gap-4 px-5 py-4 cursor-pointer select-none hover:bg-muted/40 transition-colors duration-150 list-none">
+                      <span className="text-body font-medium text-foreground">{faq.q}</span>
+                      <span className="text-muted-foreground transition-transform duration-200 group-open:rotate-45 shrink-0 text-xl leading-none">+</span>
+                    </summary>
+                    <div className="px-5 pb-4 text-body text-muted-foreground">{faq.a}</div>
+                  </details>
+                ))}
+              </div>
+            </div>
+
+            {/* Group: Billing */}
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground mb-3 px-1">Billing</p>
+              <div className="space-y-2">
+                {[
+                  { q: "Do my credits roll over?", a: "No — unused credits reset at the start of each billing cycle. Use them or lose them!" },
+                  { q: "Can I switch plans at any time?", a: "Yes. You can upgrade or downgrade at any time. Changes take effect immediately and are prorated." },
+                  { q: "What happens when I run out of credits?", a: "You will be prompted to upgrade your plan. You won't lose your account or history." },
+                  { q: "Is the Free tier really free forever?", a: "Yes. You get 30 one-time credits with no time limit and no credit card required. They just don't top up each month." },
+                  { q: "What payment methods do you accept?", a: "We accept all major credit and debit cards, as well as PayPal, via Paddle — our trusted payment processor." },
+                ].map((faq) => (
+                  <details key={faq.q} className="group rounded-xl border border-border/60 overflow-hidden">
+                    <summary className="flex items-center justify-between gap-4 px-5 py-4 cursor-pointer select-none hover:bg-muted/40 transition-colors duration-150 list-none">
+                      <span className="text-body font-medium text-foreground">{faq.q}</span>
+                      <span className="text-muted-foreground transition-transform duration-200 group-open:rotate-45 shrink-0 text-xl leading-none">+</span>
+                    </summary>
+                    <div className="px-5 pb-4 text-body text-muted-foreground">{faq.a}</div>
+                  </details>
+                ))}
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </section>
