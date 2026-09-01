@@ -50,12 +50,11 @@ export async function POST(req: NextRequest) {
           { status: 422 }
         );
       }
-      // If the brief is a JSON Master Prompt, extract the final_prompt field
-      // which is the rich, fused generation-ready string
-      try {
-        const parsed = JSON.parse(session.brief);
-        prompt = parsed.final_prompt ?? session.brief;
-      } catch {
+      // The brief is now a Markdown document. Extract the final_prompt section if present.
+      const match = session.brief.match(/## FINAL PROMPT\s+([\s\S]+)$/i);
+      if (match && match[1]) {
+        prompt = match[1].trim();
+      } else {
         prompt = session.brief;
       }
     }

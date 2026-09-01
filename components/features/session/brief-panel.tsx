@@ -75,7 +75,6 @@ export function BriefPanel({ sessionId, contentType, isLoggedIn, userPlan }: Bri
   const [historyIndex, setHistoryIndex] = React.useState(-1);
   const [changedParagraphs, setChangedParagraphs] = React.useState<Set<number>>(new Set());
   const [isChatCollapsed, setIsChatCollapsed] = React.useState(false);
-  const [showJsonView, setShowJsonView] = React.useState(false);
 
   const fileInputRef = React.useRef<HTMLInputElement>(null);
 
@@ -609,75 +608,7 @@ export function BriefPanel({ sessionId, contentType, isLoggedIn, userPlan }: Bri
             <Skeleton className="h-4 w-2/3" />
           </div>
         ) : (() => {
-          // Try to parse as JSON Master Prompt
-          let parsed: Record<string, string> | null = null;
-          const isStreaming = briefStream.isStreaming || isRefining;
-          try {
-            if (!isStreaming) parsed = JSON.parse(liveBrief);
-          } catch { /* still streaming or plain text */ }
-
-          if (parsed) {
-            // ── JSON Master Prompt: pretty card view ─────────────────────
-            const fieldLabels: Record<string, string> = {
-              subject: "Subject", style: "Style", composition: "Composition",
-              lighting: "Lighting", color_palette: "Colour Palette", mood: "Mood",
-              technical: "Technical", negative_prompt: "Negative Prompt", final_prompt: "Final Prompt",
-              // Video
-              format: "Format", hook: "Hook", structure: "Structure",
-              visual_style: "Visual Style", audio: "Audio", tone: "Tone",
-              // Article
-              topic: "Topic", rhetorical_techniques: "Rhetorical Techniques",
-              target_audience: "Target Audience",
-            };
-            const fieldColors: Record<string, string> = {
-              final_prompt: "border-primary/40 bg-primary/5",
-              negative_prompt: "border-destructive/30 bg-destructive/5",
-            };
-            return (
-              <div className="flex flex-col gap-2">
-                {/* View toggle */}
-                <div className="flex items-center justify-between mb-2">
-                  <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">Master Prompt</p>
-                  <button
-                    onClick={() => setShowJsonView(v => !v)}
-                    className="text-[11px] font-medium text-muted-foreground hover:text-foreground transition-colors px-2 py-1 rounded border border-border bg-muted/30 hover:bg-muted/60"
-                  >
-                    {showJsonView ? "Card view" : "JSON view"}
-                  </button>
-                </div>
-
-                {showJsonView ? (
-                  // Raw JSON view
-                  <pre className="text-[11px] font-mono bg-muted/30 border border-border rounded-xl p-4 overflow-x-auto leading-relaxed text-foreground whitespace-pre-wrap break-words">
-                    {JSON.stringify(parsed, null, 2)}
-                  </pre>
-                ) : (
-                  // Card view
-                  Object.entries(parsed).map(([key, value]) => (
-                    <div
-                      key={key}
-                      className={cn(
-                        "rounded-xl border p-4 flex flex-col gap-1.5 transition-colors duration-700",
-                        fieldColors[key] ?? "border-border bg-card",
-                        changedParagraphs.size > 0 && "bg-amber-50/60 border-amber-300 dark:bg-amber-950/20 dark:border-amber-700"
-                      )}
-                    >
-                      <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
-                        {fieldLabels[key] ?? key.replace(/_/g, " ")}
-                      </p>
-                      <p className={cn(
-                        "text-body text-foreground leading-relaxed",
-                        key === "final_prompt" && "font-medium",
-                        key === "negative_prompt" && "text-muted-foreground",
-                      )}>
-                        {String(value)}
-                      </p>
-                    </div>
-                  ))
-                )}
-              </div>
-            );
-          }
+          // ── Markdown Document ──────────────────────────────────────────────────
 
           // ── Plain text / streaming fallback ────────────────────────────
           return (

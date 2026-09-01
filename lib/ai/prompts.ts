@@ -129,59 +129,83 @@ ${content}
 // ─── Phase 2 — Master Prompt ──────────────────────────────────────────────────
 
 const masterPromptInstructions: Record<ContentType, string> = {
-  image: `You are a world-class prompt engineer. Using the advanced visual analysis provided, generate a MASTER PROMPT for AI image generation.
+  image: `You are a world-class prompt engineer and creative director. Using the advanced visual analysis provided, generate a MASTER PROMPT for AI image generation.
 
-Output ONLY a valid JSON object — no preamble, no explanation, no markdown fences. The JSON must have exactly these fields:
+Output ONLY a beautifully formatted Markdown document. Do not output JSON.
+Use the following structure and be hyper-specific, highly detailed, and professional (like a senior brand designer's brief):
 
-{
-  "subject": "Precise, vivid description of the main subject, action, and scene. Be hyper-specific about what is in the frame.",
-  "style": "Visual genre, art movement, photography school, or artist reference. E.g. cinematic editorial photography, Annie Leibovitz style, shot on Hasselblad.",
-  "composition": "Framing, camera angle, perspective, depth of field, rule of thirds. E.g. low angle wide shot, shallow depth of field, subject left-aligned.",
-  "lighting": "Light source, quality, direction, colour temperature, shadows. E.g. soft diffused side lighting, cool 4500K, subtle rim light.",
-  "color_palette": "2-5 specific colours or palette descriptors. E.g. muted sage green, warm ivory, deep burnt sienna, low saturation, film-like.",
-  "mood": "The emotional atmosphere and feeling of the image. 1-2 sentences.",
-  "technical": "Resolution and quality modifiers. E.g. 8K ultra-detailed, photorealistic, HDR, medium format digital, sharp focus.",
-  "negative_prompt": "Comma-separated list of things to exclude. E.g. cartoon, anime, illustration, distorted face, low quality, blurry, watermark, text.",
-  "final_prompt": "A single, fused master prompt string combining all fields above into one powerful generation-ready prompt. 60-120 words. Can be pasted directly into Midjourney, DALL-E, Stable Diffusion, Flux, or any AI image tool. Begin with the subject, weave in style, composition, lighting, mood and technical details naturally."
-}
+## CANVAS & FORMAT
+Describe the composition, aspect ratio, orientation, negative space, and resolution.
 
-Rules:
-- Every field must be populated with rich, specific detail — no vague terms like beautiful or nice
-- The final_prompt must read as professional prompt engineering output — detailed, technical, layered
-- Style references should name real photographers, movements, or camera systems where relevant
-- Negative prompt should pre-empt common AI failure modes for this image type`,
+## OVERALL VISUAL CONCEPT
+Describe the core visual idea and what the design consists of.
 
-  video: `You are a world-class prompt engineer. Using the advanced video analysis provided, generate a MASTER PROMPT for AI video generation.
+## BACKGROUND
+Describe the background colors, gradients, textures, or subtle shapes.
 
-Output ONLY a valid JSON object — no preamble, no explanation, no markdown fences. The JSON must have exactly these fields:
+## SUBJECT & BRANDING
+Describe the main subject, logo placement, typography, or UI elements.
 
-{
-  "subject": "What the video is about, who is in it, what is happening, and the setting.",
-  "format": "Video length, orientation, aspect ratio, and platform target. E.g. 60 seconds, 9:16 vertical, designed for TikTok and Reels.",
-  "hook": "Precise description of the first 2-3 seconds. What happens immediately to grab attention?",
-  "structure": "Beat-by-beat breakdown of the video arc. E.g. Hook 0-3s then Problem 3-10s then Build 10-30s then Reveal 30-50s then CTA 50-60s.",
-  "visual_style": "Shot types, camera movement, transitions, text overlay approach, colour grading.",
-  "audio": "Music mood, tempo, voiceover style, sound design notes.",
-  "tone": "Energy level and personality. E.g. high-energy, urgent, direct-to-camera authenticity.",
-  "negative_prompt": "What to avoid. E.g. slow pacing, stock footage feel, generic music, text-heavy, corporate tone.",
-  "final_prompt": "A single, detailed generation-ready prompt combining all fields. 80-150 words, written for an AI video tool like Runway, Kling, or Pika."
-}`,
+## LIGHTING & MOOD
+Describe the light source, quality, shadows, elevation depth, and emotional atmosphere.
+
+## IMPORTANT DESIGN RULES
+A bulleted list of constraints (e.g., preservation of whitespace, things to avoid like 3D or stock feel).
+
+## FINAL PROMPT
+A single, fused master prompt string combining all fields above into one powerful generation-ready directive. Must begin with a directive like "Create an image..." or "Create a premium promotional banner..." 80-150 words. Can be pasted directly into Midjourney, DALL-E, Imagen, Flux, or any AI image tool. Ensure it weaves in subject, style, composition, lighting, and technical details naturally.`,
+
+  video: `You are a world-class prompt engineer and creative director. Using the advanced video analysis provided, generate a MASTER PROMPT for AI video generation.
+
+Output ONLY a beautifully formatted Markdown document. Do not output JSON.
+Use the following structure and be highly detailed:
+
+## VIDEO FORMAT & TARGET
+Describe the length, aspect ratio, and platform target.
+
+## OVERALL CONCEPT
+Describe the core narrative or visual idea.
+
+## VISUAL STYLE
+Describe shot types, camera movement, transitions, and colour grading.
+
+## STRUCTURE & HOOK
+Beat-by-beat breakdown. Emphasize the first 3 seconds (the hook).
+
+## AUDIO & TONE
+Describe the music mood, voiceover style, and energy level.
+
+## IMPORTANT DESIGN RULES
+A bulleted list of things to avoid (e.g., slow pacing, stock footage feel).
+
+## FINAL PROMPT
+A single, detailed generation-ready directive starting with "Create a video...". 80-150 words, written for an AI video tool like Runway, Kling, or Pika.`,
 
   article: `You are a world-class prompt engineer. Using the advanced content analysis provided, generate a MASTER PROMPT for AI writing generation.
 
-Output ONLY a valid JSON object — no preamble, no explanation, no markdown fences. The JSON must have exactly these fields:
+Output ONLY a beautifully formatted Markdown document. Do not output JSON.
+Use the following structure:
 
-{
-  "topic": "The precise subject and angle of the piece. Be specific about the thesis or argument.",
-  "format": "Article type, approximate length, intended platform. E.g. Long-form opinion essay, 1500 words, LinkedIn or Substack.",
-  "hook": "How to open the piece. A specific instruction for the opening sentence or paragraph.",
-  "structure": "Section-by-section breakdown. E.g. Opening hook then Problem framing then 3 supporting arguments then Counterargument then Conclusion with CTA.",
-  "tone": "Voice, register, sentence style, point of view. E.g. First-person, conversational but authoritative, short punchy sentences.",
-  "rhetorical_techniques": "Specific writing techniques to deploy. E.g. Open with counter-intuitive claim, use data in sections 2 and 3, close with personal story.",
-  "target_audience": "Who this is written for, their pain points, their expertise level.",
-  "negative_prompt": "What to avoid. E.g. generic advice, listicle format, corporate jargon, passive voice, hedging language.",
-  "final_prompt": "A single, detailed AI writing prompt combining all fields. 80-150 words, ready to paste into ChatGPT, Claude, or any AI writing tool."
-}`,
+## TOPIC & FORMAT
+The precise subject, thesis, format, and approximate length.
+
+## OVERALL CONCEPT
+The core argument and angle.
+
+## TARGET AUDIENCE
+Who this is written for and their expertise level.
+
+## STRUCTURE & HOOK
+Section-by-section breakdown, including a specific opening hook.
+
+## TONE & RHETORIC
+Voice, register, sentence style, and specific rhetorical techniques to deploy.
+
+## IMPORTANT WRITING RULES
+A bulleted list of things to avoid (e.g., generic advice, corporate jargon, passive voice).
+
+## FINAL PROMPT
+A single, detailed AI writing directive starting with "Write a...". 80-150 words, ready to paste into an AI writing tool.`
 };
 
 export function briefPrompt(
@@ -202,11 +226,7 @@ export function refinePrompt(
   brief: string,
   instruction: string
 ): string {
-  const isJson = brief.trim().startsWith('{');
-
-  const formatRule = isJson
-    ? `The Master Prompt is in JSON format. Return ONLY a valid JSON object with the same fields. Do NOT add markdown fences, preamble, or commentary. Update only the fields the instruction affects — keep all other fields intact. The final_prompt field MUST be regenerated to reflect any changes.`
-    : `The Master Prompt is in plain text format. Return only the updated prompt text. Keep the same structure and format.`;
+  const formatRule = `The Master Prompt is in standard Markdown format. Return only the updated prompt text. Keep the same structure and headings. Ensure the ## FINAL PROMPT section is updated to reflect any new changes.`;
 
   return `You are refining a Master Prompt based on a user instruction.
 
@@ -222,5 +242,5 @@ ${brief}
 
 User instruction: "${instruction}"
 
-Return the full updated Master Prompt${isJson ? ' as valid JSON' : ''}. Do not add any commentary outside the JSON output (except the optional question card).`;
+Return the full updated Master Prompt. Do not add any commentary outside the output (except the optional question card).`;
 }

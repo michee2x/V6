@@ -44,7 +44,12 @@ export async function POST(req: NextRequest) {
           { status: 422 }
         );
       }
-      prompt = session.brief;
+      const match = session.brief.match(/## FINAL PROMPT\s+([\s\S]+)$/i);
+      if (match && match[1]) {
+        prompt = match[1].trim();
+      } else {
+        prompt = session.brief;
+      }
     }
 
     if (!prompt) {
