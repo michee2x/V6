@@ -28,8 +28,8 @@ function canGenerateVideo(plan: string) {
   return plan !== "free";
 }
 
-/** Returns true if this plan can use max (high) quality images */
-function canUseHighQuality(plan: string) {
+/** Returns true if this plan can use high resolution (1440p+) */
+function canUseHighResolution(plan: string) {
   return plan !== "free";
 }
 
@@ -47,7 +47,7 @@ const contentTypeLabel: Record<string, string> = {
 };
 
 type AspectRatio = "1:1" | "16:9" | "9:16" | "4:3" | "3:4";
-type ImageQuality = "low" | "medium" | "high";
+type ImageResolution = "720p" | "1080p" | "1440p" | "2160p" | "4320p";
 
 type GenerationResult =
   | { type: "image"; images: { base64: string; mimeType: string }[] }
@@ -67,7 +67,7 @@ export function BriefPanel({ sessionId, contentType, isLoggedIn, userPlan }: Bri
   const [generationResult, setGenerationResult] = React.useState<GenerationResult | null>(null);
   const [showOutOfCredits, setShowOutOfCredits] = React.useState(false);
   const [aspectRatio, setAspectRatio] = React.useState<AspectRatio>("1:1");
-  const [imageQuality, setImageQuality] = React.useState<ImageQuality>("medium");
+  const [imageResolution, setImageResolution] = React.useState<ImageResolution>("1080p");
   const [showMoreAspect, setShowMoreAspect] = React.useState(false);
   
   const [chatMessages, setChatMessages] = React.useState<Message[]>([]);
@@ -260,7 +260,7 @@ export function BriefPanel({ sessionId, contentType, isLoggedIn, userPlan }: Bri
       const bodyPayload: Record<string, any> = { sessionId };
       if (effectiveType === "image") {
         bodyPayload.aspectRatio = aspectRatio;
-        bodyPayload.quality = imageQuality;
+        bodyPayload.resolution = imageResolution;
       }
 
       const res = await fetch(endpoint, {
@@ -275,9 +275,15 @@ export function BriefPanel({ sessionId, contentType, isLoggedIn, userPlan }: Bri
         throw new Error(data.error?.message ?? "Generation failed.");
       }
 
-      // Navigate to the output tab
-      const queryParams = searchParams.toString() ? `?${searchParams.toString()}` : "";
-      window.location.href = `/session/${sessionId}/output${queryParams}`;
+      if (data.data) {
+        if (effectiveType === "image" && data.data.images) {
+          setGenerationResult({ type: "image", images: data.data.images });
+        } else if (effectiveType === "video" && data.data.video) {
+          setGenerationResult({ type: "video", video: data.data.video });
+        } else if (effectiveType === "article" && data.data.document) {
+          setGenerationResult({ type: "document", document: data.data.document });
+        }
+      }
 
     } catch (err) {
       const message = err instanceof Error ? err.message : "Generation failed.";
@@ -326,7 +332,9 @@ export function BriefPanel({ sessionId, contentType, isLoggedIn, userPlan }: Bri
 
   // ── Main UI ────────────────────────────────────────────────────────────────
   return (
-    <div className="flex flex-col flex-1 w-full mx-auto relative h-full">
+    <div className="flex flex-col lg:flex-row flex-1 w-full relative h-full overflow-hidden">
+      {/* Left Pane - Brief & Chat */}
+      <div className="flex flex-col flex-1 relative w-full lg:w-1/2 lg:border-r border-border h-full">
       {/* Out-of-credits modal */}
       <OutOfCreditsModal
         open={showOutOfCredits}
@@ -529,27 +537,29 @@ export function BriefPanel({ sessionId, contentType, isLoggedIn, userPlan }: Bri
                           </button>
                         </div>
 
-                        {/* Quality */}
+                        {/* Resolution */}
                         <div>
-                          <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider mb-2">Quality</p>
-                          <div className="flex gap-1.5">
+                          <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider mb-2">Resolution</p>
+                          <div className="flex gap-1.5 flex-wrap">
                             {([
-                              { value: "low" as ImageQuality, label: "Low", requiresPaid: false },
-                              { value: "medium" as ImageQuality, label: "Medium", requiresPaid: false },
-                              { value: "high" as ImageQuality, label: "High", requiresPaid: true },
+                              { value: "720p" as ImageResolution, label: "720p", requiresPaid: false },
+                              { value: "1080p" as ImageResolution, label: "1080p", requiresPaid: false },
+                              { value: "1440p" as ImageResolution, label: "1440p", requiresPaid: true },
+                              { value: "2160p" as ImageResolution, label: "2160p", requiresPaid: true },
+                              { value: "4320p" as ImageResolution, label: "4320p", requiresPaid: true },
                             ]).map(({ value, label, requiresPaid }) => {
-                              const locked = requiresPaid && !canUseHighQuality(userPlan);
+                              const locked = requiresPaid && !canUseHighResolution(userPlan);
                               return (
                                 <button
                                   key={value}
                                   disabled={locked}
                                   title={locked ? "Requires Starter plan or above" : undefined}
-                                  onClick={() => !locked && setImageQuality(value)}
+                                  onClick={() => !locked && setImageResolution(value)}
                                   className={cn(
-                                    "flex-1 flex items-center justify-center gap-1 py-1.5 rounded-lg border text-[11px] font-semibold transition-all",
+                                    "flex-1 flex items-center justify-center gap-1 py-1.5 px-2 rounded-lg border text-[11px] font-semibold transition-all min-w-[3.5rem]",
                                     locked
                                       ? "border-border text-muted-foreground/40 cursor-not-allowed opacity-60"
-                                      : imageQuality === value
+                                      : imageResolution === value
                                         ? "border-primary bg-primary/10 text-primary"
                                         : "border-border text-muted-foreground hover:border-primary/40"
                                   )}
@@ -560,9 +570,9 @@ export function BriefPanel({ sessionId, contentType, isLoggedIn, userPlan }: Bri
                               );
                             })}
                           </div>
-                          {!canUseHighQuality(userPlan) && (
+                          {!canUseHighResolution(userPlan) && (
                             <p className="text-[10px] text-muted-foreground mt-1.5 leading-snug">
-                              High quality requires{" "}
+                              1440p+ requires{" "}
                               <Link href="/#pricing" className="text-primary underline underline-offset-2">Starter+</Link>
                             </p>
                           )}
@@ -597,7 +607,7 @@ export function BriefPanel({ sessionId, contentType, isLoggedIn, userPlan }: Bri
         </div>
       </div>
 
-      <div className="flex-1 overflow-y-auto p-4 md:p-8 pb-32 max-w-3xl w-full mx-auto">
+      <div className="flex-1 overflow-y-auto p-4 md:p-8 pb-64 max-w-3xl w-full mx-auto">
         {isLoadingSkeleton ? (
           <div className="flex flex-col gap-2">
             <Skeleton className="h-4 w-full" />
@@ -629,95 +639,9 @@ export function BriefPanel({ sessionId, contentType, isLoggedIn, userPlan }: Bri
         })()}
       </div>
 
-      {/* Generation Result Overlay */}
-      {generationResult && (
-        <div className="fixed inset-0 z-50 bg-background/80 backdrop-blur-sm flex items-center justify-center p-6">
-          <div className="relative bg-background border border-border rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] flex flex-col overflow-hidden">
-            {/* Header */}
-            <div className="flex items-center justify-between px-6 py-4 border-b border-border">
-              <div className="flex items-center gap-2">
-                {generationResult.type === "image" && <ImageIcon className="w-4 h-4 text-primary" />}
-                {generationResult.type === "video" && <Video className="w-4 h-4 text-primary" />}
-                {generationResult.type === "document" && <FileText className="w-4 h-4 text-primary" />}
-                <p className="text-label font-medium text-foreground capitalize">
-                  Generated {generationResult.type}
-                </p>
-              </div>
-              <button
-                onClick={() => setGenerationResult(null)}
-                className="text-muted-foreground hover:text-foreground transition-colors"
-                aria-label="Close"
-              >
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-            {/* Content */}
-            <div className="flex-1 overflow-y-auto p-6">
-              {generationResult.type === "image" && (() => {
-                // Free users may download only their own low-quality results
-                const canDownload = isPaidPlan(userPlan) || imageQuality === "low";
-                return (
-                  <div className="flex flex-col gap-4">
-                    {generationResult.images.map((img, i) => (
-                      <img
-                        key={i}
-                        src={`data:${img.mimeType};base64,${img.base64}`}
-                        alt={`Generated image ${i + 1}`}
-                        className="w-full rounded-xl border border-border object-contain select-none"
-                        onContextMenu={!canDownload ? (e) => e.preventDefault() : undefined}
-                        draggable={canDownload}
-                      />
-                    ))}
-                    {canDownload ? (
-                      <a
-                        href={`data:${generationResult.images[0].mimeType};base64,${generationResult.images[0].base64}`}
-                        download="generated-image.png"
-                        className={cn(buttonVariants({ variant: "outline" }), "w-full mt-2")}
-                      >
-                        <Download className="w-4 h-4 mr-2" />
-                        Download image
-                      </a>
-                    ) : (
-                      <div className="mt-2 text-center text-xs text-muted-foreground bg-muted/30 py-2 rounded-md border border-border">
-                        <p>Downloading high-quality images requires a paid plan.</p>
-                        <Link href="/#pricing" className="text-primary hover:underline ml-1">Upgrade now</Link>
-                      </div>
-                    )}
-                  </div>
-                );
-              })()}
-              {generationResult.type === "video" && (
-                <div className="flex flex-col gap-4">
-                  {generationResult.video.url ? (
-                    <video
-                      src={generationResult.video.url}
-                      controls
-                      className="w-full rounded-xl border border-border"
-                    />
-                  ) : generationResult.video.base64 ? (
-                    <video
-                      src={`data:${generationResult.video.mimeType ?? "video/mp4"};base64,${generationResult.video.base64}`}
-                      controls
-                      className="w-full rounded-xl border border-border"
-                    />
-                  ) : (
-                    <p className="text-body text-muted-foreground">Video generated. Check the server response.</p>
-                  )}
-                </div>
-              )}
-              {generationResult.type === "document" && (
-                <div className="prose prose-sm dark:prose-invert max-w-none text-body text-foreground leading-relaxed font-sans">
-                  <ReactMarkdown>{generationResult.document}</ReactMarkdown>
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
-
       {/* Refinement input (Collapsible Chat) */}
       <div className={cn(
-        "fixed bottom-4 left-4 right-4 md:left-1/2 md:-translate-x-1/2 md:w-[calc(100%-2rem)] md:max-w-2xl bg-background/95 backdrop-blur-xl border border-border shadow-2xl rounded-2xl flex flex-col overflow-hidden z-40 transition-all duration-300",
+        "fixed bottom-4 left-4 right-4 md:left-1/2 md:-translate-x-1/2 md:w-[calc(100%-2rem)] md:max-w-2xl lg:left-4 lg:right-1/2 lg:translate-x-0 lg:w-auto lg:max-w-none bg-background/95 backdrop-blur-xl border border-border shadow-2xl rounded-2xl flex flex-col overflow-hidden z-40 transition-all duration-300",
         isChatCollapsed && "shadow-lg"
       )}>
         {/* Chat header toggle bar */}
@@ -854,6 +778,158 @@ export function BriefPanel({ sessionId, contentType, isLoggedIn, userPlan }: Bri
             </div>
           </>
         )}
+      </div>
+      {/* End Left Pane */}
+      </div>
+
+      {/* Right Pane - Generated Asset Preview */}
+      <div className="hidden lg:flex flex-col w-1/2 h-full bg-muted/20 overflow-hidden relative">
+        {/* Right pane header */}
+        <div className="px-6 py-3 border-b border-border bg-background/60 backdrop-blur-sm flex items-center justify-between shrink-0">
+          <div className="flex items-center gap-2">
+            {generationResult ? (
+              <>
+                {generationResult.type === "image" && <ImageIcon className="w-4 h-4 text-primary" />}
+                {generationResult.type === "video" && <Video className="w-4 h-4 text-primary" />}
+                {generationResult.type === "document" && <FileText className="w-4 h-4 text-primary" />}
+                <p className="text-label font-medium text-foreground capitalize">Generated {generationResult.type}</p>
+              </>
+            ) : (
+              <>
+                <Sparkles className="w-4 h-4 text-muted-foreground" />
+                <p className="text-label font-medium text-muted-foreground">Output Preview</p>
+              </>
+            )}
+          </div>
+          {generationResult && (
+            <button
+              onClick={() => setGenerationResult(null)}
+              className="text-muted-foreground hover:text-foreground transition-colors"
+              aria-label="Clear preview"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          )}
+        </div>
+
+        {/* Right pane content */}
+        <div className="flex-1 overflow-y-auto p-6">
+          {!generationResult && !isRendering && (
+            <div className="flex flex-col items-center justify-center h-full gap-4 text-center px-8">
+              <div className="w-16 h-16 rounded-2xl bg-muted/50 border border-border flex items-center justify-center">
+                <Wand2 className="w-7 h-7 text-muted-foreground/50" />
+              </div>
+              <div>
+                <p className="text-label font-medium text-muted-foreground">No output yet</p>
+                <p className="text-caption text-muted-foreground/60 mt-1 leading-snug">Click <strong>Recrea8</strong> to generate your asset here. You won&apos;t need to leave the page.</p>
+              </div>
+            </div>
+          )}
+
+          {isRendering && (
+            <div className="flex flex-col items-center justify-center h-full gap-4">
+              <div className="w-16 h-16 rounded-2xl bg-primary/10 border border-primary/20 flex items-center justify-center">
+                <Loader2 className="w-7 h-7 text-primary animate-spin" />
+              </div>
+              <div className="text-center">
+                <p className="text-label font-medium text-foreground">Generating...</p>
+                <p className="text-caption text-muted-foreground mt-1">This may take a few seconds</p>
+              </div>
+            </div>
+          )}
+
+          {generationResult && generationResult.type === "image" && (() => {
+            const canDownload = ["720p", "1080p"].includes(imageResolution) || isPaidPlan(userPlan);
+            const isHighRes = ["1440p", "2160p", "4320p"].includes(imageResolution);
+            return (
+              <div className="flex flex-col gap-4">
+                {generationResult.images.map((img, i) => (
+                  <img
+                    key={i}
+                    src={`data:${img.mimeType};base64,${img.base64}`}
+                    alt={`Generated image ${i + 1}`}
+                    className="w-full rounded-2xl border border-border object-contain shadow-lg"
+                    onContextMenu={!canDownload ? (e) => e.preventDefault() : undefined}
+                    draggable={canDownload}
+                  />
+                ))}
+
+                {/* Resolution badge */}
+                <div className="flex items-center gap-2">
+                  <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground bg-muted/60 px-2 py-1 rounded-md border border-border">
+                    {imageResolution}
+                  </span>
+                  {isHighRes && !isPaidPlan(userPlan) && (
+                    <span className="text-[10px] font-semibold uppercase tracking-wider text-amber-600 dark:text-amber-400 bg-amber-500/10 px-2 py-1 rounded-md border border-amber-500/20 flex items-center gap-1">
+                      <Lock className="w-2.5 h-2.5" /> Pro
+                    </span>
+                  )}
+                </div>
+
+                {canDownload ? (
+                  <a
+                    href={`data:${generationResult.images[0].mimeType};base64,${generationResult.images[0].base64}`}
+                    download={`recrea8-${imageResolution}.png`}
+                    className={cn(buttonVariants({ variant: "default" }), "w-full")}
+                  >
+                    <Download className="w-4 h-4 mr-2" />
+                    Download {imageResolution}
+                  </a>
+                ) : (
+                  <>
+                    <div className="p-3 rounded-xl bg-amber-500/10 border border-amber-500/20 text-center">
+                      <p className="text-xs text-amber-600 dark:text-amber-400 font-medium">Downloading {imageResolution} requires a paid plan</p>
+                      <Link href="/#pricing" className="text-xs text-primary underline underline-offset-2 mt-1 inline-block">Upgrade to unlock</Link>
+                    </div>
+                  </>
+                )}
+
+                <Link
+                  href={`/session/${sessionId}/output${searchParams.toString() ? `?${searchParams.toString()}` : ""}`}
+                  className={cn(buttonVariants({ variant: "outline" }), "w-full")}
+                >
+                  View in Output
+                </Link>
+              </div>
+            );
+          })()}
+
+          {generationResult && generationResult.type === "video" && (
+            <div className="flex flex-col gap-4">
+              {generationResult.video.url ? (
+                <video src={generationResult.video.url} controls className="w-full rounded-2xl border border-border shadow-lg" />
+              ) : generationResult.video.base64 ? (
+                <video
+                  src={`data:${generationResult.video.mimeType ?? "video/mp4"};base64,${generationResult.video.base64}`}
+                  controls
+                  className="w-full rounded-2xl border border-border shadow-lg"
+                />
+              ) : (
+                <p className="text-body text-muted-foreground">Video generated successfully.</p>
+              )}
+              <Link
+                href={`/session/${sessionId}/output${searchParams.toString() ? `?${searchParams.toString()}` : ""}`}
+                className={cn(buttonVariants({ variant: "outline" }), "w-full")}
+              >
+                View in Output
+              </Link>
+            </div>
+          )}
+
+          {generationResult && generationResult.type === "document" && (
+            <div className="flex flex-col gap-4">
+              <div className="prose prose-sm dark:prose-invert max-w-none text-body text-foreground leading-relaxed font-sans">
+                <ReactMarkdown>{generationResult.document}</ReactMarkdown>
+              </div>
+              <Link
+                href={`/session/${sessionId}/output${searchParams.toString() ? `?${searchParams.toString()}` : ""}`}
+                className={cn(buttonVariants({ variant: "outline" }), "w-full")}
+              >
+                View in Output
+              </Link>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );

@@ -20,11 +20,11 @@ import { createClient } from "@/utils/supabase/server";
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const { sessionId, customPrompt, aspectRatio, quality } = body as {
+    const { sessionId, customPrompt, aspectRatio, resolution } = body as {
       sessionId?: string;
       customPrompt?: string;
       aspectRatio?: "1:1" | "16:9" | "9:16" | "4:3" | "3:4";
-      quality?: "low" | "medium" | "high";
+      resolution?: "720p" | "1080p" | "1440p" | "2160p" | "4320p";
     };
 
     let prompt = customPrompt?.trim() ?? "";
@@ -74,11 +74,11 @@ export async function POST(req: NextRequest) {
     const { data: { user } } = await supabase.auth.getUser();
 
     let userPlan = "free";
-    const requestedQuality = quality ?? "medium";
+    const requestedResolution = resolution ?? "1080p";
 
     if (user) {
-      // Consume credits based on quality tier
-      const creditType = `image_${requestedQuality}`;
+      // Consume credits based on resolution tier
+      const creditType = `image_${requestedResolution}`;
       try {
         const { plan } = await consumeCredits(user.id, creditType);
         userPlan = plan || "free";
@@ -89,15 +89,15 @@ export async function POST(req: NextRequest) {
         );
       }
 
-      // Enforce quality gating: free users can use up to medium quality
+      // Enforce quality gating: free users can use up to 1080p quality
       const isPaid = userPlan !== "free";
-      if (!isPaid && requestedQuality === "high") {
+      if (!isPaid && ["1440p", "2160p", "4320p"].includes(requestedResolution)) {
         return NextResponse.json(
           {
             success: false,
             error: {
               code: "PLAN_LIMIT",
-              message: `High quality images require a Starter plan or above. Upgrade to unlock.`,
+              message: `High resolution images (1440p+) require a Starter plan or above. Upgrade to unlock.`,
             },
           },
           { status: 403 }
@@ -127,7 +127,7 @@ export async function POST(req: NextRequest) {
     const images = await generateImageFromBrief({
       prompt: enhancedPrompt,
       aspectRatio: aspectRatio ?? "1:1",
-      quality: requestedQuality as "low" | "medium" | "high",
+      quality: requestedResolution as any,
       numberOfImages: 1,
       modelType,
     });
@@ -142,7 +142,7 @@ export async function POST(req: NextRequest) {
         const saved = await saveGeneration({
           sessionId,
           type: "image",
-          model: modelType === "imagen" ? "imagen-3.0-generate-002" : `gpt-image-1 (${requestedQuality})`,
+          model: modelType === "imagen" ? "imagen-3.0-generate-002" : `gpt-image-1 (${requestedResolution})`,
           data: images[0].base64,
           mimeType: images[0].mimeType,
           expiresAt,

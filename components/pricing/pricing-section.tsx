@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { createClient } from "@/utils/supabase/server";
 import { PricingCard } from "@/components/billing/pricing-card";
+import { WhitelabelCard } from "@/components/pricing/whitelabel-card";
 
 export async function PricingSection() {
   const supabase = await createClient();
@@ -149,40 +150,32 @@ export async function PricingSection() {
         </div>
       </div>
 
-      {/* Credits + FAQ unified section */}
+      {/* Whitelabel + FAQ unified section */}
       <div className="max-w-5xl w-full mx-auto px-4 pb-24">
         {/* Section header */}
         <div className="text-center mb-10">
-          <h3 className="text-h2 font-bold text-foreground">Credits &amp; common questions</h3>
+          <h3 className="text-h2 font-bold text-foreground">Common questions &amp; Enterprise</h3>
           <p className="text-body text-muted-foreground mt-2">Everything you need to know before you get started.</p>
         </div>
 
         <div className="flex flex-col lg:flex-row gap-12 items-start">
-          {/* Left — How credits work */}
-          <div className="w-full lg:w-72 lg:shrink-0">
-            <div className="rounded-2xl border border-border shadow-sm overflow-hidden bg-card sticky top-8">
-              <div className="px-6 py-5 border-b border-border/60">
-                <h4 className="text-h3 font-semibold text-foreground">How credits work</h4>
-                <p className="text-body text-muted-foreground mt-1">Each action costs credits. Here&apos;s a rough guide:</p>
-              </div>
-              <div className="divide-y divide-border/60">
-                {[
-                  { action: "Analyse a video / article", cost: "2–5 cr" },
-                  { action: "Generate a standard image", cost: "3 cr" },
-                  { action: "Generate a 4K image", cost: "8 cr" },
-                  { action: "Generate a video clip", cost: "10–20 cr" },
-                  { action: "Text brief (basic)", cost: "1 cr" },
-                  { action: "Text brief (extended)", cost: "3 cr" },
-                ].map((row) => (
-                  <div
-                    key={row.action}
-                    className="flex items-center justify-between px-6 py-3 hover:bg-muted/40 transition-colors duration-150"
-                  >
-                    <span className="text-sm text-foreground">{row.action}</span>
-                    <span className="text-sm font-medium text-primary shrink-0 ml-3">{row.cost}</span>
-                  </div>
-                ))}
-              </div>
+          {/* Left — Whitelabel Card */}
+          <div className="w-full lg:w-80 lg:shrink-0">
+            <div className="sticky top-8">
+              <WhitelabelCard
+                user={
+                  user
+                    ? {
+                        name:
+                          user.user_metadata?.full_name ??
+                          user.user_metadata?.name ??
+                          user.email?.split("@")[0] ??
+                          "User",
+                        email: user.email ?? "",
+                      }
+                    : null
+                }
+              />
             </div>
           </div>
 
@@ -245,6 +238,35 @@ export async function PricingSection() {
                 ))}
               </div>
             </div>
+          </div>
+        </div>
+      </div>
+
+      {/* How credits work section */}
+      <div className="max-w-3xl w-full mx-auto px-4 pb-24">
+        <div className="text-center mb-10">
+          <h3 className="text-h2 font-bold text-foreground">How credits work</h3>
+          <p className="text-body text-muted-foreground mt-2">Each action costs credits. Here&apos;s a rough guide:</p>
+        </div>
+        
+        <div className="rounded-2xl border border-border shadow-sm overflow-hidden bg-card">
+          <div className="divide-y divide-border/60">
+            {[
+              { action: "Analyse a video / article", cost: "2–5 cr" },
+              { action: "Generate a standard image", cost: "3 cr" },
+              { action: "Generate a 4K image", cost: "8 cr" },
+              { action: "Generate a video clip", cost: "10–20 cr" },
+              { action: "Text brief (basic)", cost: "1 cr" },
+              { action: "Text brief (extended)", cost: "3 cr" },
+            ].map((row) => (
+              <div
+                key={row.action}
+                className="flex items-center justify-between px-6 py-4 hover:bg-muted/40 transition-colors duration-150"
+              >
+                <span className="text-body font-medium text-foreground">{row.action}</span>
+                <span className="text-body font-bold text-primary shrink-0 ml-3">{row.cost}</span>
+              </div>
+            ))}
           </div>
         </div>
       </div>

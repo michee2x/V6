@@ -2,11 +2,13 @@ import { createAdminClient } from "@/utils/supabase/admin";
 
 export const MODEL_CREDIT_COSTS: Record<string, number> = {
   "video":        150,  // ~$0.50 cost → $1.50 retail
-  "image_low":    3,    // matches pricing page: standard image = 3 credits
-  "image_medium": 5,   // mid quality
-  "image_high":   8,   // matches pricing page: 4K image = 8 credits
-  "image":        3,   // fallback
-  "document":     1,   // matches pricing page: text brief (basic) = 1 credit
+  "image_720p":   3,
+  "image_1080p":  5,
+  "image_1440p":  8,
+  "image_2160p":  12,
+  "image_4320p":  20,
+  "image":        3,    // fallback
+  "document":     1,    // matches pricing page: text brief (basic) = 1 credit
 };
 
 /**

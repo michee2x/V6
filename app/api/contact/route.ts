@@ -4,16 +4,42 @@ import { createClient } from "@/utils/supabase/server";
 export async function POST(req: Request) {
   try {
     const body = await req.json();
-    const { name, email, message } = body;
+    const { name: bodyName, email: bodyEmail, message, type } = body;
 
-    if (!name || !email || !message) {
+    if (!message) {
       return NextResponse.json(
-        { success: false, error: "Name, email, and message are required" },
+        { success: false, error: "Message is required" },
         { status: 400 }
       );
     }
 
     const supabase = await createClient();
+
+    // Check if user is logged in — if so, pull name/email from their profile
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    let name = bodyName;
+    let email = bodyEmail;
+
+    if (user) {
+      // Logged-in: use their auth email and metadata display name
+      email = user.email ?? email;
+      name =
+        user.user_metadata?.full_name ??
+        user.user_metadata?.name ??
+        user.email?.split("@")[0] ??
+        name ??
+        "Unknown";
+    }
+
+    if (!name || !email) {
+      return NextResponse.json(
+        { success: false, error: "Name and email are required" },
+        { status: 400 }
+      );
+    }
 
     // Insert into contact_messages table
     const { error } = await supabase
@@ -23,6 +49,8 @@ export async function POST(req: Request) {
           name: name.trim(),
           email: email.trim(),
           message: message.trim(),
+          // store the inquiry type if the table supports it; gracefully ignored if not
+          ...(type ? { type: type.trim() } : {}),
         },
       ]);
 

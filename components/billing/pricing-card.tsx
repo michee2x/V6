@@ -151,7 +151,7 @@ export function PricingCard({ plan, userId, email, autoOpenCheckout }: PricingCa
               className={`w-full py-2.5 text-sm font-semibold rounded-xl transition-all duration-200 hover:scale-[1.02] active:scale-[0.98] ${
                 plan.highlight
                   ? "bg-primary text-primary-foreground hover:bg-primary/90 shadow-[0_0_20px_oklch(0.65_0.2_280/0.3)]"
-                  : "bg-muted hover:bg-muted/80 text-foreground"
+                  : "bg-foreground text-background hover:bg-foreground/90 shadow-sm"
               }`}
             />
           ) : plan.ctaLink ? (
@@ -162,7 +162,7 @@ export function PricingCard({ plan, userId, email, autoOpenCheckout }: PricingCa
                 w-full flex items-center justify-center py-2.5 text-sm font-semibold rounded-xl transition-all duration-200 hover:scale-[1.02] active:scale-[0.98]
                 ${plan.ctaDisabled
                   ? "bg-muted text-muted-foreground cursor-default pointer-events-none"
-                  : "bg-muted hover:bg-muted/80 text-foreground"
+                  : "bg-foreground text-background hover:bg-foreground/90 shadow-sm"
                 }
               `}
             >
@@ -176,7 +176,7 @@ export function PricingCard({ plan, userId, email, autoOpenCheckout }: PricingCa
                 w-full flex items-center justify-center py-2.5 text-sm font-semibold rounded-xl transition-all duration-200 hover:scale-[1.02] active:scale-[0.98]
                 ${plan.highlight
                   ? "text-white shadow-[0_0_20px_oklch(0.65_0.2_280/0.3)]"
-                  : "bg-muted hover:bg-muted/80 text-foreground"
+                  : "bg-foreground text-background hover:bg-foreground/90 shadow-sm"
                 }
               `}
               style={
