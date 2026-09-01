@@ -72,3 +72,11 @@ function buildVertexProvider() {
 export function getGoogleVideoModel() {
   return buildVertexProvider().video("veo-3.1-fast-generate-001");
 }
+
+/**
+ * Returns the Imagen 3 model via Vertex AI.
+ * Model: imagen-3.0-generate-002
+ */
+export function getGoogleImageModel() {
+  return buildVertexProvider().image("imagen-3.0-generate-002");
+}

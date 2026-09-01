@@ -139,11 +139,24 @@ export function createAnalysisStream({
 
 // ─── Image generation ─────────────────────────────────────────────────────────
 
+export async function enhanceImagePrompt(brief: string): Promise<string> {
+  const result = await generateText({
+    model: models.gemini,
+    system: `You are an elite creative director and prompt engineer. Your job is to take a raw creative brief and rewrite it into a highly descriptive, visually rich, and photography-optimized prompt for an AI image generator (like Imagen 3 or Midjourney).
+    
+    Add appropriate keywords for lighting (e.g. cinematic lighting, soft diffused, volumetric), style (e.g. photorealistic, 8k, highly detailed, editorial), camera lens/composition (e.g. 35mm, macro, rule of thirds, depth of field), and emotional mood.
+    Do NOT output JSON or Markdown headers. Output ONLY a single paragraph of plain text (max 80 words) that is the optimized prompt.`,
+    prompt: brief,
+  });
+  return result.text.trim();
+}
+
 export interface GenerateImageOptions {
   prompt: string;
   aspectRatio?: "1:1" | "16:9" | "9:16" | "4:3" | "3:4";
   numberOfImages?: number;
   quality?: "low" | "medium" | "high";
+  modelType?: "openai" | "imagen";
 }
 
 export interface GeneratedImage {
@@ -152,13 +165,13 @@ export interface GeneratedImage {
 }
 
 /**
- * Generates an image using OpenAI gpt-image-1.
+ * Generates an image using either OpenAI gpt-image-1 (DALL-E 3) or Google Imagen 3.
  * Returns an array of generated images as base64 strings.
  */
 export async function generateImageFromBrief(
   options: GenerateImageOptions
 ): Promise<GeneratedImage[]> {
-  const { prompt, aspectRatio = "1:1", numberOfImages = 1, quality = "low" } = options;
+  const { prompt, aspectRatio = "1:1", numberOfImages = 1, quality = "low", modelType = "openai" } = options;
 
   const sizeMap: Record<string, string> = {
     "1:1":  "1024x1024",
@@ -169,6 +182,27 @@ export async function generateImageFromBrief(
   };
   const size = sizeMap[aspectRatio] ?? "1024x1024";
 
+  if (modelType === "imagen") {
+    // Dynamically import ai SDK image generator
+    const { generateImage } = await import("ai");
+    const { getGoogleImageModel } = await import("./providers");
+    
+    // Map aspectRatio to the format expected by Google Image
+    // The google provider accepts 1:1, 16:9, 9:16, 4:3, 3:4.
+    const result = await generateImage({
+      model: getGoogleImageModel(),
+      prompt,
+      n: numberOfImages,
+      aspectRatio: aspectRatio,
+    });
+    
+    return result.images.map((img) => ({
+      base64: img.base64,
+      mimeType: "image/png",
+    }));
+  }
+
+  // Fallback / default: OpenAI (gpt-image-1)
   const response = await fetch("https://api.openai.com/v1/images/generations", {
     method: "POST",
     headers: {

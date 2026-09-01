@@ -13,7 +13,7 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { getSession, saveGeneration } from "@/lib/session-store";
-import { generateImageFromBrief } from "@/lib/ai/orchestrator";
+import { generateImageFromBrief, enhanceImagePrompt } from "@/lib/ai/orchestrator";
 import { consumeCredits, checkAnonymousUsage } from "@/lib/billing";
 import { createClient } from "@/utils/supabase/server";
 
@@ -78,7 +78,6 @@ export async function POST(req: NextRequest) {
 
     if (user) {
       // Consume credits based on quality tier
-      // Consume credits based on quality tier
       const creditType = `image_${requestedQuality}`;
       try {
         const { plan } = await consumeCredits(user.id, creditType);
@@ -118,25 +117,32 @@ export async function POST(req: NextRequest) {
       }
     }
 
+    // 1. Enhance the prompt using Gemini Flash (all users)
+    const enhancedPrompt = await enhanceImagePrompt(prompt);
+
+    // 2. Route generation based on plan: Free -> OpenAI, Paid -> Imagen 3
+    const isPaidPlan = userPlan !== "free";
+    const modelType = isPaidPlan ? "imagen" : "openai";
+
     const images = await generateImageFromBrief({
-      prompt,
+      prompt: enhancedPrompt,
       aspectRatio: aspectRatio ?? "1:1",
       quality: requestedQuality as "low" | "medium" | "high",
       numberOfImages: 1,
+      modelType,
     });
 
     let savedGenerationId: string | undefined;
 
     if (sessionId && images.length > 0) {
       // Free plan = 24hr expiry, Paid = null (forever)
-      const isPaidPlan = userPlan !== "free";
       const expiresAt = isPaidPlan ? null : new Date(Date.now() + 24 * 60 * 60 * 1000);
       
       try {
         const saved = await saveGeneration({
           sessionId,
           type: "image",
-          model: `gpt-image-1 (${requestedQuality})`,
+          model: modelType === "imagen" ? "imagen-3.0-generate-002" : `gpt-image-1 (${requestedQuality})`,
           data: images[0].base64,
           mimeType: images[0].mimeType,
           expiresAt,
