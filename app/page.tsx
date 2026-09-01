@@ -56,8 +56,8 @@ export default function HomePage() {
         {/* How it Works */}
         <HowItWorks />
 
-        {/* Gallery */}
-        <InspirationGallery />
+        {/* Gallery — hidden for now */}
+        {/* <InspirationGallery /> */}
       </section>
 
       {/* Full width showcase */}

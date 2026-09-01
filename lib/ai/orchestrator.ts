@@ -117,7 +117,7 @@ export function createAnalysisStream({
           model: models.gemini,
           system: SYSTEM_PROMPT,
           messages: [{ role: "user", content }],
-          maxOutputTokens: 2048,
+          maxOutputTokens: 4096,
         });
 
         let fullText = "";

@@ -45,10 +45,10 @@ export async function BeforeAfterShowcase() {
   return (
     <section
       id="showcase"
-      className="w-full py-20 border-t border-border/40 mt-8 flex flex-col items-center gap-12"
+      className="w-full border-t border-border/40 mt-8 flex flex-col items-center gap-0"
     >
       {/* Heading */}
-      <div className="flex flex-col items-center text-center gap-3 px-4 max-w-2xl">
+      <div className="flex flex-col items-center text-center gap-3 px-4 max-w-2xl py-16">
         <h2 className="text-3xl sm:text-4xl font-bold tracking-tight text-foreground">
           See what&apos;s possible
         </h2>
@@ -58,7 +58,7 @@ export async function BeforeAfterShowcase() {
         </p>
       </div>
 
-      {/* Tabs + grid */}
+      {/* Snap-scroll cards */}
       <ShowcaseTabs items={items} />
     </section>
   );
