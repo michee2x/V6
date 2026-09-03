@@ -29,7 +29,7 @@ export default async function BriefPage({ params, searchParams }: BriefPageProps
   }
 
   return (
-    <div className="flex flex-col flex-1">
+    <div className="flex flex-col flex-1 h-full overflow-hidden">
       <BriefPanel
         sessionId={id}
         contentType={type}

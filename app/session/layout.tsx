@@ -11,9 +11,9 @@ export default function SessionLayout({
   children: React.ReactNode;
 }) {
   return (
-    <div className="min-h-screen flex flex-col bg-background">
+    <div className="h-screen flex flex-col bg-background overflow-hidden">
       <SessionNav />
-      <div className="flex-1 flex flex-col">{children}</div>
+      <div className="flex-1 flex flex-col overflow-hidden min-h-0">{children}</div>
     </div>
   );
 }

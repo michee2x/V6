@@ -151,11 +151,25 @@ export async function enhanceImagePrompt(brief: string): Promise<string> {
   return result.text.trim();
 }
 
+/** Maps UI resolution labels to OpenAI quality values */
+const resolutionToQuality: Record<string, "low" | "medium" | "high"> = {
+  "720p":  "low",
+  "1080p": "medium",
+  "1440p": "high",
+  "2160p": "high",
+  "4320p": "high",
+  // pass-through if already an OpenAI quality string
+  "low":    "low",
+  "medium": "medium",
+  "high":   "high",
+};
+
 export interface GenerateImageOptions {
   prompt: string;
   aspectRatio?: "1:1" | "16:9" | "9:16" | "4:3" | "3:4";
   numberOfImages?: number;
-  quality?: "low" | "medium" | "high";
+  /** Accepts either OpenAI quality strings (low/medium/high) or resolution labels (720p/1080p/…) */
+  quality?: string;
   modelType?: "openai" | "imagen";
 }
 
@@ -171,7 +185,9 @@ export interface GeneratedImage {
 export async function generateImageFromBrief(
   options: GenerateImageOptions
 ): Promise<GeneratedImage[]> {
-  const { prompt, aspectRatio = "1:1", numberOfImages = 1, quality = "low", modelType = "openai" } = options;
+  const { prompt, aspectRatio = "1:1", numberOfImages = 1, quality: rawQuality = "low", modelType = "openai" } = options;
+  // Normalize resolution labels ("720p", "1080p", etc.) → OpenAI quality strings ("low", "medium", "high")
+  const quality: "low" | "medium" | "high" = resolutionToQuality[rawQuality] ?? "low";
 
   const sizeMap: Record<string, string> = {
     "1:1":  "1024x1024",
