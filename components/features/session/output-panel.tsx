@@ -19,11 +19,7 @@ function getGenerationQuality(model: string): "low" | "medium" | "high" {
   return (match?.[1] as "low" | "medium" | "high") ?? "low";
 }
 
-/** Returns true if a free user is allowed to download this generation */
-function freeUserCanDownload(gen: SessionGeneration): boolean {
-  if (gen.type !== "image") return true;
-  return getGenerationQuality(gen.model) === "low";
-}
+
 
 export function OutputPanel({ sessionId, userPlan }: OutputPanelProps) {
   const [generations, setGenerations] = React.useState<SessionGeneration[]>([]);
@@ -118,7 +114,7 @@ export function OutputPanel({ sessionId, userPlan }: OutputPanelProps) {
                 
                 <div className="p-4 flex-1 flex flex-col justify-center bg-muted/5 min-h-[300px]">
                   {gen.type === "image" && (() => {
-                    const canDownload = userPlan !== "free" || freeUserCanDownload(gen);
+                    const canDownload = true;
                     return (
                       <img
                         src={`data:${gen.mimeType || "image/png"};base64,${gen.data}`}
@@ -155,7 +151,7 @@ export function OutputPanel({ sessionId, userPlan }: OutputPanelProps) {
                     )}
                     
                     {gen.type === "image" && (() => {
-                      const canDownload = userPlan !== "free" || freeUserCanDownload(gen);
+                      const canDownload = true;
                       return canDownload ? (
                         <a
                           href={`data:${gen.mimeType || "image/png"};base64,${gen.data}`}

@@ -151,24 +151,10 @@ export async function enhanceImagePrompt(brief: string): Promise<string> {
   return result.text.trim();
 }
 
-/** Maps UI resolution labels to OpenAI quality values */
-const resolutionToQuality: Record<string, "low" | "medium" | "high"> = {
-  "720p":  "low",
-  "1080p": "medium",
-  "1440p": "high",
-  "2160p": "high",
-  "4320p": "high",
-  // pass-through if already an OpenAI quality string
-  "low":    "low",
-  "medium": "medium",
-  "high":   "high",
-};
-
 export interface GenerateImageOptions {
   prompt: string;
   aspectRatio?: "1:1" | "16:9" | "9:16" | "4:3" | "3:4";
   numberOfImages?: number;
-  /** Accepts either OpenAI quality strings (low/medium/high) or resolution labels (720p/1080p/…) */
   quality?: string;
   modelType?: "openai" | "imagen";
 }
@@ -179,22 +165,20 @@ export interface GeneratedImage {
 }
 
 /**
- * Generates an image using either OpenAI gpt-image-1 (DALL-E 3) or Google Imagen 3.
+ * Generates an image using either OpenAI dall-e-3 or Google Imagen 3.
  * Returns an array of generated images as base64 strings.
  */
 export async function generateImageFromBrief(
   options: GenerateImageOptions
 ): Promise<GeneratedImage[]> {
-  const { prompt, aspectRatio = "1:1", numberOfImages = 1, quality: rawQuality = "low", modelType = "openai" } = options;
-  // Normalize resolution labels ("720p", "1080p", etc.) → OpenAI quality strings ("low", "medium", "high")
-  const quality: "low" | "medium" | "high" = resolutionToQuality[rawQuality] ?? "low";
+  const { prompt, aspectRatio = "1:1", numberOfImages = 1, modelType = "openai" } = options;
 
   const sizeMap: Record<string, string> = {
     "1:1":  "1024x1024",
-    "16:9": "1536x1024",
-    "9:16": "1024x1536",
-    "4:3":  "1365x1024",
-    "3:4":  "1024x1365",
+    "16:9": "1792x1024", // DALL-E 3 landscape
+    "9:16": "1024x1792", // DALL-E 3 portrait
+    "4:3":  "1024x1024", // Not supported by DALL-E 3 natively, fallback to square
+    "3:4":  "1024x1024", // Not supported by DALL-E 3 natively, fallback to square
   };
   const size = sizeMap[aspectRatio] ?? "1024x1024";
 
@@ -218,7 +202,7 @@ export async function generateImageFromBrief(
     }));
   }
 
-  // Fallback / default: OpenAI (gpt-image-1)
+  // Fallback / default: OpenAI (dall-e-3)
   const response = await fetch("https://api.openai.com/v1/images/generations", {
     method: "POST",
     headers: {
@@ -226,12 +210,12 @@ export async function generateImageFromBrief(
       "Authorization": `Bearer ${process.env.OPENAI_API_KEY}`,
     },
     body: JSON.stringify({
-      model: "gpt-image-1",
+      model: "dall-e-3",
       prompt,
       n: numberOfImages,
       size,
-      quality,
-      output_format: "png",
+      quality: "hd",
+      response_format: "b64_json",
     }),
   });
 

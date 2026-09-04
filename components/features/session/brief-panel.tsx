@@ -67,7 +67,6 @@ export function BriefPanel({ sessionId, contentType, isLoggedIn, userPlan }: Bri
   const [generationResult, setGenerationResult] = React.useState<GenerationResult | null>(null);
   const [showOutOfCredits, setShowOutOfCredits] = React.useState(false);
   const [aspectRatio, setAspectRatio] = React.useState<AspectRatio>("1:1");
-  const [imageResolution, setImageResolution] = React.useState<ImageResolution>("1080p");
   const [showMoreAspect, setShowMoreAspect] = React.useState(false);
 
   const [chatMessages, setChatMessages] = React.useState<Message[]>([]);
@@ -274,7 +273,6 @@ export function BriefPanel({ sessionId, contentType, isLoggedIn, userPlan }: Bri
       const bodyPayload: Record<string, any> = { sessionId };
       if (effectiveType === "image") {
         bodyPayload.aspectRatio = aspectRatio;
-        bodyPayload.resolution = imageResolution;
       }
 
       const res = await fetch(endpoint, {
@@ -587,47 +585,6 @@ export function BriefPanel({ sessionId, contentType, isLoggedIn, userPlan }: Bri
                               {aspectRatio === "3:4" && <Check className="w-3 h-3" />}
                             </button>
                           </div>
-
-                          {/* Resolution */}
-                          <div>
-                            <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider mb-2">Resolution</p>
-                            <div className="flex gap-1.5 flex-wrap">
-                              {([
-                                { value: "720p" as ImageResolution, label: "720p", requiresPaid: false },
-                                { value: "1080p" as ImageResolution, label: "1080p", requiresPaid: false },
-                                { value: "1440p" as ImageResolution, label: "1440p", requiresPaid: true },
-                                { value: "2160p" as ImageResolution, label: "2160p", requiresPaid: true },
-                                { value: "4320p" as ImageResolution, label: "4320p", requiresPaid: true },
-                              ]).map(({ value, label, requiresPaid }) => {
-                                const locked = requiresPaid && !canUseHighResolution(userPlan);
-                                return (
-                                  <button
-                                    key={value}
-                                    disabled={locked}
-                                    title={locked ? "Requires Starter plan or above" : undefined}
-                                    onClick={() => !locked && setImageResolution(value)}
-                                    className={cn(
-                                      "flex-1 flex items-center justify-center gap-1 py-1.5 px-2 rounded-lg border text-[11px] font-semibold transition-all min-w-[3.5rem]",
-                                      locked
-                                        ? "border-border text-muted-foreground/40 cursor-not-allowed opacity-60"
-                                        : imageResolution === value
-                                          ? "border-primary bg-primary/10 text-primary"
-                                          : "border-border text-muted-foreground hover:border-primary/40"
-                                    )}
-                                  >
-                                    {locked && <Lock className="w-3 h-3" />}
-                                    {label}
-                                  </button>
-                                );
-                              })}
-                            </div>
-                            {!canUseHighResolution(userPlan) && (
-                              <p className="text-[10px] text-muted-foreground mt-1.5 leading-snug">
-                                1440p+ requires{" "}
-                                <Link href="/#pricing" className="text-primary underline underline-offset-2">Starter+</Link>
-                              </p>
-                            )}
-                          </div>
                         </div>
                       )}
 
@@ -906,8 +863,7 @@ export function BriefPanel({ sessionId, contentType, isLoggedIn, userPlan }: Bri
           )}
 
           {generationResult && generationResult.type === "image" && (() => {
-            const canDownload = ["720p", "1080p"].includes(imageResolution) || isPaidPlan(userPlan);
-            const isHighRes = ["1440p", "2160p", "4320p"].includes(imageResolution);
+            const canDownload = true;
             return (
               <div className="flex flex-col gap-4">
                 {generationResult.images.map((img, i) => (
@@ -916,40 +872,33 @@ export function BriefPanel({ sessionId, contentType, isLoggedIn, userPlan }: Bri
                     src={`data:${img.mimeType};base64,${img.base64}`}
                     alt={`Generated image ${i + 1}`}
                     className="w-full rounded-2xl border border-border object-contain shadow-lg"
-                    onContextMenu={!canDownload ? (e) => e.preventDefault() : undefined}
                     draggable={canDownload}
                   />
                 ))}
+                
+                {/* Generation Details */}
+                <div className="flex items-center justify-between mt-2">
+                  <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-1.5">
+                      <ImageIcon className="w-4 h-4 text-primary" />
+                      <span className="text-sm font-medium text-foreground">Generated Image</span>
+                    </div>
+                  </div>
 
-                {/* Resolution badge */}
-                <div className="flex items-center gap-2">
-                  <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground bg-muted/60 px-2 py-1 rounded-md border border-border">
-                    {imageResolution}
-                  </span>
-                  {isHighRes && !isPaidPlan(userPlan) && (
-                    <span className="text-[10px] font-semibold uppercase tracking-wider text-amber-600 dark:text-amber-400 bg-amber-500/10 px-2 py-1 rounded-md border border-amber-500/20 flex items-center gap-1">
-                      <Lock className="w-2.5 h-2.5" /> Pro
+                  {!isPaidPlan(userPlan) && (
+                    <span className="text-xs text-amber-600 dark:text-amber-500 font-medium">
+                      Expires in 24h
                     </span>
                   )}
                 </div>
-
-                {canDownload ? (
-                  <a
-                    href={`data:${generationResult.images[0].mimeType};base64,${generationResult.images[0].base64}`}
-                    download={`recrea8-${imageResolution}.png`}
-                    className={cn(buttonVariants({ variant: "default" }), "w-full")}
-                  >
-                    <Download className="w-4 h-4 mr-2" />
-                    Download {imageResolution}
-                  </a>
-                ) : (
-                  <>
-                    <div className="p-3 rounded-xl bg-amber-500/10 border border-amber-500/20 text-center">
-                      <p className="text-xs text-amber-600 dark:text-amber-400 font-medium">Downloading {imageResolution} requires a paid plan</p>
-                      <Link href="/#pricing" className="text-xs text-primary underline underline-offset-2 mt-1 inline-block">Upgrade to unlock</Link>
-                    </div>
-                  </>
-                )}
+                <a
+                  href={`data:${generationResult.images[0].mimeType};base64,${generationResult.images[0].base64}`}
+                  download={`recrea8-image.png`}
+                  className={cn(buttonVariants({ variant: "default" }), "w-full")}
+                >
+                  <Download className="w-4 h-4 mr-2" />
+                  Download Image
+                </a>
 
                 <Link
                   href={`/session/${sessionId}/output${searchParams.toString() ? `?${searchParams.toString()}` : ""}`}

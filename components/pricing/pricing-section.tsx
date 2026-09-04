@@ -22,11 +22,9 @@ export async function PricingSection() {
       creditsLabel: "30 one-time credits",
       features: [
         { label: "30 starter credits (one-time)", included: true },
-        { label: "Basic text generation", included: true },
-        { label: "Standard image quality only", included: true },
+        { label: "HD image generation", included: true },
         { label: "Analysis history", included: true },
         { label: "Video generation", included: false },
-        { label: "4K image generation", included: false },
         { label: "Extended text outputs", included: false },
         { label: "Priority processing", included: false },
       ],
@@ -45,11 +43,9 @@ export async function PricingSection() {
       creditsLabel: "500 credits / month",
       features: [
         { label: "500 credits per month", included: true },
-        { label: "Extended text generation", included: true },
-        { label: "Standard image quality (up to 2K)", included: true },
+        { label: "HD image generation", included: true },
         { label: "Full analysis history", included: true },
         { label: "Video generation", included: true },
-        { label: "4K image generation", included: false },
         { label: "Extended text outputs", included: true },
         { label: "Priority processing", included: false },
       ],
@@ -68,8 +64,7 @@ export async function PricingSection() {
       creditsLabel: "2,000 credits / month",
       features: [
         { label: "2,000 credits per month", included: true },
-        { label: "Full text generation (no limits)", included: true },
-        { label: "4K image generation", included: true },
+        { label: "HD image generation", included: true },
         { label: "Full analysis history", included: true },
         { label: "Video generation", included: true },
         { label: "Extended text outputs", included: true },
@@ -91,8 +86,7 @@ export async function PricingSection() {
       creditsLabel: "5,000 credits / month",
       features: [
         { label: "5,000 credits per month", included: true },
-        { label: "Full text generation (no limits)", included: true },
-        { label: "4K image generation", included: true },
+        { label: "HD image generation", included: true },
         { label: "Full analysis history", included: true },
         { label: "Video generation", included: true },
         { label: "Extended text outputs", included: true },
@@ -253,8 +247,7 @@ export async function PricingSection() {
           <div className="divide-y divide-border/60">
             {[
               { action: "Analyse a video / article", cost: "2–5 cr" },
-              { action: "Generate a standard image", cost: "3 cr" },
-              { action: "Generate a 4K image", cost: "8 cr" },
+              { action: "Generate an HD image", cost: "3 cr" },
               { action: "Generate a video clip", cost: "10–20 cr" },
               { action: "Text brief (basic)", cost: "1 cr" },
               { action: "Text brief (extended)", cost: "3 cr" },
