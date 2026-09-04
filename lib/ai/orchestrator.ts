@@ -210,7 +210,7 @@ export async function generateImageFromBrief(
       "Authorization": `Bearer ${process.env.OPENAI_API_KEY}`,
     },
     body: JSON.stringify({
-      model: "dall-e-3",
+      model: "gpt-image-2",
       prompt,
       n: numberOfImages,
       size,
