@@ -215,7 +215,7 @@ export async function generateImageFromBrief(
       n: numberOfImages,
       size,
       quality: "hd",
-      response_format: "b64_json",
+      output_format: "png",
     }),
   });
 

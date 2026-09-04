@@ -647,7 +647,7 @@ export function BriefPanel({ sessionId, contentType, isLoggedIn, userPlan }: Bri
 
         {/* Refinement input (Collapsible Chat) — fixed to bottom of LEFT pane only */}
         <div className={cn(
-          "absolute bottom-4 left-4 right-4 bg-background/95 backdrop-blur-xl border border-border shadow-2xl rounded-2xl flex flex-col overflow-hidden z-40 transition-all duration-300",
+          "absolute bottom-4 left-1/2 -translate-x-1/2 w-[calc(100%-2rem)] max-w-3xl bg-background/95 backdrop-blur-xl border border-border shadow-2xl rounded-2xl flex flex-col overflow-hidden z-40 transition-all duration-300",
           isChatCollapsed && "shadow-lg"
         )}>
           {/* Chat header toggle bar */}

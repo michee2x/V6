@@ -47,7 +47,7 @@ export function SessionWorkspace({ sessionId, initialUrl, contentType }: Session
   }, [sessionId, router, searchParams]);
 
   return (
-    <div className="flex-1 flex flex-col">
+    <div className="flex-1 flex flex-col min-h-0 overflow-hidden">
       <InsightPanel
         basicInsight={basicStream.text}
         advancedInsight={advancedStream.text}
