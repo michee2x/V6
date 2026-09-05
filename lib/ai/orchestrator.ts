@@ -214,7 +214,7 @@ export async function generateImageFromBrief(
       prompt,
       n: numberOfImages,
       size,
-      quality: "hd",
+      quality: "high",
       output_format: "png",
     }),
   });
