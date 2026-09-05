@@ -19,12 +19,25 @@ function getGenerationQuality(model: string): "low" | "medium" | "high" {
   return (match?.[1] as "low" | "medium" | "high") ?? "low";
 }
 
-
+function formatExpiresIn(dateString: string, now: number): string {
+  const diffMs = new Date(dateString).getTime() - now;
+  if (diffMs <= 0) return "Expired";
+  const hours = Math.floor(diffMs / (1000 * 60 * 60));
+  const minutes = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
+  if (hours > 0) return `${hours}hrs ${minutes}min`;
+  return `${minutes}min`;
+}
 
 export function OutputPanel({ sessionId, userPlan }: OutputPanelProps) {
   const [generations, setGenerations] = React.useState<SessionGeneration[]>([]);
   const [isLoading, setIsLoading] = React.useState(true);
   const [error, setError] = React.useState<string | null>(null);
+  const [now, setNow] = React.useState(Date.now());
+
+  React.useEffect(() => {
+    const interval = setInterval(() => setNow(Date.now()), 60000);
+    return () => clearInterval(interval);
+  }, []);
 
   const fetchGenerations = React.useCallback(async () => {
     setIsLoading(true);
@@ -143,7 +156,7 @@ export function OutputPanel({ sessionId, userPlan }: OutputPanelProps) {
                   <div className="flex items-center justify-between">
                     {gen.expiresAt && (
                       <span className="text-caption text-amber-600 dark:text-amber-500">
-                        Expires: {new Date(gen.expiresAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                        Expires in: {formatExpiresIn(gen.expiresAt, now)}
                       </span>
                     )}
                     {!gen.expiresAt && (
