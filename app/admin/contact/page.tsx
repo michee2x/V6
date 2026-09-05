@@ -1,5 +1,5 @@
 import { createClient } from "@/utils/supabase/server";
-import { Mail, Calendar, User } from "lucide-react";
+import { Mail, Calendar, User, Paperclip } from "lucide-react";
 
 export const metadata = { title: "Admin — Contact Messages" };
 
@@ -8,6 +8,7 @@ type ContactMessage = {
   name: string;
   email: string;
   message: string;
+  attachment_url: string | null;
   created_at: string;
 };
 
@@ -16,7 +17,7 @@ async function getContactMessages(): Promise<ContactMessage[]> {
     const supabase = await createClient();
     const { data, error } = await supabase
       .from("contact_messages")
-      .select("id, name, email, message, created_at")
+      .select("id, name, email, message, attachment_url, created_at")
       .order("created_at", { ascending: false });
 
     if (error) {
@@ -141,8 +142,38 @@ export default async function AdminContactPage() {
                   </p>
                 </div>
 
+                {/* Attachment */}
+                {msg.attachment_url && (
+                  <div className="mt-2">
+                    <a
+                      href={msg.attachment_url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-2 text-sm text-primary hover:underline bg-primary/10 px-3 py-1.5 rounded-md border border-primary/20"
+                    >
+                      <Paperclip className="w-4 h-4" />
+                      View Attachment
+                    </a>
+                    
+                    {/* Preview logic for images */}
+                    {(msg.attachment_url.match(/\.(jpeg|jpg|gif|png|webp)(\?.*)?$/i)) && (
+                      <div className="mt-3 rounded-lg overflow-hidden border border-border/60 max-w-sm">
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img src={msg.attachment_url} alt="Attachment preview" className="w-full h-auto object-cover" />
+                      </div>
+                    )}
+                    
+                    {/* Preview logic for videos */}
+                    {(msg.attachment_url.match(/\.(mp4|webm|ogg)(\?.*)?$/i)) && (
+                      <div className="mt-3 rounded-lg overflow-hidden border border-border/60 max-w-sm bg-black">
+                        <video src={msg.attachment_url} controls className="w-full h-auto max-h-64" />
+                      </div>
+                    )}
+                  </div>
+                )}
+
                 {/* Reply CTA */}
-                <div className="flex justify-end">
+                <div className="flex justify-end mt-1">
                   <a
                     href={`mailto:${msg.email}?subject=Re: ${subject ?? "Your message to Recrea8"}`}
                     className="inline-flex items-center gap-1.5 text-xs font-medium text-primary hover:underline"

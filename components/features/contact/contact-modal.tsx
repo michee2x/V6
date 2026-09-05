@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { MessageCircle } from "lucide-react";
 import { toast } from "sonner";
+import { createClient } from "@/utils/supabase/client";
 
 export function ContactModal() {
   const [open, setOpen] = React.useState(false);
@@ -18,13 +19,36 @@ export function ContactModal() {
     setIsLoading(true);
 
     const formData = new FormData(e.currentTarget);
-    const data = {
-      name: formData.get("name"),
-      email: formData.get("email"),
-      message: formData.get("message"),
-    };
-
+    
     try {
+      let attachment_url = null;
+      const fileInput = e.currentTarget.querySelector('input[type="file"]') as HTMLInputElement;
+      const file = fileInput?.files?.[0];
+
+      if (file) {
+        const supabase = createClient();
+        const fileExt = file.name.split('.').pop();
+        const fileName = `${Math.random().toString(36).substring(2, 15)}.${fileExt}`;
+        
+        const { error: uploadError } = await supabase.storage
+          .from('contact_attachments')
+          .upload(fileName, file);
+          
+        if (uploadError) {
+          throw new Error("Failed to upload attachment");
+        }
+        
+        const { data } = supabase.storage.from('contact_attachments').getPublicUrl(fileName);
+        attachment_url = data.publicUrl;
+      }
+
+      const data = {
+        name: formData.get("name"),
+        email: formData.get("email"),
+        message: formData.get("message"),
+        attachment_url,
+      };
+
       const res = await fetch("/api/contact", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -77,6 +101,10 @@ export function ContactModal() {
               rows={4}
               required
             />
+          </div>
+          <div className="flex flex-col gap-2">
+            <Label htmlFor="attachment">Attachment (optional)</Label>
+            <Input id="attachment" name="attachment" type="file" accept="image/*,video/*" />
           </div>
           <Button type="submit" disabled={isLoading} className="mt-2">
             {isLoading ? "Sending..." : "Send Message"}

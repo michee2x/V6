@@ -58,8 +58,8 @@ export default function HomePage() {
         {/* <InspirationGallery /> */}
       </section>
 
-      {/* Full width showcase */}
-      <BeforeAfterShowcase />
+      {/* Full width showcase - Hidden for now */}
+      {/* <BeforeAfterShowcase /> */}
 
       {/* Pricing Section */}
       <PricingSection />
