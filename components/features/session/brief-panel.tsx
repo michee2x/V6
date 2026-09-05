@@ -194,17 +194,12 @@ export function BriefPanel({ sessionId, contentType, isLoggedIn, userPlan }: Bri
   const params       = searchParams.toString() ? `?${searchParams.toString()}` : "";
   const insightsHref = `/session/${sessionId}${params}`;
 
-  /** Copy the final_prompt (for JSON) or full text to clipboard */
+  /** Copy the JSON to clipboard */
   const handleCopy = async () => {
     if (!liveBrief) return;
-    let textToCopy = liveBrief;
-    try {
-      const parsed = JSON.parse(liveBrief);
-      if (parsed.final_prompt) textToCopy = parsed.final_prompt;
-    } catch { /* not JSON — use raw */ }
-    await navigator.clipboard.writeText(textToCopy);
+    await navigator.clipboard.writeText(liveBrief);
     setCopied(true);
-    toast.success("Final prompt copied to clipboard");
+    toast.success("JSON copied to clipboard");
     setTimeout(() => setCopied(false), 2000);
   };
 
@@ -498,15 +493,6 @@ export function BriefPanel({ sessionId, contentType, isLoggedIn, userPlan }: Bri
                         <LogIn className="w-4 h-4 mr-2" />
                         Sign in to Recrea8
                       </Link>
-                      <div className="flex flex-col gap-1.5">
-                        <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">Export Master Prompt</p>
-                        <Button id="export-json-btn" variant="outline" className="w-full justify-start" disabled={!liveBrief} onClick={exportAsJson}>
-                          <Download className="w-4 h-4 mr-2" />Export as JSON
-                        </Button>
-                        <Button id="export-text-btn" variant="outline" className="w-full justify-start" disabled={!liveBrief} onClick={exportAsText}>
-                          <FileText className="w-4 h-4 mr-2" />Export plain text
-                        </Button>
-                      </div>
                     </>
                   ) : isVideoBocked ? (
                     /* ── Free user trying video ── */
@@ -525,15 +511,6 @@ export function BriefPanel({ sessionId, contentType, isLoggedIn, userPlan }: Bri
                         <Sparkles className="w-4 h-4 mr-2" />
                         Upgrade to unlock video
                       </Link>
-                      <div className="flex flex-col gap-1.5">
-                        <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">Export Master Prompt</p>
-                        <Button id="export-json-btn-video" variant="outline" className="w-full justify-start" disabled={!liveBrief} onClick={exportAsJson}>
-                          <Download className="w-4 h-4 mr-2" />Export as JSON
-                        </Button>
-                        <Button id="export-text-btn-video" variant="outline" className="w-full justify-start" disabled={!liveBrief} onClick={exportAsText}>
-                          <FileText className="w-4 h-4 mr-2" />Export plain text
-                        </Button>
-                      </div>
                     </>
                   ) : (
                     /* ── Logged-in with access ── */
@@ -563,7 +540,7 @@ export function BriefPanel({ sessionId, contentType, isLoggedIn, userPlan }: Bri
                                 >
                                   <span
                                     className={cn(
-                                      "rounded-sm border-2 transition-colors",
+                                      "rounded-[1px] border-2 transition-colors",
                                       aspectRatio === ratio ? "border-primary" : "border-muted-foreground/50"
                                     )}
                                     style={{ width: w / 2.5, height: h / 2.5, display: "block" }}
@@ -590,13 +567,6 @@ export function BriefPanel({ sessionId, contentType, isLoggedIn, userPlan }: Bri
                       )}
 
                       <div className="flex flex-col gap-1.5">
-                        <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">Export Master Prompt</p>
-                        <Button id="export-json-btn-main" variant="outline" className="w-full justify-start" disabled={!liveBrief} onClick={exportAsJson}>
-                          <Download className="w-4 h-4 mr-2" />Export as JSON
-                        </Button>
-                        <Button id="export-text-btn-main" variant="outline" className="w-full justify-start" disabled={!liveBrief} onClick={exportAsText}>
-                          <FileText className="w-4 h-4 mr-2" />Export plain text
-                        </Button>
                         <Button
                           id="copy-prompt-mobile-btn"
                           variant="outline"

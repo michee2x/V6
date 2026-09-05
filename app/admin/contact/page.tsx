@@ -1,4 +1,4 @@
-import { createClient } from "@/utils/supabase/server";
+import { createAdminClient } from "@/utils/supabase/admin";
 import { Mail, Calendar, User, Paperclip } from "lucide-react";
 
 export const metadata = { title: "Admin — Contact Messages" };
@@ -14,7 +14,7 @@ type ContactMessage = {
 
 async function getContactMessages(): Promise<ContactMessage[]> {
   try {
-    const supabase = await createClient();
+    const supabase = createAdminClient();
     const { data, error } = await supabase
       .from("contact_messages")
       .select("id, name, email, message, attachment_url, created_at")
