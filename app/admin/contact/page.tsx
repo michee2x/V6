@@ -1,5 +1,6 @@
 import { createAdminClient } from "@/utils/supabase/admin";
 import { Mail, Calendar, User, Paperclip } from "lucide-react";
+import Link from "next/link";
 
 export const metadata = { title: "Admin — Contact Messages" };
 
@@ -98,91 +99,60 @@ export default async function AdminContactPage() {
                 ? SUBJECT_COLORS[subject]
                 : "bg-muted text-muted-foreground border-border";
 
+            // Truncate body for preview
+            const snippet = body.length > 80 ? body.substring(0, 80) + "..." : body;
+
             return (
-              <div
+              <Link
                 key={msg.id}
-                className="rounded-2xl border border-border bg-card p-5 flex flex-col gap-3 hover:border-primary/30 transition-colors"
+                href={`/admin/contact/${msg.id}`}
+                className="group flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 rounded-xl border border-border bg-card hover:border-primary/40 hover:bg-muted/30 transition-all"
               >
-                {/* Top row */}
-                <div className="flex flex-wrap items-start justify-between gap-3">
-                  <div className="flex flex-col gap-1 min-w-0">
-                    <div className="flex items-center gap-2">
-                      <User className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
+                <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-6 min-w-0 flex-1">
+                  {/* Sender Info */}
+                  <div className="flex items-center gap-3 shrink-0 sm:w-48">
+                    <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+                      <User className="w-4 h-4 text-primary" />
+                    </div>
+                    <div className="flex flex-col min-w-0">
                       <span className="text-sm font-semibold text-foreground truncate">
                         {msg.name}
                       </span>
+                      <span className="text-xs text-muted-foreground truncate">
+                        {msg.email}
+                      </span>
                     </div>
-                    <a
-                      href={`mailto:${msg.email}`}
-                      className="text-xs text-primary hover:underline ml-5"
-                    >
-                      {msg.email}
-                    </a>
                   </div>
 
-                  <div className="flex items-center gap-2 shrink-0">
+                  {/* Subject & Snippet */}
+                  <div className="flex flex-col sm:flex-row sm:items-center gap-2 min-w-0 flex-1">
                     {subject && (
                       <span
-                        className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-semibold border ${subjectClass}`}
+                        className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold border shrink-0 ${subjectClass}`}
                       >
                         {subject}
                       </span>
                     )}
-                    <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                      <Calendar className="w-3 h-3" />
-                      {formatDate(msg.created_at)}
+                    <span className="text-sm text-muted-foreground truncate group-hover:text-foreground transition-colors">
+                      {snippet}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Metadata (Date & Attachments) */}
+                <div className="flex items-center gap-4 shrink-0 mt-2 sm:mt-0">
+                  {msg.attachment_url && (
+                    <div className="flex items-center gap-1 text-xs text-primary bg-primary/10 px-2 py-1 rounded-md border border-primary/20">
+                      <Paperclip className="w-3.5 h-3.5" />
+                      <span>Attachment</span>
                     </div>
+                  )}
+                  <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                    <Calendar className="w-3.5 h-3.5" />
+                    {formatDate(msg.created_at)}
                   </div>
                 </div>
-
-                {/* Message body */}
-                <div className="rounded-xl bg-muted/40 border border-border/60 px-4 py-3">
-                  <p className="text-sm text-foreground whitespace-pre-wrap leading-relaxed">
-                    {body}
-                  </p>
-                </div>
-
-                {/* Attachment */}
-                {msg.attachment_url && (
-                  <div className="mt-2">
-                    <a
-                      href={msg.attachment_url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-flex items-center gap-2 text-sm text-primary hover:underline bg-primary/10 px-3 py-1.5 rounded-md border border-primary/20"
-                    >
-                      <Paperclip className="w-4 h-4" />
-                      View Attachment
-                    </a>
-                    
-                    {/* Preview logic for images */}
-                    {(msg.attachment_url.match(/\.(jpeg|jpg|gif|png|webp)(\?.*)?$/i)) && (
-                      <div className="mt-3 rounded-lg overflow-hidden border border-border/60 max-w-sm">
-                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img src={msg.attachment_url} alt="Attachment preview" className="w-full h-auto object-cover" />
-                      </div>
-                    )}
-                    
-                    {/* Preview logic for videos */}
-                    {(msg.attachment_url.match(/\.(mp4|webm|ogg)(\?.*)?$/i)) && (
-                      <div className="mt-3 rounded-lg overflow-hidden border border-border/60 max-w-sm bg-black">
-                        <video src={msg.attachment_url} controls className="w-full h-auto max-h-64" />
-                      </div>
-                    )}
-                  </div>
-                )}
-
-                {/* Reply CTA */}
-                <div className="flex justify-end mt-1">
-                  <a
-                    href={`mailto:${msg.email}?subject=Re: ${subject ?? "Your message to Recrea8"}`}
-                    className="inline-flex items-center gap-1.5 text-xs font-medium text-primary hover:underline"
-                  >
-                    <Mail className="w-3 h-3" />
-                    Reply via email
-                  </a>
-                </div>
-              </div>
+              </Link>
             );
           })}
         </div>
