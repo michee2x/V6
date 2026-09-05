@@ -78,8 +78,9 @@ const SUBJECT_COLORS: Record<string, string> = {
   "General Enquiry":                 "bg-primary/10 text-primary border-primary/20",
 };
 
-export default async function ContactDetailPage({ params }: { params: { id: string } }) {
-  const msg = await getContactMessage(params.id);
+export default async function ContactDetailPage({ params }: { params: Promise<{ id: string }> }) {
+  const resolvedParams = await params;
+  const msg = await getContactMessage(resolvedParams.id);
 
   if (!msg) {
     notFound();
