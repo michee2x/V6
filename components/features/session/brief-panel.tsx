@@ -74,6 +74,7 @@ export function BriefPanel({ sessionId, contentType, isLoggedIn, userPlan }: Bri
   const [historyIndex, setHistoryIndex] = React.useState(-1);
   const [changedParagraphs, setChangedParagraphs] = React.useState<Set<number>>(new Set());
   const [isChatCollapsed, setIsChatCollapsed] = React.useState(false);
+  const [activeTab, setActiveTab] = React.useState<"overview" | "engine">("overview");
 
   // Right panel visibility state:
   // "hidden"  = never shown yet (no output)
@@ -616,33 +617,93 @@ export function BriefPanel({ sessionId, contentType, isLoggedIn, userPlan }: Bri
         </div>
 
         {/* Brief content — scrollable, isolated from right pane */}
-        <div className="flex-1 overflow-y-auto p-4 md:p-8 pb-64 max-w-3xl w-full mx-auto">
-          {isLoadingSkeleton ? (
-            <div className="flex flex-col gap-2">
-              <Skeleton className="h-4 w-full" />
-              <Skeleton className="h-4 w-4/5" />
-              <Skeleton className="h-4 w-full" />
-              <Skeleton className="h-4 w-3/4" />
-              <Skeleton className="h-4 w-full" />
-              <Skeleton className="h-4 w-2/3" />
+        <div className="flex-1 flex flex-col overflow-y-auto">
+          <div className="max-w-3xl w-full mx-auto pt-4 md:pt-8 px-4 md:px-8">
+            <div className="flex items-center gap-6 border-b border-border mb-6">
+              <button
+                onClick={() => setActiveTab("overview")}
+                className={cn(
+                  "pb-3 text-sm font-medium transition-colors border-b-2",
+                  activeTab === "overview" ? "border-primary text-foreground" : "border-transparent text-muted-foreground hover:text-foreground"
+                )}
+              >
+                Overview
+              </button>
+              <button
+                onClick={() => setActiveTab("engine")}
+                className={cn(
+                  "pb-3 text-sm font-medium transition-colors border-b-2",
+                  activeTab === "engine" ? "border-primary text-foreground" : "border-transparent text-muted-foreground hover:text-foreground"
+                )}
+              >
+                Prompt Engine
+              </button>
             </div>
-          ) : (() => {
-            return (
-              <div className="prose prose-sm dark:prose-invert max-w-none text-body text-foreground leading-relaxed font-sans flex flex-col gap-4">
-                {liveBrief.split("\n\n").map((para, idx) => (
-                  <div
-                    key={idx}
-                    className={cn(
-                      "transition-colors duration-1000 p-2 -mx-2 rounded-md border-l-2 border-transparent",
-                      changedParagraphs.has(idx) && "bg-amber-50 border-amber-300 ring-1 ring-amber-100 dark:bg-amber-950/30 dark:border-amber-700"
-                    )}
-                  >
-                    <ReactMarkdown>{para + (idx === liveBrief.split("\n\n").length - 1 && (briefStream.isStreaming || isRefining) ? " ▋" : "")}</ReactMarkdown>
-                  </div>
-                ))}
+          </div>
+
+          <div className="p-4 md:p-8 pt-0 pb-64 max-w-3xl w-full mx-auto">
+            {isLoadingSkeleton ? (
+              <div className="flex flex-col gap-2">
+                <Skeleton className="h-4 w-full" />
+                <Skeleton className="h-4 w-4/5" />
+                <Skeleton className="h-4 w-full" />
+                <Skeleton className="h-4 w-3/4" />
+                <Skeleton className="h-4 w-full" />
+                <Skeleton className="h-4 w-2/3" />
               </div>
-            );
-          })()}
+            ) : (() => {
+              let parsedOverview = "";
+              let isJsonFormat = false;
+
+              // Extract overview for display
+              const jsonMatch = liveBrief.match(/```json\n([\s\S]*?)(\n```)?$/);
+              if (jsonMatch) {
+                isJsonFormat = true;
+                try {
+                  const p = JSON.parse(jsonMatch[1]);
+                  if (p.overview) parsedOverview = p.overview;
+                } catch {
+                  // Fallback for streaming JSON
+                  const overviewMatch = liveBrief.match(/"overview"\s*:\s*"([^"]+)"?/);
+                  if (overviewMatch) parsedOverview = overviewMatch[1];
+                }
+              } else {
+                try {
+                  const p = JSON.parse(liveBrief);
+                  isJsonFormat = true;
+                  if (p.overview) parsedOverview = p.overview;
+                } catch {}
+              }
+
+              // What content to show based on the tab
+              let contentToRender = liveBrief;
+              if (activeTab === "overview") {
+                if (isJsonFormat && parsedOverview) {
+                  contentToRender = parsedOverview;
+                } else if (isJsonFormat) {
+                  contentToRender = "Generating overview...";
+                } else {
+                  contentToRender = liveBrief; // Fallback for old plain-text prompts
+                }
+              }
+
+              return (
+                <div className="prose prose-sm dark:prose-invert max-w-none text-body text-foreground leading-relaxed font-sans flex flex-col gap-4">
+                  {contentToRender.split("\n\n").map((para, idx) => (
+                    <div
+                      key={idx}
+                      className={cn(
+                        "transition-colors duration-1000 p-2 -mx-2 rounded-md border-l-2 border-transparent",
+                        changedParagraphs.has(idx) && "bg-amber-50 border-amber-300 ring-1 ring-amber-100 dark:bg-amber-950/30 dark:border-amber-700"
+                      )}
+                    >
+                      <ReactMarkdown>{para + (idx === contentToRender.split("\n\n").length - 1 && (briefStream.isStreaming || isRefining) ? " ▋" : "")}</ReactMarkdown>
+                    </div>
+                  ))}
+                </div>
+              );
+            })()}
+          </div>
         </div>
 
         {/* Refinement input (Collapsible Chat) — fixed to bottom of LEFT pane only */}

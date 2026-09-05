@@ -41,12 +41,16 @@ export function sseResponse(stream: ReadableStream<Uint8Array>): Response {
 interface AnalyzeOptions {
   userPrompt: string;
   contentType?: ContentType;
+
   /** For image analysis: base64 encoded image data */
   image?: ImageData;
+
   /** For YouTube: pass the public URL directly — Gemini reads frames natively */
   videoUrl?: string;
+
   /** For uploaded or downloaded videos: raw base64 bytes (no data URI prefix) */
   videoBase64?: string;
+
   /** MIME type of the inline video e.g. "video/mp4" */
   videoMimeType?: string;
 }
@@ -79,11 +83,12 @@ export function createAnalysisStream({
             { type: "text", text: userPrompt },
             {
               type: "file",
-              data: videoUrl,         // plain URL string — Gemini handles it natively
+              data: videoUrl,
               mediaType: "video/mp4",
             },
           ];
         }
+
         // ── Route 2: Inline video bytes (uploaded file or TikTok download) ──
         else if (videoBase64 && videoMimeType) {
           content = [
@@ -95,11 +100,22 @@ export function createAnalysisStream({
             },
           ];
         }
+
         // ── Route 3: Image → Gemini inline vision ────────────────────────────
         else if (image) {
           let safeMediaType = image.mimeType || "image/jpeg";
-          const validTypes = ["image/jpeg", "image/png", "image/gif", "image/webp"];
-          if (!validTypes.includes(safeMediaType)) safeMediaType = "image/jpeg";
+
+          const validTypes = [
+            "image/jpeg",
+            "image/png",
+            "image/gif",
+            "image/webp",
+          ];
+
+          if (!validTypes.includes(safeMediaType)) {
+            safeMediaType = "image/jpeg";
+          }
+
           content = [
             {
               type: "image",
@@ -108,6 +124,7 @@ export function createAnalysisStream({
             { type: "text", text: userPrompt },
           ];
         }
+
         // ── Route 4: Text / Article ───────────────────────────────────────────
         else {
           content = [{ type: "text", text: userPrompt }];
@@ -121,16 +138,36 @@ export function createAnalysisStream({
         });
 
         let fullText = "";
+
         for await (const textPart of result.textStream) {
           fullText += textPart;
-          controller.enqueue(encodeSSE({ type: "delta", text: textPart }));
+          controller.enqueue(
+            encodeSSE({
+              type: "delta",
+              text: textPart,
+            })
+          );
         }
 
-        controller.enqueue(encodeSSE({ type: "done", fullText }));
+        controller.enqueue(
+          encodeSSE({
+            type: "done",
+            fullText,
+          })
+        );
+
         controller.close();
       } catch (err) {
-        const message = err instanceof Error ? err.message : "AI stream error";
-        controller.enqueue(encodeSSE({ type: "error", message }));
+        const message =
+          err instanceof Error ? err.message : "AI stream error";
+
+        controller.enqueue(
+          encodeSSE({
+            type: "error",
+            message,
+          })
+        );
+
         controller.close();
       }
     },
@@ -139,15 +176,43 @@ export function createAnalysisStream({
 
 // ─── Image generation ─────────────────────────────────────────────────────────
 
-export async function enhanceImagePrompt(brief: string): Promise<string> {
+export async function enhanceImagePrompt(
+  brief: string
+): Promise<string> {
+  // Check if it contains our new JSON format (wrapped in ```json ... ```)
+  const jsonMatch = brief.match(/```json\n([\s\S]*?)\n```/);
+  if (jsonMatch) {
+    try {
+      const parsed = JSON.parse(jsonMatch[1]);
+      if (parsed.final_prompt) {
+        return parsed.final_prompt;
+      }
+    } catch (e) {
+      console.error("[enhanceImagePrompt] JSON parse failed, falling back", e);
+    }
+  } else {
+    // Maybe it's raw JSON without backticks
+    try {
+      const parsed = JSON.parse(brief);
+      if (parsed.final_prompt) {
+        return parsed.final_prompt;
+      }
+    } catch (e) {
+      // Not raw JSON
+    }
+  }
+
+  // Fallback for old sessions (text-based master prompts)
   const result = await generateText({
     model: models.gemini,
     system: `You are an elite creative director and prompt engineer. Your job is to take a raw creative brief and rewrite it into a highly descriptive, visually rich, and photography-optimized prompt for an AI image generator (like Imagen 3 or Midjourney).
-    
-    Add appropriate keywords for lighting (e.g. cinematic lighting, soft diffused, volumetric), style (e.g. photorealistic, 8k, highly detailed, editorial), camera lens/composition (e.g. 35mm, macro, rule of thirds, depth of field), and emotional mood.
-    Do NOT output JSON or Markdown headers. Output ONLY a single paragraph of plain text (max 80 words) that is the optimized prompt.`,
+
+Add appropriate keywords for lighting (e.g. cinematic lighting, soft diffused, volumetric), style (e.g. photorealistic, 8k, highly detailed, editorial), camera lens/composition (e.g. 35mm, macro, rule of thirds, depth of field), and emotional mood.
+
+Do NOT output JSON or Markdown headers. Output ONLY a single paragraph of plain text (max 80 words) that is the optimized prompt.`,
     prompt: brief,
   });
+
   return result.text.trim();
 }
 
@@ -165,68 +230,131 @@ export interface GeneratedImage {
 }
 
 /**
- * Generates an image using either OpenAI dall-e-3 or Google Imagen 3.
+ * Generates an image using either OpenAI GPT Image 2 or Google Imagen.
  * Returns an array of generated images as base64 strings.
+ *
+ * OpenAI:
+ *   - Uses gpt-image-2
+ *   - Uses GPT Image 2 quality levels
+ *   - Uses flexible resolutions
+ *   - Returns base64 PNG images
  */
 export async function generateImageFromBrief(
   options: GenerateImageOptions
 ): Promise<GeneratedImage[]> {
-  const { prompt, aspectRatio = "1:1", numberOfImages = 1, modelType = "openai" } = options;
+  const {
+    prompt,
+    aspectRatio = "1:1",
+    numberOfImages = 1,
+    modelType = "openai",
+  } = options;
 
-  const sizeMap: Record<string, string> = {
-    "1:1":  "1024x1024",
-    "16:9": "1792x1024", // DALL-E 3 landscape
-    "9:16": "1024x1792", // DALL-E 3 portrait
-    "4:3":  "1024x1024", // Not supported by DALL-E 3 natively, fallback to square
-    "3:4":  "1024x1024", // Not supported by DALL-E 3 natively, fallback to square
-  };
-  const size = sizeMap[aspectRatio] ?? "1024x1024";
-
+  // ── Google Imagen ─────────────────────────────────────────────────────────
   if (modelType === "imagen") {
-    // Dynamically import ai SDK image generator
     const { generateImage } = await import("ai");
     const { getGoogleImageModel } = await import("./providers");
-    
-    // Map aspectRatio to the format expected by Google Image
-    // The google provider accepts 1:1, 16:9, 9:16, 4:3, 3:4.
+
+    // Google Imagen supports these aspect ratios directly.
     const result = await generateImage({
       model: getGoogleImageModel(),
       prompt,
       n: numberOfImages,
       aspectRatio: aspectRatio,
     });
-    
+
     return result.images.map((img) => ({
       base64: img.base64,
       mimeType: "image/png",
     }));
   }
 
-  // Fallback / default: OpenAI (dall-e-3)
-  const response = await fetch("https://api.openai.com/v1/images/generations", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "Authorization": `Bearer ${process.env.OPENAI_API_KEY}`,
-    },
-    body: JSON.stringify({
-      model: "gpt-image-2",
-      prompt,
-      n: numberOfImages,
-      size,
-      quality: "high",
-      output_format: "png",
-    }),
-  });
+  // ── OpenAI GPT Image 2 ────────────────────────────────────────────────────
+  //
+  // GPT Image 2 supports flexible resolutions.
+  //
+  // All custom width/height values must:
+  //   1. Be divisible by 16
+  //   2. Have an aspect ratio between 1:3 and 3:1
+  //
+  // These resolutions preserve the requested aspect ratio instead of
+  // incorrectly falling back to 1024x1024 for portrait/landscape formats.
+
+  const sizeMap: Record<string, string> = {
+    "1:1": "1536x1536",
+    "16:9": "1536x864",
+    "9:16": "864x1536",
+    "4:3": "1536x1152",
+    "3:4": "1152x1536",
+  };
+
+  const size = sizeMap[aspectRatio] ?? "1536x1536";
+
+  const response = await fetch(
+    "https://api.openai.com/v1/images/generations",
+    {
+      method: "POST",
+
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
+      },
+
+      body: JSON.stringify({
+        // Current OpenAI image generation model.
+        model: "gpt-image-2",
+
+        // Keep the Gemini-enhanced prompt exactly as supplied.
+        prompt,
+
+        // GPT Image 2 supports multiple images per request.
+        n: numberOfImages,
+
+        // GPT Image 2 supports flexible image dimensions.
+        size,
+
+        // IMPORTANT:
+        // GPT Image 2 uses low / medium / high / auto.
+        // "hd" belongs to the older DALL-E 3 API.
+        quality: "high",
+
+        // PNG preserves the maximum visual quality and is directly
+        // compatible with the existing GeneratedImage return type.
+        output_format: "png",
+
+        // Let GPT Image 2 determine the appropriate background.
+        background: "auto",
+
+        // Keep OpenAI's default automatic moderation behavior.
+        moderation: "auto",
+      }),
+    }
+  );
 
   if (!response.ok) {
     const err = await response.json().catch(() => ({}));
-    const msg = (err as any)?.error?.message ?? "Image generation failed.";
-    console.error("[generate/image] OpenAI error:", msg);
+
+    const msg =
+      (err as any)?.error?.message ??
+      "Image generation failed.";
+
+    console.error(
+      "[generate/image] OpenAI error:",
+      msg
+    );
+
     throw new Error(msg);
   }
 
-  const data = await response.json() as { data: { b64_json: string }[] };
+  const data = (await response.json()) as {
+    data: {
+      b64_json: string;
+    }[];
+  };
+
+  if (!data.data || data.data.length === 0) {
+    throw new Error("OpenAI returned no generated images.");
+  }
+
   return data.data.map((img) => ({
     base64: img.b64_json,
     mimeType: "image/png",
@@ -244,6 +372,7 @@ export async function generateTextDocumentFromBrief(
     system: `You are an expert creative director and writer. Turn the provided creative brief into a detailed and polished ${docType}. Output only the final document, beautifully formatted in Markdown.`,
     prompt,
   });
+
   return result.text;
 }
 
@@ -258,7 +387,9 @@ export async function generateVideoFromBrief(
 ) {
   const { prompt } = options;
 
-  const enhancedPrompt = `${prompt}\n\nCRITICAL CONSTRAINT: Generate a maximum of 2-3 seconds of video only. Do not exceed 3 seconds.`;
+  const enhancedPrompt = `${prompt}
+
+CRITICAL CONSTRAINT: Generate a maximum of 2-3 seconds of video only. Do not exceed 3 seconds.`;
 
   const result = await experimental_generateVideo({
     model: getGoogleVideoModel(),
