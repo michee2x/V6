@@ -19,8 +19,8 @@ function getGenerationQuality(model: string): "low" | "medium" | "high" {
   return (match?.[1] as "low" | "medium" | "high") ?? "low";
 }
 
-function formatExpiresIn(dateString: string, now: number): string {
-  const diffMs = new Date(dateString).getTime() - now;
+function formatExpiresIn(date: string | Date, now: number): string {
+  const diffMs = new Date(date).getTime() - now;
   if (diffMs <= 0) return "Expired";
   const hours = Math.floor(diffMs / (1000 * 60 * 60));
   const minutes = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
@@ -124,7 +124,7 @@ export function OutputPanel({ sessionId, userPlan }: OutputPanelProps) {
                     {new Date(gen.createdAt).toLocaleDateString()} {new Date(gen.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                   </span>
                 </div>
-                
+
                 <div className="p-4 flex-1 flex flex-col justify-center bg-muted/5 min-h-[300px]">
                   {gen.type === "image" && (() => {
                     const canDownload = true;
@@ -151,7 +151,7 @@ export function OutputPanel({ sessionId, userPlan }: OutputPanelProps) {
                     </div>
                   )}
                 </div>
-                
+
                 <div className="p-4 border-t border-border bg-muted/10">
                   <div className="flex items-center justify-between">
                     {gen.expiresAt && (
@@ -162,7 +162,7 @@ export function OutputPanel({ sessionId, userPlan }: OutputPanelProps) {
                     {!gen.expiresAt && (
                       <span className="text-caption text-muted-foreground">Saved permanently</span>
                     )}
-                    
+
                     {gen.type === "image" && (() => {
                       const canDownload = true;
                       return canDownload ? (
