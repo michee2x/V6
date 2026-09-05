@@ -41,7 +41,7 @@ export function SessionNav() {
             aria-current={isInsights ? "page" : undefined}
           >
             <Lightbulb className="w-3.5 h-3.5" />
-            <span className="hidden sm:inline">Insights</span>
+            <span className="hidden sm:inline">Insight</span>
           </Link>
 
           <Link
@@ -55,7 +55,7 @@ export function SessionNav() {
             aria-current={isBrief ? "page" : undefined}
           >
             <Wand2 className="w-3.5 h-3.5" />
-            <span className="hidden sm:inline">Creative Brief</span>
+            <span className="hidden sm:inline">Master Prompt</span>
           </Link>
 
           <Link
@@ -77,7 +77,7 @@ export function SessionNav() {
             >
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
             </svg>
-            <span className="hidden sm:inline">Output</span>
+            <span className="hidden sm:inline">History</span>
           </Link>
         </nav>
       )}

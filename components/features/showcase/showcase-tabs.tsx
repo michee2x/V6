@@ -25,7 +25,7 @@ function ShowcaseCard({ item }: { item: ShowcaseItem }) {
           )}
           {/* Before label */}
           <div className="absolute top-3 left-3 px-2.5 py-1 rounded-md bg-black/60 backdrop-blur-sm text-[10px] font-bold text-white/90 uppercase tracking-wider">
-            {item.before_label || "Original"}
+            {item.before_label || "[original]"}
           </div>
         </div>
 
@@ -62,7 +62,7 @@ function ShowcaseCard({ item }: { item: ShowcaseItem }) {
           )}
           {/* After label */}
           <div className="absolute top-3 right-3 px-2.5 py-1 rounded-md bg-primary/80 backdrop-blur-sm text-[10px] font-bold text-white uppercase tracking-wider">
-            {item.after_label || "Recrea8'd"}
+            {item.after_label || "With ReCrea8"}
           </div>
         </div>
       </div>

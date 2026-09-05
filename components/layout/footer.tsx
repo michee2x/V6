@@ -6,12 +6,11 @@ export function Footer() {
   return (
     <footer className="w-full border-t border-border/40 bg-background mt-auto">
       <div className="container max-w-screen-2xl mx-auto px-4 py-10 flex flex-col items-center gap-4 text-center">
-        {/* Brand wordmark — visible HTML text for Google verification */}
         <p className="text-2xl font-bold tracking-tight text-foreground">
-          Recrea8
+          ReCrea8
         </p>
         <p className="text-caption text-muted-foreground max-w-xs">
-          Paste any link. Understand it. Create from it.
+          Stop wondering how they made it. ReCrea8 it.
         </p>
 
         {/* Legal links */}
@@ -32,7 +31,7 @@ export function Footer() {
         </nav>
 
         <p className="text-caption text-muted-foreground/60">
-          © {year} Recrea8. All rights reserved.
+          © {year} ReCrea8. All rights reserved.
         </p>
       </div>
     </footer>

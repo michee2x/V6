@@ -17,43 +17,43 @@ const inter = Inter({
 export const metadata: Metadata = {
   metadataBase: new URL("https://recrea8.app"),
   title: {
-    default: "Recrea8",
-    template: "%s — Recrea8",
+    default: "ReCrea8 — See something you like online? Recrea8 it.",
+    template: "%s — ReCrea8",
   },
   description:
-    "Paste any link — a video, image, or article — and get an instant AI breakdown. Then turn it into a ready-to-use creative brief in seconds.",
+    "Paste a link or upload a reference. ReCrea8 breaks it down, builds a Power Prompt, and generates your own version — right inside ReCrea8.",
   keywords: [
-    "content analysis",
-    "creative brief",
-    "AI content tool",
-    "video breakdown",
-    "content strategy",
-    "recrea8",
+    "AI recreation engine",
+    "reverse engineer design",
+    "recreate an ad",
+    "power prompt",
+    "AI content recreation",
+    "recrea8"
   ],
-  authors: [{ name: "Recrea8" }],
-  creator: "Recrea8",
+  authors: [{ name: "ReCrea8" }],
+  creator: "ReCrea8",
   openGraph: {
     type: "website",
     locale: "en_US",
     url: "https://recrea8.app",
-    siteName: "Recrea8",
-    title: "Recrea8 — Paste a link, understand it. Create from it.",
+    siteName: "ReCrea8",
+    title: "ReCrea8 — See something you like online? Recrea8 it.",
     description:
-      "Paste any link — a video, image, or article — and get an instant AI breakdown. Then turn it into a ready-to-use creative brief in seconds.",
+      "See something you like online? Paste it into ReCrea8. Get a Power Prompt, and your own customized version — generated right inside the app.",
     images: [
       {
         url: "/og-image.png",
         width: 1200,
         height: 630,
-        alt: "Recrea8 — Understand content. Create from it.",
+        alt: "ReCrea8 — Understand content. Create from it.",
       },
     ],
   },
   twitter: {
     card: "summary_large_image",
-    title: "Recrea8 — Paste a link, understand it. Create from it.",
+    title: "ReCrea8 — See something you like online? Recrea8 it.",
     description:
-      "Paste any link — a video, image, or article — and get an instant AI breakdown. Then turn it into a ready-to-use creative brief in seconds.",
+      "See something you like online? Paste it into ReCrea8. Get a Power Prompt, and your own customized version — generated right inside the app.",
     images: ["/og-image.png"],
     creator: "@recrea8",
   },

@@ -118,7 +118,7 @@ export async function PricingSection() {
             Pay for what you{" "}
             <span
               className="bg-clip-text text-transparent"
-              style={{ backgroundImage: "linear-gradient(135deg, oklch(0.65 0.2 280), oklch(0.65 0.2 340))" }}
+              style={{ backgroundImage: "linear-gradient(135deg, oklch(0.65 0.2 250), oklch(0.7 0.15 210))" }}
             >
               actually use
             </span>
@@ -185,11 +185,11 @@ export async function PricingSection() {
                 {[
                   {
                     q: "What exactly does ReCrea8 do?",
-                    a: "ReCrea8 analyzes something you found online — an image, video, URL, or article — breaks down how it was made, and turns it into a Power Prompt you can customize and generate.",
+                    a: "ReCrea8 analyzes something you found online — an image, video, URL, or article — breaks down how it was made, and turns it into a Power Prompt you can customize and Recreate.",
                   },
                   {
                     q: "Does ReCrea8 make exact copies?",
-                    a: "No. ReCrea8 recreates the creative approach — the layout, pacing, tone, and structure — not the protected brand assets themselves. Logos and trademarks are automatically detected and replaced, not reproduced. You customize the result to make it yours before you generate.",
+                    a: "No. ReCrea8 recreates the creative approach — the layout, pacing, tone, and structure — not the protected brand assets themselves. You customize the result to make it yours before you generate.",
                   },
                   {
                     q: "Do I need to know how to write AI prompts?",

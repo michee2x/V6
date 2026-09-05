@@ -7,9 +7,9 @@ import { BeforeAfterShowcase } from "@/components/features/showcase/before-after
 import { PricingSection } from "@/components/pricing/pricing-section";
 
 export const metadata = {
-  title: "Recrea8 — Paste a link, understand it. Create from it.",
+  title: "ReCrea8 — See something you like online? Recrea8 it.",
   description:
-    "Paste any link — a video, image, or article — and get an instant breakdown. Then turn it into a ready-to-use creative brief in seconds.",
+    "Paste a link or upload a reference. ReCrea8 breaks it down, builds a Power Prompt, and generates your own version — right inside ReCrea8.",
 };
 
 export default function HomePage() {
@@ -34,12 +34,10 @@ export default function HomePage() {
           </div>
           <h1 className="text-display tracking-tight text-foreground">
             See something you like online?{" "}
-            <span className="text-brand-gradient">Recrea8 it.</span>
+            <span className="text-brand-gradient">ReCrea8 it.</span>
           </h1>
           <p className="text-body-lg text-muted-foreground max-w-prose">
-            Paste a link or upload a creative. Recrea8 reverse-engineers how it
-            works, lets you make it yours, and generates the finished version in
-            minutes.
+            Paste a link or upload a creative. ReCrea8 software Analyzes it, builds a Master Prompt and lets you RECREA8 your version - Faster, Better and tailored to you
           </p>
         </div>
 
@@ -48,7 +46,7 @@ export default function HomePage() {
 
         {/* Social proof nudge */}
         <p className="text-caption text-muted-foreground">
-          No signup needed for your first run · Supports YouTube, TikTok, images &amp; articles
+          No signup needed for your first run · Supports YouTube, TikTok, images, articles & more
         </p>
       </section>
 

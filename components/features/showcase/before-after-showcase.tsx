@@ -53,8 +53,7 @@ export async function BeforeAfterShowcase() {
           See what&apos;s possible
         </h2>
         <p className="text-muted-foreground text-base max-w-prose">
-          These are real before &amp; afters — inspiration in, finished creative out.
-          Click any card to see the full creative journey.
+          These are real before & afters — inspiration in, finished creative out. creators are turning inspiration into execution using ReCrea8.
         </p>
       </div>
 

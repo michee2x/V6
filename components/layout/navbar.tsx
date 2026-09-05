@@ -26,9 +26,9 @@ export async function Navbar() {
       <div className="container flex h-14 max-w-screen-2xl items-center justify-between px-4">
         <Link href="/" className="flex items-center space-x-2">
           {/* Image logo hidden — CSS text replica shown for Google OAuth branding verification */}
-          <Image src="/logo.webp" alt="Recrea8" width={120} height={40} className="hidden" priority />
-          <span className="font-bold text-xl tracking-tight text-foreground select-none" aria-label="Recrea8">
-            Recrea<span className="text-primary">8</span>
+          <Image src="/logo.webp" alt="ReCrea8" width={120} height={40} className="hidden" priority />
+          <span className="font-bold text-xl tracking-tight text-foreground select-none" aria-label="ReCrea8">
+            ReCrea<span className="text-primary">8</span>
           </span>
         </Link>
         <div className="flex items-center space-x-3 sm:space-x-6">

@@ -41,6 +41,12 @@ export async function POST(req: Request) {
       );
     }
 
+    let finalMessage = message.trim();
+    if (type) {
+      const subject = type === "whitelabel" ? "Whitelabel / Enterprise Enquiry" : type;
+      finalMessage = `[${subject}]\n\n${finalMessage}`;
+    }
+
     // Insert into contact_messages table
     const { error } = await supabase
       .from("contact_messages")
@@ -48,9 +54,7 @@ export async function POST(req: Request) {
         {
           name: name.trim(),
           email: email.trim(),
-          message: message.trim(),
-          // store the inquiry type if the table supports it; gracefully ignored if not
-          ...(type ? { type: type.trim() } : {}),
+          message: finalMessage,
         },
       ]);
 
