@@ -75,70 +75,76 @@ export function createAnalysisStream({
   return new ReadableStream({
     async start(controller) {
       try {
-        let content: any[];
+        let finalContent: any[];
+        let modelToUse = models.gpt4o;
 
-        // ── Route 1: YouTube (or any direct video URL) → Gemini native URL ──
-        if (videoUrl && contentType === "video") {
-          content = [
-            { type: "text", text: userPrompt },
-            {
-              type: "file",
-              data: videoUrl,
-              mediaType: "video/mp4",
-            },
+        const isVideo = (videoUrl && contentType === "video") || (videoBase64 && videoMimeType);
+
+        if (isVideo) {
+          // ── STEP 1: Gemini reads the video ─────────────────────────────────
+          let geminiContent: any[];
+          
+          if (videoUrl && contentType === "video") {
+             geminiContent = [
+              { type: "text", text: "Watch this video carefully. Provide a highly detailed, scene-by-scene breakdown of everything that happens, including all visual details, text appearing on screen, and an exact transcription of all spoken audio." },
+              {
+                type: "file",
+                data: videoUrl,
+                mediaType: "video/mp4",
+              },
+            ];
+          } else {
+             geminiContent = [
+              { type: "text", text: "Watch this video carefully. Provide a highly detailed, scene-by-scene breakdown of everything that happens, including all visual details, text appearing on screen, and an exact transcription of all spoken audio." },
+              {
+                type: "file",
+                data: Buffer.from(videoBase64!, "base64"),
+                mediaType: videoMimeType as any,
+              },
+            ];
+          }
+
+          const geminiSummary = await generateText({
+            model: models.gemini,
+            messages: [{ role: "user", content: geminiContent }],
+            maxTokens: 4096,
+          });
+
+          // ── STEP 2: Pass the detailed summary + user prompt to OpenAI ─────
+          finalContent = [
+            { type: "text", text: `Here is a highly detailed, scene-by-scene transcript and visual breakdown of the video provided by a visual analysis AI:\n\n${geminiSummary.text}` },
+            { type: "text", text: userPrompt }
           ];
-        }
-
-        // ── Route 2: Inline video bytes (uploaded file or TikTok download) ──
-        else if (videoBase64 && videoMimeType) {
-          content = [
-            { type: "text", text: userPrompt },
-            {
-              type: "file",
-              data: Buffer.from(videoBase64, "base64"),
-              mediaType: videoMimeType as any,
-            },
-          ];
-        }
-
-        // ── Route 3: Image → Gemini inline vision ────────────────────────────
+        } 
         else if (image) {
+          // ── Route: Image → OpenAI inline vision ────────────────────────────
           let safeMediaType = image.mimeType || "image/jpeg";
-
-          const validTypes = [
-            "image/jpeg",
-            "image/png",
-            "image/gif",
-            "image/webp",
-          ];
-
+          const validTypes = ["image/jpeg", "image/png", "image/gif", "image/webp"];
           if (!validTypes.includes(safeMediaType)) {
             safeMediaType = "image/jpeg";
           }
-
-          content = [
+          finalContent = [
             {
               type: "image",
               image: `data:${safeMediaType};base64,${image.base64}`,
             },
             { type: "text", text: userPrompt },
           ];
-        }
-
-        // ── Route 4: Text / Article ───────────────────────────────────────────
+        } 
         else {
-          content = [{ type: "text", text: userPrompt }];
+          // ── Route: Text / Article → OpenAI ─────────────────────────────────
+          finalContent = [{ type: "text", text: userPrompt }];
         }
 
+        // ── Stream final output from OpenAI ──────────────────────────────────
         const result = await streamText({
-          model: models.gemini,
+          model: modelToUse,
           system: SYSTEM_PROMPT,
-          messages: [{ role: "user", content }],
-          maxOutputTokens: 4096,
+          messages: [{ role: "user", content: finalContent }],
+          maxTokens: 4096,
         });
 
         let fullText = "";
-
         for await (const textPart of result.textStream) {
           fullText += textPart;
           controller.enqueue(
@@ -155,19 +161,15 @@ export function createAnalysisStream({
             fullText,
           })
         );
-
         controller.close();
       } catch (err) {
-        const message =
-          err instanceof Error ? err.message : "AI stream error";
-
+        const message = err instanceof Error ? err.message : "AI stream error";
         controller.enqueue(
           encodeSSE({
             type: "error",
             message,
           })
         );
-
         controller.close();
       }
     },
