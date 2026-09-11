@@ -107,7 +107,7 @@ export function createAnalysisStream({
           const geminiSummary = await generateText({
             model: models.gemini,
             messages: [{ role: "user", content: geminiContent }],
-            maxTokens: 4096,
+          maxOutputTokens: 4096,
           });
 
           // ── STEP 2: Pass the detailed summary + user prompt to OpenAI ─────
@@ -141,7 +141,7 @@ export function createAnalysisStream({
           model: modelToUse,
           system: SYSTEM_PROMPT,
           messages: [{ role: "user", content: finalContent }],
-          maxTokens: 4096,
+          maxOutputTokens: 8192,
         });
 
         let fullText = "";
