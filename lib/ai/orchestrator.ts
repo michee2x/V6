@@ -79,10 +79,9 @@ export function createAnalysisStream({
         let modelToUse = models.gpt4o;
 
         const isVideo = (videoUrl && contentType === "video") || (videoBase64 && videoMimeType);
-        const isMedia = isVideo || !!image;
 
-        if (isMedia) {
-          // ── STEP 1: Gemini reads the media ─────────────────────────────────
+        if (isVideo) {
+          // ── STEP 1: Gemini reads the video ─────────────────────────────────
           let geminiContent: any[];
           
           if (videoUrl && contentType === "video") {
@@ -94,7 +93,7 @@ export function createAnalysisStream({
                 mediaType: "video/mp4",
               },
             ];
-          } else if (videoBase64 && videoMimeType) {
+          } else {
              geminiContent = [
               { type: "text", text: "Watch this video carefully. Provide a highly detailed, scene-by-scene breakdown of everything that happens, including all visual details, text appearing on screen, and an exact transcription of all spoken audio." },
               {
@@ -103,32 +102,33 @@ export function createAnalysisStream({
                 mediaType: videoMimeType as any,
               },
             ];
-          } else {
-             // ── Route: Image ────────────────────────────
-             let safeMediaType = image!.mimeType || "image/jpeg";
-             const validTypes = ["image/jpeg", "image/png", "image/gif", "image/webp"];
-             if (!validTypes.includes(safeMediaType)) {
-               safeMediaType = "image/jpeg";
-             }
-             geminiContent = [
-              { type: "text", text: "Examine this image carefully. Provide an extremely detailed description of everything in it. Include the overall setting, lighting, style, colors, and pay special attention to small details like clothing, accessories (e.g. necklaces, rings), facial features, and any text." },
-              {
-                type: "image",
-                image: `data:${safeMediaType};base64,${image!.base64}`,
-              },
-            ];
           }
 
           const geminiSummary = await generateText({
             model: models.gemini,
             messages: [{ role: "user", content: geminiContent }],
-            maxOutputTokens: 4096,
+            maxTokens: 4096,
           });
 
           // ── STEP 2: Pass the detailed summary + user prompt to OpenAI ─────
           finalContent = [
-            { type: "text", text: `Here is a highly detailed visual breakdown of the media provided by a visual analysis AI:\n\n${geminiSummary.text}` },
+            { type: "text", text: `Here is a highly detailed, scene-by-scene transcript and visual breakdown of the video provided by a visual analysis AI:\n\n${geminiSummary.text}` },
             { type: "text", text: userPrompt }
+          ];
+        } 
+        else if (image) {
+          // ── Route: Image → OpenAI inline vision ────────────────────────────
+          let safeMediaType = image.mimeType || "image/jpeg";
+          const validTypes = ["image/jpeg", "image/png", "image/gif", "image/webp"];
+          if (!validTypes.includes(safeMediaType)) {
+            safeMediaType = "image/jpeg";
+          }
+          finalContent = [
+            {
+              type: "image",
+              image: `data:${safeMediaType};base64,${image.base64}`,
+            },
+            { type: "text", text: userPrompt },
           ];
         } 
         else {
@@ -141,7 +141,7 @@ export function createAnalysisStream({
           model: modelToUse,
           system: SYSTEM_PROMPT,
           messages: [{ role: "user", content: finalContent }],
-          maxOutputTokens: 4096,
+          maxTokens: 4096,
         });
 
         let fullText = "";
