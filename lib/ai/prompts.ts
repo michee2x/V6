@@ -80,16 +80,16 @@ Cover all of:
 
 Be specific and analytical. This output will be used to create a Master Prompt.`,
 
-  image: `Go deep. This is the analytical layer that will power the Master Prompt.
+  image: `Do NOT summarize. This is the analytical layer that will power the Master Prompt. Imagine you are instructing a blind artist to perfectly recreate this image pixel by pixel. Perform a microscopic visual extraction.
 
 Cover all of:
 1. **Composition rules** — rule of thirds, leading lines, symmetry, negative space
 2. **Colour palette** — dominant colours, contrast, temperature, emotional associations
 3. **Lighting** — source, quality, shadows, mood created
-4. **Subject Identity & Actions** — precise demographics (race, age, gender), exact poses, clothing, and spatial positioning of all subjects.
-5. **Style references** — what design movement, photography school, or visual genre this evokes
-6. **Focal point and hierarchy** — what the eye is drawn to first and why
-7. **Why it works** — the underlying reason this image is compelling
+4. **Subject Identity & Actions** — precise demographics (race, age, gender), exact poses, and spatial positioning of all subjects.
+5. **Exhaustive Micro-Details** — List every single texture, accessory, jewelry, fabric fold, subtle anomaly, or secondary element. If it's a person, list every ring, necklace, watch, and eyewear. If it's a landscape or object, list every background element, tiny detail, and texture. Missing any small feature is a failure.
+6. **Style references** — what design movement, photography school, or visual genre this evokes
+7. **Focal point and hierarchy** — what the eye is drawn to first and why
 
 Be specific and analytical. This output will be used to create a Master Prompt.`,
 
@@ -133,7 +133,7 @@ ${content}
 const masterPromptInstructions: Record<ContentType, string> = {
   image: `You are a world-class prompt engineer and senior creative director. Your output will be used verbatim as a production brief by a designer or fed directly into an AI image generation tool. Quality and precision are non-negotiable.
 
-Using the advanced visual analysis provided, produce an exhaustive, hyper-specific MASTER PROMPT. Think of yourself as writing an art-direction document for a high-end commercial shoot — every decision must be named and justified.
+Using the advanced visual analysis provided, produce an exhaustive, hyper-specific MASTER PROMPT. Think of yourself as writing an art-direction document for a high-end commercial shoot — every decision must be named and justified. Do NOT summarize or compress details.
 
 Output ONLY a strict JSON object wrapped in a markdown code block (e.g. \`\`\`json ... \`\`\`). Do not add preamble or commentary. Follow this exact schema:
 
@@ -146,26 +146,24 @@ Output ONLY a strict JSON object wrapped in a markdown code block (e.g. \`\`\`js
     "color_palette": ["List", "Dominant", "Colors", "With", "Hex", "Values"]
   },
   "spatial_layout": {
-    "foreground": [
+    "primary_focal_subjects": [
       {
-        "type": "human | object | text | ui",
-        "demographics": "If human: exact race, age, gender. Else: null",
-        "appearance": "Wardrobe, materials, physical attributes, colors",
-        "pose": "Exact physical pose, action, and gaze direction",
-        "relative_position": "e.g. center-left, occupying 40% of frame"
+        "type": "human | object | text | ui | nature",
+        "exhaustive_appearance": "Microscopic breakdown of textures, materials, colors, and specific nuances.",
+        "micro_details_and_accessories": "List every single tiny detail attached to this subject (jewelry, specific trims, unique markings, subtle textures, text, watches, necklaces). If none, state 'None'."
       }
     ],
-    "background": [
+    "secondary_and_background_elements": [
       {
-        "type": "environment | abstract",
-        "description": "Exhaustive detail of background elements, gradients, shapes, colors"
+        "type": "environment | abstract | secondary_object",
+        "exhaustive_description": "List all background objects, environmental props, subtle anomalies, or minor elements that would usually be ignored."
       }
     ]
   },
   "design_rules": [
     "List of hard constraints — what the AI must and must not do."
   ],
-  "final_prompt": "A single, densely packed, generation-ready master prompt string (200-350 words). It MUST weave together all the precise demographics, poses, lighting, color, and technical tags into a flowing narrative paragraph. DO NOT summarize. Use advanced prompt syntax (e.g. binding adjectives directly to subjects)."
+  "final_prompt": "A single, densely packed, generation-ready master prompt string. There is NO length limit. Write as much as needed to capture 100% of the micro-details. It MUST weave together all the exhaustive appearance details, every single accessory/micro-detail, lighting, color, and background elements into a flowing narrative paragraph. DO NOT summarize. Use advanced prompt syntax."
 }`,
 
   video: `You are a world-class prompt engineer and senior creative director. Your output will be used verbatim as a production brief for an AI video generation tool. Quality and precision are non-negotiable.
@@ -202,7 +200,7 @@ Output ONLY a strict JSON object wrapped in a markdown code block (e.g. \`\`\`js
       "description": "What happens visually and aurally (e.g. Hook)"
     }
   ],
-  "final_prompt": "A single, densely packed, generation-ready master prompt string (200-350 words) for AI video tools (Runway, Sora, etc.). It MUST weave together the exact demographics, actions, camera movements, style, and tone into a flowing narrative paragraph. DO NOT summarize."
+  "final_prompt": "A single, densely packed, generation-ready master prompt string for AI video tools (Runway, Sora, etc.). There is NO length limit. Write as much as needed to capture 100% of the visual and action details. It MUST weave together the exact demographics, actions, camera movements, style, and tone into a flowing narrative paragraph. DO NOT summarize."
 }`,
 
   article: `You are a world-class prompt engineer and editorial strategist. Your output will be used verbatim as a writing brief for an AI writing tool or human writer. Quality and specificity are non-negotiable.
