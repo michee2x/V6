@@ -80,7 +80,7 @@ Cover all of:
 
 Be specific and analytical. This output will be used to create a Master Prompt.`,
 
-  image: `Do NOT summarize. This is the analytical layer that will power the Master Prompt. Imagine you are instructing a blind artist to perfectly recreate this image pixel by pixel. Perform a microscopic visual extraction.
+  image: `Do NOT summarize. This is the analytical layer that will power the Master Prompt. Imagine you are instructing a blind artist to perfectly recreate this image pixel by pixel, OR to use it creatively in synergy with a new concept (like character consistency, style transfer, structural reference, or direct manipulation). Perform a microscopic visual extraction.
 
 Cover all of:
 1. **Composition rules** — rule of thirds, leading lines, symmetry, negative space
@@ -90,6 +90,7 @@ Cover all of:
 5. **Exhaustive Micro-Details** — List every single texture, accessory, jewelry, fabric fold, subtle anomaly, or secondary element. If it's a person, list every ring, necklace, watch, and eyewear. If it's a landscape or object, list every background element, tiny detail, and texture. Missing any small feature is a failure.
 6. **Style references** — what design movement, photography school, or visual genre this evokes
 7. **Focal point and hierarchy** — what the eye is drawn to first and why
+8. **Transformation & Synergy Map** — if an image is provided alongside a user instruction, analyze how they should interact. Should the image be used for a direct manipulation (like a face swap), as a style reference, as a structural pose reference, or for character consistency in a new environment?
 
 Be specific and analytical. This output will be used to create a Master Prompt.`,
 
@@ -135,6 +136,8 @@ const masterPromptInstructions: Record<ContentType, string> = {
 
 Using the advanced visual analysis provided, produce an exhaustive, hyper-specific MASTER PROMPT. Think of yourself as writing an art-direction document for a high-end commercial shoot — every decision must be named and justified. Do NOT summarize or compress details.
 
+Crucially, if the user's intent implies a synergy between an uploaded image and a text prompt (e.g., replacing a face, style transfer, using the image as a character reference in a new scene, or structural layout), your prompt must explicitly direct the AI on how to blend them. You must clearly delineate what acts as the reference, what is being changed or generated from scratch, and what must remain untouched.
+
 Output ONLY a strict JSON object wrapped in a markdown code block (e.g. \`\`\`json ... \`\`\`). Do not add preamble or commentary. Follow this exact schema:
 
 {
@@ -160,10 +163,17 @@ Output ONLY a strict JSON object wrapped in a markdown code block (e.g. \`\`\`js
       }
     ]
   },
+  "multimodal_directives": {
+    "is_multimodal": "boolean - true if using an uploaded image as a reference alongside a text prompt.",
+    "reference_type": "How the image is used: 'direct_manipulation' (modifying the image itself), 'style_reference' (borrowing the art style), 'character_reference' (retaining the subject in a new scene), 'structural_reference' (borrowing pose/layout), or 'concept_blending'. Null if not multimodal.",
+    "image_contribution": "Exactly what the AI should extract and keep from the reference image (e.g., 'the exact face', 'the lighting and mood', 'the pose'). Null if not multimodal.",
+    "text_contribution": "What the text prompt introduces that changes or builds upon the image (e.g., 'change shirt to blue polo', 'move the character to a cyberpunk city'). Null if not multimodal.",
+    "preservation_rules": "If manipulating the original image, what MUST NOT change (e.g., 'Preserve the original background'). Null if creating a new scene."
+  },
   "design_rules": [
     "List of hard constraints — what the AI must and must not do."
   ],
-  "final_prompt": "A single, densely packed, generation-ready master prompt string. There is NO length limit. Write as much as needed to capture 100% of the micro-details. It MUST weave together all the exhaustive appearance details, every single accessory/micro-detail, lighting, color, and background elements into a flowing narrative paragraph. DO NOT summarize. Use advanced prompt syntax."
+  "final_prompt": "A single, densely packed, generation-ready master prompt string. There is NO length limit. Write as much as needed to capture 100% of the micro-details. If this is a multimodal task (using an image as a reference), you MUST explicitly start the prompt with clear directives on how to blend the image and text (e.g., what to extract from the image, what to alter, what to generate from scratch). It MUST weave together all the exhaustive appearance details, every single accessory/micro-detail, lighting, color, and background elements into a flowing narrative paragraph. DO NOT summarize. Use advanced prompt syntax."
 }`,
 
   video: `You are a world-class prompt engineer and senior creative director. Your output will be used verbatim as a production brief for an AI video generation tool. Quality and precision are non-negotiable.
