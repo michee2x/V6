@@ -15,6 +15,7 @@ import { cn } from "@/lib/utils";
 import ReactMarkdown from "react-markdown";
 import { ChatThread, Message } from "./chat-thread";
 import { OutOfCreditsModal } from "@/components/modals/out-of-credits-modal";
+import { AbilitiesMenu } from "./abilities-menu";
 
 interface BriefPanelProps {
   sessionId: string;
@@ -760,6 +761,14 @@ export function BriefPanel({ sessionId, contentType, isLoggedIn, userPlan }: Bri
                     >
                       <Paperclip className="h-4 w-4" />
                     </Button>
+                    <AbilitiesMenu 
+                      onSelect={(prompt) => {
+                        setRefinement(prompt);
+                        if (!refinementImage) {
+                          fileInputRef.current?.click();
+                        }
+                      }} 
+                    />
                     <input
                       type="file"
                       ref={fileInputRef}
