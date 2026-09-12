@@ -3,7 +3,8 @@
 import * as React from "react";
 import { Sparkles } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Button } from "@/components/ui/button";
+import { buttonVariants } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 
 export interface AbilityTemplate {
   id: string;
@@ -48,17 +49,15 @@ export function AbilitiesMenu({ onSelect }: AbilitiesMenuProps) {
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
-      <PopoverTrigger asChild>
-        <Button
-          type="button"
-          variant="ghost"
-          size="icon"
-          className="rounded-full h-9 w-9 text-muted-foreground hover:text-foreground shrink-0 ml-1"
-          aria-label="Abilities & Templates"
-          title="Abilities & Templates"
-        >
-          <Sparkles className="h-4 w-4" />
-        </Button>
+      <PopoverTrigger
+        className={cn(
+          buttonVariants({ variant: "ghost", size: "icon" }),
+          "rounded-full h-9 w-9 text-muted-foreground hover:text-foreground shrink-0 ml-1"
+        )}
+        aria-label="Abilities & Templates"
+        title="Abilities & Templates"
+      >
+        <Sparkles className="h-4 w-4" />
       </PopoverTrigger>
       <PopoverContent align="start" className="w-[320px] sm:w-[400px] p-4 shadow-xl border-border">
         <div className="flex flex-col gap-3">
