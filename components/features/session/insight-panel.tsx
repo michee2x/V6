@@ -68,7 +68,7 @@ export function InsightPanel({
   return (
     <div className="flex flex-col gap-0 overflow-y-auto flex-1">
 
-      <div className="flex flex-col gap-8 p-8 max-w-3xl w-full mx-auto">
+      <div className="flex flex-col gap-6 md:gap-8 p-4 md:p-8 max-w-3xl w-full mx-auto">
         {/* Phase 1 — Basic Insight */}
         <section>
           <div className="flex items-center gap-2 mb-3">

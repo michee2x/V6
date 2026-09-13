@@ -11,7 +11,6 @@ const steps = [
       "Find a TikTok, YouTube video, website or image you love. Paste the URL or upload it directly into Recrea8.",
     image: "/steps/step1.jpeg",
     imageAlt: "Pasting a link into the Recrea8 input form",
-    badge: "Any link works",
   },
   {
     number: "02",
@@ -20,16 +19,14 @@ const steps = [
       "Our AI reverse-engineers the content - analysing the style, composition, and structure. Then generates a detailed Master Prompt.",
     image: "/steps/step2.jpeg",
     imageAlt: "The Master Prompt JSON card view in Recrea8",
-    badge: "AI-powered analysis",
   },
   {
     number: "03",
     title: "Recrea8 it",
     description:
       "Hit Recrea8 to instantly generate your own version. Download it or keep refining.",
-    image: "/images/how-it-works-3.png",
+    image: "/steps/step3.png",
     imageAlt: "Generated image output in Recrea8",
-    badge: "Your version, instantly",
   },
 ];
 
@@ -56,12 +53,17 @@ export function HowItWorks() {
         </p>
       </div>
 
-      {/* Steps — single row */}
-      <div className="w-full grid grid-cols-1 md:grid-cols-[1fr_auto_1fr_auto_1fr] items-start gap-4 md:gap-0">
+      {/* Steps — desktop: single row with arrows | mobile: vertical stack */}
+      <div className="w-full grid grid-cols-1 md:grid-cols-[1fr_auto_1fr_auto_1fr] items-start gap-8 md:gap-0">
         {steps.map((step, idx) => (
           <React.Fragment key={step.number}>
             {/* Step card */}
             <div className="flex flex-col items-center text-center gap-4">
+              {/* Step number badge — mobile only */}
+              <span className="md:hidden inline-flex items-center justify-center w-7 h-7 rounded-full bg-primary/10 border border-primary/20 text-[11px] font-bold text-primary tabular-nums">
+                {step.number}
+              </span>
+
               {/* Image card */}
               <div className="relative w-full rounded-2xl overflow-hidden border border-border/60 bg-muted/20 shadow-xl shadow-black/10 aspect-video group">
                 {/* Ambient glow on hover */}
@@ -73,21 +75,7 @@ export function HowItWorks() {
                   fill
                   className="object-cover object-top transition-transform duration-700 group-hover:scale-[1.015]"
                   sizes="(max-width: 768px) 100vw, 33vw"
-                  onError={(e) => {
-                    (e.currentTarget as HTMLImageElement).style.display = "none";
-                  }}
                 />
-
-                {/* Placeholder */}
-                <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 text-muted-foreground/30 pointer-events-none select-none">
-                  <span className="text-5xl font-black tabular-nums">{step.number}</span>
-                  <p className="text-[11px] font-semibold uppercase tracking-widest">
-                    Screenshot coming soon
-                  </p>
-                  <code className="text-[10px] opacity-60 mt-1">
-                    public{step.image}
-                  </code>
-                </div>
 
                 {/* Inner border shine */}
                 <div className="absolute inset-0 rounded-2xl ring-1 ring-inset ring-white/5 pointer-events-none" />
@@ -102,7 +90,7 @@ export function HowItWorks() {
               </div>
             </div>
 
-            {/* Arrow connector — between cards only */}
+            {/* Arrow connector — between cards only, desktop only */}
             {idx < steps.length - 1 && (
               <div className="hidden md:flex items-center justify-center self-center px-2 mt-[-40px]">
                 <svg
@@ -119,6 +107,16 @@ export function HowItWorks() {
                     strokeLinecap="round"
                     strokeLinejoin="round"
                   />
+                </svg>
+              </div>
+            )}
+
+            {/* Vertical connector — between cards only, mobile only */}
+            {idx < steps.length - 1 && (
+              <div className="md:hidden flex flex-col items-center gap-1 py-1">
+                <div className="w-px h-6 bg-border/60" />
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" className="text-primary/40">
+                  <path d="M12 5v14M6 13l6 6 6-6" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
                 </svg>
               </div>
             )}

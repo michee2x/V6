@@ -365,7 +365,7 @@ export function BriefPanel({ sessionId, contentType, isLoggedIn, userPlan }: Bri
       <div
         className={cn(
           "flex flex-col relative h-full overflow-hidden border-r border-border transition-[width] duration-[600ms] ease-in-out",
-          isRightPanelOpen ? "w-1/2" : "w-full"
+          isRightPanelOpen ? "w-full lg:w-1/2" : "w-full"
         )}
       >
         {/* Back link + header */}
@@ -679,7 +679,7 @@ export function BriefPanel({ sessionId, contentType, isLoggedIn, userPlan }: Bri
 
         {/* Refinement input (Collapsible Chat) — fixed to bottom of LEFT pane only */}
         <div className={cn(
-          "absolute bottom-4 left-1/2 -translate-x-1/2 w-[calc(100%-2rem)] max-w-3xl bg-background/95 backdrop-blur-xl border border-border shadow-2xl rounded-2xl flex flex-col overflow-hidden z-40 transition-all duration-300",
+          "absolute bottom-2 md:bottom-4 left-1/2 -translate-x-1/2 w-[calc(100%-1rem)] md:w-[calc(100%-2rem)] max-w-3xl bg-background/95 backdrop-blur-xl border border-border shadow-2xl rounded-2xl flex flex-col overflow-hidden z-40 transition-all duration-300",
           isChatCollapsed && "shadow-lg"
         )}>
           {/* Chat header toggle bar */}
@@ -829,16 +829,29 @@ export function BriefPanel({ sessionId, contentType, isLoggedIn, userPlan }: Bri
       {/* End Left Pane */}
 
       {/* ── RIGHT PANE ─────────────────────────────────────────────────────── */}
-      {/* Always rendered on desktop but width-controlled. On mobile it's hidden entirely. */}
+      {/* Mobile: full-screen overlay when open. Desktop: side-by-side panel. */}
       <div
         className={cn(
-          "hidden lg:flex flex-col h-full bg-muted/20 overflow-hidden relative transition-[width,opacity] duration-[600ms] ease-in-out",
-          isRightPanelOpen ? "w-1/2 opacity-100" : "w-0 opacity-0 pointer-events-none"
+          "flex flex-col h-full bg-muted/20 overflow-hidden relative transition-all duration-[600ms] ease-in-out",
+          // Mobile: fixed full-screen overlay when open, hidden when closed
+          isRightPanelOpen
+            ? "fixed lg:relative inset-0 lg:inset-auto z-40 lg:z-auto w-full lg:w-1/2 opacity-100"
+            : "hidden lg:flex w-0 opacity-0 pointer-events-none"
         )}
       >
         {/* Right pane header */}
-        <div className="px-6 py-3 border-b border-border bg-background/60 backdrop-blur-sm flex items-center justify-between shrink-0">
+        <div className="px-4 md:px-6 py-3 border-b border-border bg-background flex items-center justify-between shrink-0">
           <div className="flex items-center gap-2">
+            {/* Mobile back button */}
+            <button
+              onClick={toggleRightPanel}
+              className="lg:hidden flex items-center gap-1 text-muted-foreground hover:text-foreground transition-colors mr-1"
+              aria-label="Close preview"
+            >
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M15 18l-6-6 6-6" />
+              </svg>
+            </button>
             {generationResult ? (
               <>
                 {generationResult.type === "image" && <ImageIcon className="w-4 h-4 text-primary" />}
@@ -863,10 +876,10 @@ export function BriefPanel({ sessionId, contentType, isLoggedIn, userPlan }: Bri
                 <X className="w-4 h-4" />
               </button>
             )}
-            {/* Collapse button always visible when panel is open */}
+            {/* Desktop collapse button */}
             <button
               onClick={toggleRightPanel}
-              className="text-muted-foreground hover:text-foreground transition-colors"
+              className="hidden lg:block text-muted-foreground hover:text-foreground transition-colors"
               aria-label="Collapse preview"
               title="Collapse preview"
             >
