@@ -72,11 +72,14 @@ export async function signup(formData: FormData) {
 
   const origin = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
 
+  const nextPath = (formData.get("next") as string) || "/";
+
   const { data, error } = await supabase.auth.signUp({
     email,
     password,
     options: {
       emailRedirectTo: `${origin}/auth/callback?type=signup`,
+      emailRedirectTo: `${origin}/auth/callback?type=signup&next=${encodeURIComponent(nextPath)}`,
     },
   });
 
@@ -90,6 +93,7 @@ export async function signup(formData: FormData) {
 
   revalidatePath("/", "layout");
   redirect("/login?newsignup=true");
+  redirect(`/login?newsignup=true&next=${encodeURIComponent(nextPath)}`);
 }
 
 export async function logout() {

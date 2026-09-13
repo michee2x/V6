@@ -11,6 +11,7 @@ export function VerifyEmailForm() {
   const searchParams = useSearchParams();
   const token_hash = searchParams.get("token_hash");
   const type = searchParams.get("type") || "signup";
+  const next = searchParams.get("next") || "/";
   const [isLoading, setIsLoading] = useState(false);
 
   if (!token_hash) {
@@ -27,7 +28,7 @@ export function VerifyEmailForm() {
   const handleVerify = async () => {
     setIsLoading(true);
     try {
-      await verifyEmailAction(token_hash, type);
+      await verifyEmailAction(token_hash, type, next);
     } catch (err: any) {
       // Next.js redirects throw a specific error which we should not swallow
       if (!(err && typeof err === 'object' && 'digest' in err && (err as any).digest.startsWith('NEXT_REDIRECT'))) {
@@ -46,7 +47,7 @@ export function VerifyEmailForm() {
       <h1 className="text-2xl font-bold tracking-tight mb-2">Verify Your Email</h1>
       <p className="text-sm text-muted-foreground mb-6">
         Click the button below to verify your email address and activate your account. 
-        This extra step ensures that email scanners don't accidentally expire your link.
+        This extra step ensures that email scanners don&apos;t accidentally expire your link.
       </p>
       <Button onClick={handleVerify} className="w-full" disabled={isLoading}>
         {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}

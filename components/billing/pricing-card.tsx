@@ -171,6 +171,9 @@ export function PricingCard({ plan, userId, email, autoOpenCheckout }: PricingCa
           ) : (
             <Link
               href={plan.priceId ? `/login?next=/pricing?checkout=${plan.priceId}` : "/login"}
+              href={plan.priceId 
+                ? `/login?next=${encodeURIComponent(`/#pricing?checkout=${plan.priceId}${typeof window !== "undefined" && new URLSearchParams(window.location.search).get("returnUrl") ? `&returnUrl=${encodeURIComponent(new URLSearchParams(window.location.search).get("returnUrl")!)}` : ""}`)}` 
+                : `/login${typeof window !== "undefined" && new URLSearchParams(window.location.search).get("returnUrl") ? `?next=${encodeURIComponent(new URLSearchParams(window.location.search).get("returnUrl")!)}` : ""}`}
               id={`pricing-cta-${plan.name.toLowerCase()}-login`}
               className={`
                 w-full flex items-center justify-center py-2.5 text-sm font-semibold rounded-xl transition-all duration-200 hover:scale-[1.02] active:scale-[0.98]

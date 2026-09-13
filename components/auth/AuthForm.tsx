@@ -207,6 +207,7 @@ export function AuthForm() {
 
         <TabsContent value="signup" className="space-y-4 mt-4">
           <form onSubmit={(e) => handleEmailAuth(e, "signup")} className="flex flex-col gap-4">
+            <input type="hidden" name="next" value={searchParams.get("next") ?? "/"} />
             <div className="flex flex-col gap-2">
               <Label htmlFor="signup-email">Email</Label>
               <Input

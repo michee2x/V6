@@ -39,6 +39,7 @@ export function CheckoutButton({ priceId, userId, email, planName, className, au
       setIsUpgrading(true);
       
       const urlParams = new URLSearchParams(window.location.search);
+      // returnUrl is the session page they came from — fall back to /history if not set
       const returnUrl = urlParams.get("returnUrl") || "/history";
       const separator = returnUrl.includes("?") ? "&" : "?";
       const finalUrl = `${returnUrl}${separator}upgrade_success=1`;

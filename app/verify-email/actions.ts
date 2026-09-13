@@ -3,7 +3,7 @@
 import { createClient } from "@/utils/supabase/server";
 import { redirect } from "next/navigation";
 
-export async function verifyEmailAction(token_hash: string, type: string) {
+export async function verifyEmailAction(token_hash: string, type: string, next: string = "/") {
   if (!token_hash || !type) {
     redirect("/login?error=Verification token missing");
   }
@@ -18,5 +18,7 @@ export async function verifyEmailAction(token_hash: string, type: string) {
     redirect("/login?error=Invalid or expired verification link");
   }
 
-  redirect(`/login?verified=true`);
+  // Redirect back to wherever they came from (e.g. their session), showing verified banner
+  const separator = next.includes("?") ? "&" : "?";
+  redirect(`/login${separator === "?" ? `?next=${encodeURIComponent(next)}&verified=true` : `?verified=true&next=${encodeURIComponent(next)}`}`);
 }
