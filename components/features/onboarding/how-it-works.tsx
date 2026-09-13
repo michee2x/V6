@@ -49,7 +49,8 @@ export function HowItWorks() {
           Three steps. That&apos;s it.
         </h2>
         <p className="text-body text-muted-foreground">
-          No learning curve. No prompt engineering skills needed - Just paste/upload, analyse, and ReCreate.
+          No learning curve. No prompt engineering skills needed - Just
+          paste/upload, analyse, and ReCreate.
         </p>
       </div>
 
@@ -73,7 +74,7 @@ export function HowItWorks() {
                   src={step.image}
                   alt={step.imageAlt}
                   fill
-                  className="object-cover object-top transition-transform duration-700 group-hover:scale-[1.015]"
+                  className="object-contain object-center transition-transform duration-700 group-hover:scale-[1.015]"
                   sizes="(max-width: 768px) 100vw, 33vw"
                 />
 
@@ -115,8 +116,20 @@ export function HowItWorks() {
             {idx < steps.length - 1 && (
               <div className="md:hidden flex flex-col items-center gap-1 py-1">
                 <div className="w-px h-6 bg-border/60" />
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" className="text-primary/40">
-                  <path d="M12 5v14M6 13l6 6 6-6" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+                <svg
+                  width="16"
+                  height="16"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  className="text-primary/40"
+                >
+                  <path
+                    d="M12 5v14M6 13l6 6 6-6"
+                    stroke="currentColor"
+                    strokeWidth="1.6"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
                 </svg>
               </div>
             )}
