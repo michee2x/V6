@@ -78,7 +78,6 @@ export async function signup(formData: FormData) {
     email,
     password,
     options: {
-      emailRedirectTo: `${origin}/auth/callback?type=signup`,
       emailRedirectTo: `${origin}/auth/callback?type=signup&next=${encodeURIComponent(nextPath)}`,
     },
   });
@@ -92,7 +91,6 @@ export async function signup(formData: FormData) {
   }
 
   revalidatePath("/", "layout");
-  redirect("/login?newsignup=true");
   redirect(`/login?newsignup=true&next=${encodeURIComponent(nextPath)}`);
 }
 

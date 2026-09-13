@@ -170,7 +170,6 @@ export function PricingCard({ plan, userId, email, autoOpenCheckout }: PricingCa
             </Link>
           ) : (
             <Link
-              href={plan.priceId ? `/login?next=/pricing?checkout=${plan.priceId}` : "/login"}
               href={plan.priceId 
                 ? `/login?next=${encodeURIComponent(`/#pricing?checkout=${plan.priceId}${typeof window !== "undefined" && new URLSearchParams(window.location.search).get("returnUrl") ? `&returnUrl=${encodeURIComponent(new URLSearchParams(window.location.search).get("returnUrl")!)}` : ""}`)}` 
                 : `/login${typeof window !== "undefined" && new URLSearchParams(window.location.search).get("returnUrl") ? `?next=${encodeURIComponent(new URLSearchParams(window.location.search).get("returnUrl")!)}` : ""}`}

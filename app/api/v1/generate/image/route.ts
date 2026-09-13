@@ -126,7 +126,7 @@ export async function POST(req: NextRequest) {
         const saved = await saveGeneration({
           sessionId,
           type: "image",
-          model: modelType === "imagen" ? "imagen-3.0-generate-002" : `dall-e-3 (hd)`,
+          model: "dall-e-3 (hd)",
           data: images[0].base64,
           mimeType: images[0].mimeType,
           expiresAt,

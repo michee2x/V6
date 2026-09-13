@@ -488,7 +488,6 @@ export function BriefPanel({ sessionId, contentType, isLoggedIn, userPlan }: Bri
                       </div>
                       <Link
                         id="sign-in-to-recreate-btn"
-                        href="/login"
                         href={`/login?next=${encodeURIComponent(typeof window !== "undefined" ? window.location.pathname + window.location.search : "")}`}
                         className={cn(buttonVariants({ variant: "default" }), "w-full")}
                       >

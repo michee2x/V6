@@ -1,10 +1,10 @@
-'use client';
+"use client";
 
-import { useEffect, useState } from 'react';
-import Script from 'next/script';
-import { Button } from '@/components/ui/button';
-import { createClient } from '@/utils/supabase/client';
-import { Loader2 } from 'lucide-react';
+import { useEffect, useState } from "react";
+import Script from "next/script";
+import { Button } from "@/components/ui/button";
+import { createClient } from "@/utils/supabase/client";
+import { Loader2 } from "lucide-react";
 
 interface CheckoutButtonProps {
   priceId: string;
@@ -15,7 +15,14 @@ interface CheckoutButtonProps {
   autoOpen?: boolean;
 }
 
-export function CheckoutButton({ priceId, userId, email, planName, className, autoOpen }: CheckoutButtonProps) {
+export function CheckoutButton({
+  priceId,
+  userId,
+  email,
+  planName,
+  className,
+  autoOpen,
+}: CheckoutButtonProps) {
   const [paddleInitialized, setPaddleInitialized] = useState(false);
   const [isUpgrading, setIsUpgrading] = useState(false);
   const supabase = createClient();
@@ -29,15 +36,15 @@ export function CheckoutButton({ priceId, userId, email, planName, className, au
       });
       // Clean up URL so it doesn't pop open again if they refresh
       const currentUrl = new URL(window.location.href);
-      currentUrl.searchParams.delete('checkout');
-      window.history.replaceState({}, '', currentUrl.toString());
+      currentUrl.searchParams.delete("checkout");
+      window.history.replaceState({}, "", currentUrl.toString());
     }
   }, [paddleInitialized, autoOpen, priceId, userId, email]);
 
   useEffect(() => {
     const handleCheckoutCompleted = async () => {
       setIsUpgrading(true);
-      
+
       const urlParams = new URLSearchParams(window.location.search);
       // returnUrl is the session page they came from — fall back to /history if not set
       const returnUrl = urlParams.get("returnUrl") || "/history";
@@ -49,20 +56,27 @@ export function CheckoutButton({ priceId, userId, email, planName, className, au
       const pollInterval = setInterval(async () => {
         attempts++;
         const { data } = await supabase
-          .from('users')
-          .select('plan')
-          .eq('id', userId)
+          .from("users")
+          .select("plan")
+          .eq("id", userId)
           .single();
-          
-        if ((data && data.plan !== 'free') || attempts >= 10) {
+
+        if ((data && data.plan !== "free") || attempts >= 10) {
           clearInterval(pollInterval);
           window.location.href = finalUrl;
         }
       }, 1000);
     };
 
-    window.addEventListener("paddle-checkout-completed", handleCheckoutCompleted);
-    return () => window.removeEventListener("paddle-checkout-completed", handleCheckoutCompleted);
+    window.addEventListener(
+      "paddle-checkout-completed",
+      handleCheckoutCompleted,
+    );
+    return () =>
+      window.removeEventListener(
+        "paddle-checkout-completed",
+        handleCheckoutCompleted,
+      );
   }, [userId, supabase]);
 
   return (
@@ -71,17 +85,21 @@ export function CheckoutButton({ priceId, userId, email, planName, className, au
         src="https://cdn.paddle.com/paddle/v2/paddle.js"
         onLoad={() => {
           // Initialize Paddle
-          if (typeof window !== 'undefined' && window.Paddle) {
+          if (typeof window !== "undefined" && window.Paddle) {
             window.Paddle.Environment.set(
-              process.env.NEXT_PUBLIC_PADDLE_ENV === 'sandbox' ? 'sandbox' : 'production'
+              process.env.NEXT_PUBLIC_PADDLE_ENV === "sandbox"
+                ? "sandbox"
+                : "production",
             );
-            window.Paddle.Initialize({ 
+            window.Paddle.Initialize({
               token: process.env.NEXT_PUBLIC_PADDLE_CLIENT_TOKEN!,
-              eventCallback: function(data: any) {
+              eventCallback: function (data: any) {
                 if (data.name === "checkout.completed") {
-                  window.dispatchEvent(new CustomEvent("paddle-checkout-completed"));
+                  window.dispatchEvent(
+                    new CustomEvent("paddle-checkout-completed"),
+                  );
                 }
-              }
+              },
             });
             setPaddleInitialized(true);
           }
