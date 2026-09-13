@@ -4,11 +4,10 @@ import * as React from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import {
-  Copy, Download, Wand2, CheckCheck, AlertCircle, RefreshCw, ArrowLeft, Settings2, ArrowUp, Paperclip, X, Loader2, Image as ImageIcon, Video, FileText, Undo2, Redo2, ChevronDown, ChevronUp, MessageSquare, Lock, Sparkles, LogIn, Check, PanelRightClose, PanelRightOpen
+  Copy, Download, Wand2, CheckCheck, AlertCircle, RefreshCw, ArrowLeft, ArrowUp, Paperclip, X, Loader2, Image as ImageIcon, Video, FileText, Undo2, Redo2, ChevronDown, ChevronUp, MessageSquare, Lock, Sparkles, LogIn, Check, PanelRightClose, PanelRightOpen
 } from "lucide-react";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { toast } from "sonner";
 import { useSSEStream } from "@/hooks/use-sse-stream";
 import { cn } from "@/lib/utils";
@@ -614,24 +613,35 @@ export function BriefPanel({ sessionId, contentType, isLoggedIn, userPlan }: Bri
         {/* Brief content — scrollable, isolated from right pane */}
         <div className="flex-1 flex flex-col overflow-y-auto">
           <div className="max-w-3xl w-full mx-auto pt-4 md:pt-8 px-4 md:px-8">
-            <div className="flex items-center gap-6 border-b border-border mb-6">
+            <div className="flex items-center justify-between gap-6 border-b border-border mb-6">
+              <div className="flex items-center gap-6">
+                <button
+                  onClick={() => setActiveTab("overview")}
+                  className={cn(
+                    "pb-3 text-sm font-medium transition-colors border-b-2",
+                    activeTab === "overview" ? "border-primary text-foreground" : "border-transparent text-muted-foreground hover:text-foreground"
+                  )}
+                >
+                  Overview
+                </button>
+                <button
+                  onClick={() => setActiveTab("engine")}
+                  className={cn(
+                    "pb-3 text-sm font-medium transition-colors border-b-2",
+                    activeTab === "engine" ? "border-primary text-foreground" : "border-transparent text-muted-foreground hover:text-foreground"
+                  )}
+                >
+                  Prompt Engine
+                </button>
+              </div>
+              {/* Mobile copy button */}
               <button
-                onClick={() => setActiveTab("overview")}
-                className={cn(
-                  "pb-3 text-sm font-medium transition-colors border-b-2",
-                  activeTab === "overview" ? "border-primary text-foreground" : "border-transparent text-muted-foreground hover:text-foreground"
-                )}
+                onClick={handleCopy}
+                disabled={!liveBrief}
+                className="sm:hidden pb-3 text-muted-foreground hover:text-foreground transition-colors disabled:opacity-30"
+                aria-label="Copy brief"
               >
-                Overview
-              </button>
-              <button
-                onClick={() => setActiveTab("engine")}
-                className={cn(
-                  "pb-3 text-sm font-medium transition-colors border-b-2",
-                  activeTab === "engine" ? "border-primary text-foreground" : "border-transparent text-muted-foreground hover:text-foreground"
-                )}
-              >
-                Prompt Engine
+                {copied ? <CheckCheck className="w-4 h-4 text-green-500" /> : <Copy className="w-4 h-4" />}
               </button>
             </div>
           </div>
