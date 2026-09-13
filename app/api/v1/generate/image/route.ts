@@ -103,9 +103,9 @@ export async function POST(req: NextRequest) {
     // 1. Enhance the prompt using Gemini Flash (all users)
     const enhancedPrompt = await enhanceImagePrompt(prompt);
 
-    // 2. Route generation based on plan: Free -> OpenAI, Paid -> Imagen 3
+    // 2. Route generation: Always use OpenAI for images
     const isPaidPlan = userPlan !== "free";
-    const modelType = isPaidPlan ? "imagen" : "openai";
+    const modelType = "openai";
 
     const images = await generateImageFromBrief({
       prompt: enhancedPrompt,

@@ -9,7 +9,7 @@ const steps = [
     title: "Paste or upload a Creative",
     description:
       "Find a TikTok, YouTube video, website or image you love. Paste the URL or upload it directly into Recrea8.",
-    image: "/images/how-it-works-1.png",
+    image: "/steps/step1.jpeg",
     imageAlt: "Pasting a link into the Recrea8 input form",
     badge: "Any link works",
   },
@@ -18,7 +18,7 @@ const steps = [
     title: "Get the Master Prompt",
     description:
       "Our AI reverse-engineers the content - analysing the style, composition, and structure. Then generates a detailed Master Prompt.",
-    image: "/images/how-it-works-2.png",
+    image: "/steps/step2.jpeg",
     imageAlt: "The Master Prompt JSON card view in Recrea8",
     badge: "AI-powered analysis",
   },
