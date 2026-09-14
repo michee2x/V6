@@ -4,7 +4,31 @@ import * as React from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import {
-  Copy, Download, Wand2, CheckCheck, AlertCircle, RefreshCw, ArrowLeft, ArrowUp, Paperclip, X, Loader2, Image as ImageIcon, Video, FileText, Undo2, Redo2, ChevronDown, ChevronUp, MessageSquare, Lock, Sparkles, LogIn, Check, PanelRightClose, PanelRightOpen
+  Copy,
+  Download,
+  Wand2,
+  CheckCheck,
+  AlertCircle,
+  RefreshCw,
+  ArrowLeft,
+  ArrowUp,
+  Paperclip,
+  X,
+  Loader2,
+  Image as ImageIcon,
+  Video,
+  FileText,
+  Undo2,
+  Redo2,
+  ChevronDown,
+  ChevronUp,
+  MessageSquare,
+  Lock,
+  Sparkles,
+  LogIn,
+  Check,
+  PanelRightClose,
+  PanelRightOpen,
 } from "lucide-react";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -40,10 +64,10 @@ function isPaidPlan(plan: string) {
 
 // Content-type label for UX copy
 const contentTypeLabel: Record<string, string> = {
-  image:   "image",
-  video:   "video",
+  image: "image",
+  video: "video",
   article: "document",
-  auto:    "image",
+  auto: "image",
 };
 
 type AspectRatio = "1:1" | "16:9" | "9:16" | "4:3" | "3:4";
@@ -51,20 +75,32 @@ type ImageResolution = "720p" | "1080p" | "1440p" | "2160p" | "4320p";
 
 type GenerationResult =
   | { type: "image"; images: { base64: string; mimeType: string }[] }
-  | { type: "video"; video: { url?: string; base64?: string; mimeType?: string } }
+  | {
+      type: "video";
+      video: { url?: string; base64?: string; mimeType?: string };
+    }
   | { type: "document"; document: string };
 
-export function BriefPanel({ sessionId, contentType, isLoggedIn, userPlan }: BriefPanelProps) {
+export function BriefPanel({
+  sessionId,
+  contentType,
+  isLoggedIn,
+  userPlan,
+}: BriefPanelProps) {
   const searchParams = useSearchParams();
-  const briefStream  = useSSEStream();
+  const briefStream = useSSEStream();
   const refineStream = useSSEStream();
 
   const [copied, setCopied] = React.useState(false);
   const [refinement, setRefinement] = React.useState("");
-  const [refinementImage, setRefinementImage] = React.useState<{ mimeType: string; base64: string } | null>(null);
+  const [refinementImage, setRefinementImage] = React.useState<{
+    mimeType: string;
+    base64: string;
+  } | null>(null);
   const [hastriggered, setHasTriggered] = React.useState(false);
   const [isRendering, setIsRendering] = React.useState(false);
-  const [generationResult, setGenerationResult] = React.useState<GenerationResult | null>(null);
+  const [generationResult, setGenerationResult] =
+    React.useState<GenerationResult | null>(null);
   const [showOutOfCredits, setShowOutOfCredits] = React.useState(false);
   const [aspectRatio, setAspectRatio] = React.useState<AspectRatio>("1:1");
   const [showMoreAspect, setShowMoreAspect] = React.useState(false);
@@ -73,16 +109,22 @@ export function BriefPanel({ sessionId, contentType, isLoggedIn, userPlan }: Bri
   const [chatMessages, setChatMessages] = React.useState<Message[]>([]);
   const [history, setHistory] = React.useState<string[]>([]);
   const [historyIndex, setHistoryIndex] = React.useState(-1);
-  const [changedParagraphs, setChangedParagraphs] = React.useState<Set<number>>(new Set());
+  const [changedParagraphs, setChangedParagraphs] = React.useState<Set<number>>(
+    new Set(),
+  );
   const [isChatCollapsed, setIsChatCollapsed] = React.useState(false);
-  const [activeTab, setActiveTab] = React.useState<"overview" | "engine">("overview");
+  const [activeTab, setActiveTab] = React.useState<"overview" | "engine">(
+    "overview",
+  );
 
   // Right panel visibility state:
   // "hidden"  = never shown yet (no output)
   // "sliding" = animation is playing (left shrinks, right slides in)
   // "visible" = fully open at 50/50
   // "collapsed" = user manually collapsed it with the toggle button
-  const [rightPanelState, setRightPanelState] = React.useState<"hidden" | "sliding" | "visible" | "collapsed">("hidden");
+  const [rightPanelState, setRightPanelState] = React.useState<
+    "hidden" | "sliding" | "visible" | "collapsed"
+  >("hidden");
 
   const fileInputRef = React.useRef<HTMLInputElement>(null);
 
@@ -116,17 +158,17 @@ export function BriefPanel({ sessionId, contentType, isLoggedIn, userPlan }: Bri
   React.useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.ctrlKey || e.metaKey) {
-        if (e.key === 'z' && !e.shiftKey) {
+        if (e.key === "z" && !e.shiftKey) {
           e.preventDefault();
-          setHistoryIndex(prev => Math.max(0, prev - 1));
-        } else if ((e.key === 'z' && e.shiftKey) || e.key === 'y') {
+          setHistoryIndex((prev) => Math.max(0, prev - 1));
+        } else if ((e.key === "z" && e.shiftKey) || e.key === "y") {
           e.preventDefault();
-          setHistoryIndex(prev => Math.min(history.length - 1, prev + 1));
+          setHistoryIndex((prev) => Math.min(history.length - 1, prev + 1));
         }
       }
     };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
   }, [history.length]);
 
   // Initial Master Prompt load -> history
@@ -134,9 +176,14 @@ export function BriefPanel({ sessionId, contentType, isLoggedIn, userPlan }: Bri
     if (briefStream.isDone && briefStream.text && history.length === 0) {
       setHistory([briefStream.text]);
       setHistoryIndex(0);
-      setChatMessages([{
-        id: "init", role: "assistant", content: "Your Master Prompt is ready. Refine it by telling me your subject, colours, style changes, or anything else."
-      }]);
+      setChatMessages([
+        {
+          id: "init",
+          role: "assistant",
+          content:
+            "Your Master Prompt is ready. Refine it by telling me your subject, colours, style changes, or anything else.",
+        },
+      ]);
     }
   }, [briefStream.isDone, briefStream.text, history.length]);
 
@@ -144,8 +191,8 @@ export function BriefPanel({ sessionId, contentType, isLoggedIn, userPlan }: Bri
   React.useEffect(() => {
     if (refineStream.isDone && refineStream.text) {
       const newText = refineStream.text;
-      
-      setHistory(prev => {
+
+      setHistory((prev) => {
         const currentText = prev[historyIndex] || "";
         const oldLines = currentText.split("\n\n");
         const newLines = newText.split("\n\n");
@@ -164,11 +211,13 @@ export function BriefPanel({ sessionId, contentType, isLoggedIn, userPlan }: Bri
       });
 
       const match = newText.match(/\[\[QUESTION:\s*(\{.*?\})\s*\]\]/);
-      const aiReply = match ? match[0] : "Master Prompt updated. What else would you like to change?";
+      const aiReply = match
+        ? match[0]
+        : "Master Prompt updated. What else would you like to change?";
 
-      setChatMessages(prev => [
+      setChatMessages((prev) => [
         ...prev,
-        { id: Date.now().toString(), role: "assistant", content: aiReply }
+        { id: Date.now().toString(), role: "assistant", content: aiReply },
       ]);
     }
   }, [refineStream.isDone, refineStream.text]);
@@ -183,16 +232,18 @@ export function BriefPanel({ sessionId, contentType, isLoggedIn, userPlan }: Bri
     rawBrief = refineStream.text;
   }
 
-  const liveBrief = rawBrief.replace(/\[\[QUESTION:\s*(\{.*?\})\s*\]\]/g, "").trim();
+  const liveBrief = rawBrief
+    .replace(/\[\[QUESTION:\s*(\{.*?\})\s*\]\]/g, "")
+    .trim();
   const isRefining = refineStream.isStreaming;
 
   // Access control derived state
   const effectiveType = contentType === "auto" ? "image" : contentType;
   const isVideoContent = effectiveType === "video";
-  const isVideoBocked  = isVideoContent && !canGenerateVideo(userPlan);
+  const isVideoBocked = isVideoContent && !canGenerateVideo(userPlan);
 
   // Insights back link — preserve search params
-  const params       = searchParams.toString() ? `?${searchParams.toString()}` : "";
+  const params = searchParams.toString() ? `?${searchParams.toString()}` : "";
   const insightsHref = `/session/${sessionId}${params}`;
 
   /** Copy the JSON to clipboard */
@@ -208,7 +259,10 @@ export function BriefPanel({ sessionId, contentType, isLoggedIn, userPlan }: Bri
   const exportAsJson = () => {
     const blob = new Blob([liveBrief], { type: "application/json" });
     const url = URL.createObjectURL(blob);
-    const a = document.createElement("a"); a.href = url; a.download = "master-prompt.json"; a.click();
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "master-prompt.json";
+    a.click();
     URL.revokeObjectURL(url);
     toast.success("Exported as JSON");
   };
@@ -218,21 +272,32 @@ export function BriefPanel({ sessionId, contentType, isLoggedIn, userPlan }: Bri
     try {
       const p = JSON.parse(liveBrief);
       text = p.final_prompt ?? liveBrief;
-    } catch { text = liveBrief; }
+    } catch {
+      text = liveBrief;
+    }
     const blob = new Blob([text], { type: "text/plain" });
     const url = URL.createObjectURL(blob);
-    const a = document.createElement("a"); a.href = url; a.download = "master-prompt.txt"; a.click();
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "master-prompt.txt";
+    a.click();
     URL.revokeObjectURL(url);
     toast.success("Exported as plain text");
   };
 
   const submitRefinement = (customInstruction?: string) => {
-    const instruction = typeof customInstruction === 'string' ? customInstruction.trim() : refinement.trim();
+    const instruction =
+      typeof customInstruction === "string"
+        ? customInstruction.trim()
+        : refinement.trim();
     if (!instruction || isRefining) return;
-    
+
     setRefinement("");
-    setChatMessages(prev => [...prev, { id: Date.now().toString(), role: "user", content: instruction }]);
-    
+    setChatMessages((prev) => [
+      ...prev,
+      { id: Date.now().toString(), role: "user", content: instruction },
+    ]);
+
     refineStream.reset();
     refineStream.trigger(`/api/v1/sessions/${sessionId}/refine`, {
       brief: rawBrief,
@@ -290,14 +355,19 @@ export function BriefPanel({ sessionId, contentType, isLoggedIn, userPlan }: Bri
         } else if (effectiveType === "video" && data.data.video) {
           setGenerationResult({ type: "video", video: data.data.video });
         } else if (effectiveType === "article" && data.data.document) {
-          setGenerationResult({ type: "document", document: data.data.document });
+          setGenerationResult({
+            type: "document",
+            document: data.data.document,
+          });
         }
       }
-
     } catch (err) {
       const message = err instanceof Error ? err.message : "Generation failed.";
       // Check if this is an insufficient credits error
-      if (message.toLowerCase().includes("insufficient credits") || message.toLowerCase().includes("insufficient")) {
+      if (
+        message.toLowerCase().includes("insufficient credits") ||
+        message.toLowerCase().includes("insufficient")
+      ) {
         setShowOutOfCredits(true);
       } else {
         toast.error(message);
@@ -316,10 +386,12 @@ export function BriefPanel({ sessionId, contentType, isLoggedIn, userPlan }: Bri
     }
   };
 
-  const isLoadingSkeleton = briefStream.isStreaming && briefStream.text.length === 0;
+  const isLoadingSkeleton =
+    briefStream.isStreaming && briefStream.text.length === 0;
 
   // Derived booleans for right pane
-  const isRightPanelOpen = rightPanelState === "visible" || rightPanelState === "sliding";
+  const isRightPanelOpen =
+    rightPanelState === "visible" || rightPanelState === "sliding";
   const hasEverGeneratedOrGenerating = rightPanelState !== "hidden";
 
   // ── Error state ────────────────────────────────────────────────────────────
@@ -337,14 +409,20 @@ export function BriefPanel({ sessionId, contentType, isLoggedIn, userPlan }: Bri
             className="self-start"
             onClick={() => {
               briefStream.reset();
-              briefStream.trigger(`/api/v1/sessions/${sessionId}/brief?force=true`, {});
+              briefStream.trigger(
+                `/api/v1/sessions/${sessionId}/brief?force=true`,
+                {},
+              );
             }}
           >
             <RefreshCw className="w-3.5 h-3.5 mr-1.5" />
             Retry
           </Button>
         </div>
-        <Link href={insightsHref} className="text-label text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1.5">
+        <Link
+          href={insightsHref}
+          className="text-label text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1.5"
+        >
           <ArrowLeft className="w-3.5 h-3.5" />
           Back to insights
         </Link>
@@ -354,7 +432,10 @@ export function BriefPanel({ sessionId, contentType, isLoggedIn, userPlan }: Bri
 
   // ── Main UI ────────────────────────────────────────────────────────────────
   return (
-    <div className="flex flex-row flex-1 w-full relative overflow-hidden" style={{ height: "100%" }}>
+    <div
+      className="flex flex-row flex-1 w-full relative overflow-hidden"
+      style={{ height: "100%" }}
+    >
       {/* Out-of-credits modal */}
       <OutOfCreditsModal
         open={showOutOfCredits}
@@ -365,7 +446,7 @@ export function BriefPanel({ sessionId, contentType, isLoggedIn, userPlan }: Bri
       <div
         className={cn(
           "flex flex-col relative h-full overflow-hidden border-r border-border transition-[width] duration-[600ms] ease-in-out",
-          isRightPanelOpen ? "w-full lg:w-1/2" : "w-full"
+          isRightPanelOpen ? "w-full lg:w-1/2" : "w-full",
         )}
       >
         {/* Back link + header */}
@@ -378,15 +459,17 @@ export function BriefPanel({ sessionId, contentType, isLoggedIn, userPlan }: Bri
               <ArrowLeft className="w-4 h-4 md:w-3.5 md:h-3.5" />
               <span className="hidden sm:inline">Insights</span>
             </Link>
-            <h1 className="text-h4 md:text-h3 text-foreground truncate hidden xs:block">Master Prompt</h1>
+            <h1 className="text-h4 md:text-h3 text-foreground truncate hidden xs:block">
+              Master Prompt
+            </h1>
           </div>
-          
+
           <div className="flex items-center gap-1.5 md:gap-2 shrink-0">
             <div className="hidden sm:flex items-center gap-1">
               <Button
                 variant="ghost"
                 size="sm"
-                onClick={() => setHistoryIndex(i => Math.max(0, i - 1))}
+                onClick={() => setHistoryIndex((i) => Math.max(0, i - 1))}
                 disabled={historyIndex <= 0}
                 title="Undo (Ctrl+Z)"
                 className="h-8 w-8 p-0"
@@ -396,7 +479,9 @@ export function BriefPanel({ sessionId, contentType, isLoggedIn, userPlan }: Bri
               <Button
                 variant="ghost"
                 size="sm"
-                onClick={() => setHistoryIndex(i => Math.min(history.length - 1, i + 1))}
+                onClick={() =>
+                  setHistoryIndex((i) => Math.min(history.length - 1, i + 1))
+                }
                 disabled={historyIndex >= history.length - 1}
                 title="Redo (Ctrl+Shift+Z)"
                 className="h-8 w-8 p-0"
@@ -433,9 +518,10 @@ export function BriefPanel({ sessionId, contentType, isLoggedIn, userPlan }: Bri
                 onClick={() => {
                   if (!isLoggedIn) {
                     // Redirect to login, then return here
-                    const next = typeof window !== "undefined"
-                      ? window.location.pathname + window.location.search
-                      : "";
+                    const next =
+                      typeof window !== "undefined"
+                        ? window.location.pathname + window.location.search
+                        : "";
                     window.location.href = `/login?next=${encodeURIComponent(next)}`;
                     return;
                   }
@@ -482,12 +568,16 @@ export function BriefPanel({ sessionId, contentType, isLoggedIn, userPlan }: Bri
                         <div className="flex items-start gap-2 p-3 rounded-lg bg-muted/50 border border-border">
                           <LogIn className="w-4 h-4 mt-0.5 shrink-0 text-muted-foreground" />
                           <p className="text-caption text-muted-foreground leading-snug">
-                            Sign in to unlock generation. Analysis is always free.
+                            Sign in to unlock generation. Analysis is always
+                            free.
                           </p>
                         </div>
                         <Link
                           href={`/login?next=${encodeURIComponent(typeof window !== "undefined" ? window.location.pathname + window.location.search : "")}`}
-                          className={cn(buttonVariants({ variant: "default" }), "w-full")}
+                          className={cn(
+                            buttonVariants({ variant: "default" }),
+                            "w-full",
+                          )}
                           onClick={() => setShowRecrea8Modal(false)}
                         >
                           <LogIn className="w-4 h-4 mr-2" />
@@ -505,7 +595,10 @@ export function BriefPanel({ sessionId, contentType, isLoggedIn, userPlan }: Bri
                         </div>
                         <Link
                           href={`/#pricing?returnUrl=${encodeURIComponent(typeof window !== "undefined" ? window.location.pathname + window.location.search : "")}`}
-                          className={cn(buttonVariants({ variant: "default" }), "w-full bg-gradient-to-r from-violet-600 to-fuchsia-600 hover:from-violet-500 hover:to-fuchsia-500")}
+                          className={cn(
+                            buttonVariants({ variant: "default" }),
+                            "w-full bg-gradient-to-r from-violet-600 to-fuchsia-600 hover:from-violet-500 hover:to-fuchsia-500",
+                          )}
                           onClick={() => setShowRecrea8Modal(false)}
                         >
                           <Sparkles className="w-4 h-4 mr-2" />
@@ -516,7 +609,9 @@ export function BriefPanel({ sessionId, contentType, isLoggedIn, userPlan }: Bri
                       /* Image — aspect ratio picker */
                       <>
                         <div className="flex items-center justify-between">
-                          <p className="text-label font-semibold text-foreground">Choose aspect ratio</p>
+                          <p className="text-label font-semibold text-foreground">
+                            Choose aspect ratio
+                          </p>
                           <button
                             onClick={() => setShowRecrea8Modal(false)}
                             className="text-muted-foreground hover:text-foreground transition-colors"
@@ -528,12 +623,32 @@ export function BriefPanel({ sessionId, contentType, isLoggedIn, userPlan }: Bri
 
                         {/* Ratio grid */}
                         <div className="grid grid-cols-4 gap-1.5">
-                          {([
-                            { ratio: "1:1" as AspectRatio, label: "Square", w: 28, h: 28 },
-                            { ratio: "16:9" as AspectRatio, label: "Wide", w: 36, h: 20 },
-                            { ratio: "9:16" as AspectRatio, label: "Portrait", w: 20, h: 36 },
-                            { ratio: "4:3" as AspectRatio, label: "4:3", w: 32, h: 24 },
-                          ]).map(({ ratio, label, w, h }) => (
+                          {[
+                            {
+                              ratio: "1:1" as AspectRatio,
+                              label: "Square",
+                              w: 28,
+                              h: 28,
+                            },
+                            {
+                              ratio: "16:9" as AspectRatio,
+                              label: "Wide",
+                              w: 36,
+                              h: 20,
+                            },
+                            {
+                              ratio: "9:16" as AspectRatio,
+                              label: "Portrait",
+                              w: 20,
+                              h: 36,
+                            },
+                            {
+                              ratio: "4:3" as AspectRatio,
+                              label: "4:3",
+                              w: 32,
+                              h: 24,
+                            },
+                          ].map(({ ratio, label, w, h }) => (
                             <button
                               key={ratio}
                               onClick={() => setAspectRatio(ratio)}
@@ -541,17 +656,25 @@ export function BriefPanel({ sessionId, contentType, isLoggedIn, userPlan }: Bri
                                 "flex flex-col items-center justify-center gap-1 py-2 px-1 rounded-xl border transition-all duration-150 hover:border-primary/60",
                                 aspectRatio === ratio
                                   ? "border-primary bg-primary/10 text-primary"
-                                  : "border-border bg-muted/40 text-muted-foreground"
+                                  : "border-border bg-muted/40 text-muted-foreground",
                               )}
                             >
                               <span
                                 className={cn(
                                   "rounded-[1px] border-2 transition-colors",
-                                  aspectRatio === ratio ? "border-primary" : "border-muted-foreground/50"
+                                  aspectRatio === ratio
+                                    ? "border-primary"
+                                    : "border-muted-foreground/50",
                                 )}
-                                style={{ width: w / 2.5, height: h / 2.5, display: "block" }}
+                                style={{
+                                  width: w / 2.5,
+                                  height: h / 2.5,
+                                  display: "block",
+                                }}
                               />
-                              <span className="text-[9px] font-medium leading-none">{label}</span>
+                              <span className="text-[9px] font-medium leading-none">
+                                {label}
+                              </span>
                             </button>
                           ))}
                         </div>
@@ -562,11 +685,13 @@ export function BriefPanel({ sessionId, contentType, isLoggedIn, userPlan }: Bri
                             "w-full flex items-center justify-between px-3 py-1.5 rounded-lg border text-[11px] font-medium transition-all",
                             aspectRatio === "3:4"
                               ? "border-primary bg-primary/10 text-primary"
-                              : "border-border text-muted-foreground hover:border-primary/40"
+                              : "border-border text-muted-foreground hover:border-primary/40",
                           )}
                         >
                           <span>Tall Portrait (3:4)</span>
-                          {aspectRatio === "3:4" && <Check className="w-3 h-3" />}
+                          {aspectRatio === "3:4" && (
+                            <Check className="w-3 h-3" />
+                          )}
                         </button>
 
                         <p className="text-[11px] text-muted-foreground text-center">
@@ -598,7 +723,9 @@ export function BriefPanel({ sessionId, contentType, isLoggedIn, userPlan }: Bri
                 className="h-8 w-8 p-0 hidden lg:flex"
                 onClick={toggleRightPanel}
                 title={isRightPanelOpen ? "Collapse preview" : "Expand preview"}
-                aria-label={isRightPanelOpen ? "Collapse preview" : "Expand preview"}
+                aria-label={
+                  isRightPanelOpen ? "Collapse preview" : "Expand preview"
+                }
               >
                 {isRightPanelOpen ? (
                   <PanelRightClose className="w-4 h-4" />
@@ -619,7 +746,9 @@ export function BriefPanel({ sessionId, contentType, isLoggedIn, userPlan }: Bri
                   onClick={() => setActiveTab("overview")}
                   className={cn(
                     "pb-3 text-sm font-medium transition-colors border-b-2",
-                    activeTab === "overview" ? "border-primary text-foreground" : "border-transparent text-muted-foreground hover:text-foreground"
+                    activeTab === "overview"
+                      ? "border-primary text-foreground"
+                      : "border-transparent text-muted-foreground hover:text-foreground",
                   )}
                 >
                   Overview
@@ -628,7 +757,9 @@ export function BriefPanel({ sessionId, contentType, isLoggedIn, userPlan }: Bri
                   onClick={() => setActiveTab("engine")}
                   className={cn(
                     "pb-3 text-sm font-medium transition-colors border-b-2",
-                    activeTab === "engine" ? "border-primary text-foreground" : "border-transparent text-muted-foreground hover:text-foreground"
+                    activeTab === "engine"
+                      ? "border-primary text-foreground"
+                      : "border-transparent text-muted-foreground hover:text-foreground",
                   )}
                 >
                   Prompt Engine
@@ -641,7 +772,11 @@ export function BriefPanel({ sessionId, contentType, isLoggedIn, userPlan }: Bri
                 className="sm:hidden pb-3 text-muted-foreground hover:text-foreground transition-colors disabled:opacity-30"
                 aria-label="Copy brief"
               >
-                {copied ? <CheckCheck className="w-4 h-4 text-green-500" /> : <Copy className="w-4 h-4" />}
+                {copied ? (
+                  <CheckCheck className="w-4 h-4 text-green-500" />
+                ) : (
+                  <Copy className="w-4 h-4" />
+                )}
               </button>
             </div>
           </div>
@@ -656,98 +791,119 @@ export function BriefPanel({ sessionId, contentType, isLoggedIn, userPlan }: Bri
                 <Skeleton className="h-4 w-full" />
                 <Skeleton className="h-4 w-2/3" />
               </div>
-            ) : (() => {
-              let parsedOverview = "";
-              let isJsonFormat = false;
+            ) : (
+              (() => {
+                let parsedOverview = "";
+                let isJsonFormat = false;
 
-              // Extract overview for display
-              const jsonMatch = liveBrief.match(/```json\n([\s\S]*?)(\n```)?$/);
-              if (jsonMatch) {
-                isJsonFormat = true;
-                try {
-                  const p = JSON.parse(jsonMatch[1]);
-                  if (p.overview) parsedOverview = p.overview;
-                } catch {
-                  // Fallback for streaming JSON
-                  const overviewMatch = liveBrief.match(/"overview"\s*:\s*"([^"]+)"?/);
-                  if (overviewMatch) parsedOverview = overviewMatch[1];
-                }
-              } else {
-                try {
-                  const p = JSON.parse(liveBrief);
+                // Extract overview for display
+                const jsonMatch = liveBrief.match(
+                  /```json\n([\s\S]*?)(\n```)?$/,
+                );
+                if (jsonMatch) {
                   isJsonFormat = true;
-                  if (p.overview) parsedOverview = p.overview;
-                } catch {}
-              }
-
-              // What content to show based on the tab
-              let contentToRender = liveBrief;
-              if (activeTab === "overview") {
-                if (isJsonFormat && parsedOverview) {
-                  contentToRender = parsedOverview;
-                } else if (isJsonFormat) {
-                  contentToRender = "Generating overview...";
+                  try {
+                    const p = JSON.parse(jsonMatch[1]);
+                    if (p.overview) parsedOverview = p.overview;
+                  } catch {
+                    // Fallback for streaming JSON
+                    const overviewMatch = liveBrief.match(
+                      /"overview"\s*:\s*"([^"]+)"?/,
+                    );
+                    if (overviewMatch) parsedOverview = overviewMatch[1];
+                  }
                 } else {
-                  contentToRender = liveBrief; // Fallback for old plain-text prompts
+                  try {
+                    const p = JSON.parse(liveBrief);
+                    isJsonFormat = true;
+                    if (p.overview) parsedOverview = p.overview;
+                  } catch {}
                 }
-              }
 
-              return (
-                <div className="prose prose-sm dark:prose-invert max-w-none text-body text-foreground leading-relaxed font-sans flex flex-col gap-4">
-                  {contentToRender.split("\n\n").map((para, idx) => (
-                    <div
-                      key={idx}
-                      className={cn(
-                        "transition-colors duration-1000 p-2 -mx-2 rounded-md border-l-2 border-transparent",
-                        changedParagraphs.has(idx) && "bg-amber-50 border-amber-300 ring-1 ring-amber-100 dark:bg-amber-950/30 dark:border-amber-700"
-                      )}
-                    >
-                      <ReactMarkdown>{para + (idx === contentToRender.split("\n\n").length - 1 && (briefStream.isStreaming || isRefining) ? " ▋" : "")}</ReactMarkdown>
-                    </div>
-                  ))}
-                </div>
-              );
-            })()}
+                // What content to show based on the tab
+                let contentToRender = liveBrief;
+                if (activeTab === "overview") {
+                  if (isJsonFormat && parsedOverview) {
+                    contentToRender = parsedOverview;
+                  } else if (isJsonFormat) {
+                    contentToRender = "Generating overview...";
+                  } else {
+                    contentToRender = liveBrief; // Fallback for old plain-text prompts
+                  }
+                }
+
+                return (
+                  <div className="prose prose-sm dark:prose-invert max-w-none text-body text-foreground leading-relaxed font-sans flex flex-col gap-4">
+                    {contentToRender.split("\n\n").map((para, idx) => (
+                      <div
+                        key={idx}
+                        className={cn(
+                          "transition-colors duration-1000 p-2 -mx-2 rounded-md border-l-2 border-transparent",
+                          changedParagraphs.has(idx) &&
+                            "bg-amber-50 border-amber-300 ring-1 ring-amber-100 dark:bg-amber-950/30 dark:border-amber-700",
+                        )}
+                      >
+                        <ReactMarkdown>
+                          {para +
+                            (idx === contentToRender.split("\n\n").length - 1 &&
+                            (briefStream.isStreaming || isRefining)
+                              ? " ▋"
+                              : "")}
+                        </ReactMarkdown>
+                      </div>
+                    ))}
+                  </div>
+                );
+              })()
+            )}
           </div>
         </div>
 
         {/* Refinement input (Collapsible Chat) — fixed to bottom of LEFT pane only */}
-        <div className={cn(
-          "absolute bottom-2 md:bottom-4 left-1/2 -translate-x-1/2 w-[calc(100%-1rem)] md:w-[calc(100%-2rem)] max-w-3xl bg-background/95 backdrop-blur-xl border border-border shadow-2xl rounded-2xl flex flex-col overflow-hidden z-40 transition-all duration-300",
-          isChatCollapsed && "shadow-lg"
-        )}>
+        <div
+          className={cn(
+            "absolute bottom-2 md:bottom-4 left-1/2 -translate-x-1/2 w-[calc(100%-1rem)] md:w-[calc(100%-2rem)] max-w-3xl bg-background/95 backdrop-blur-xl border border-border shadow-2xl rounded-2xl flex flex-col overflow-hidden z-40 transition-all duration-300",
+            isChatCollapsed && "shadow-lg",
+          )}
+        >
           {/* Chat header toggle bar */}
           <div
             className={cn(
               "flex items-center justify-between px-3 py-2 cursor-pointer select-none group transition-colors",
               isChatCollapsed
                 ? "bg-primary/10 hover:bg-primary/15 border-b-0"
-                : "bg-muted/40 hover:bg-muted/60 border-b border-border"
+                : "bg-muted/40 hover:bg-muted/60 border-b border-border",
             )}
-            onClick={() => setIsChatCollapsed(prev => !prev)}
+            onClick={() => setIsChatCollapsed((prev) => !prev)}
             role="button"
             aria-expanded={!isChatCollapsed}
             aria-label={isChatCollapsed ? "Expand chat" : "Collapse chat"}
             id="chat-toggle-btn"
           >
             <div className="flex items-center gap-2">
-              <MessageSquare className={cn(
-                "w-3.5 h-3.5 transition-colors",
-                isChatCollapsed ? "text-primary" : "text-muted-foreground"
-              )} />
-              <span className={cn(
-                "text-label font-medium transition-colors",
-                isChatCollapsed ? "text-primary" : "text-muted-foreground"
-              )}>
+              <MessageSquare
+                className={cn(
+                  "w-3.5 h-3.5 transition-colors",
+                  isChatCollapsed ? "text-primary" : "text-muted-foreground",
+                )}
+              />
+              <span
+                className={cn(
+                  "text-label font-medium transition-colors",
+                  isChatCollapsed ? "text-primary" : "text-muted-foreground",
+                )}
+              >
                 Chat
               </span>
               {chatMessages.length > 0 && (
-                <span className={cn(
-                  "text-[10px] font-semibold px-1.5 py-0.5 rounded-full leading-none transition-colors",
-                  isChatCollapsed
-                    ? "bg-primary text-primary-foreground"
-                    : "bg-muted text-muted-foreground"
-                )}>
+                <span
+                  className={cn(
+                    "text-[10px] font-semibold px-1.5 py-0.5 rounded-full leading-none transition-colors",
+                    isChatCollapsed
+                      ? "bg-primary text-primary-foreground"
+                      : "bg-muted text-muted-foreground",
+                  )}
+                >
                   {chatMessages.length}
                 </span>
               )}
@@ -757,10 +913,12 @@ export function BriefPanel({ sessionId, contentType, isLoggedIn, userPlan }: Bri
                 </span>
               )}
             </div>
-            <div className={cn(
-              "flex items-center gap-1 text-muted-foreground group-hover:text-foreground transition-colors",
-              isChatCollapsed && "text-primary group-hover:text-primary"
-            )}>
+            <div
+              className={cn(
+                "flex items-center gap-1 text-muted-foreground group-hover:text-foreground transition-colors",
+                isChatCollapsed && "text-primary group-hover:text-primary",
+              )}
+            >
               {isChatCollapsed ? (
                 <ChevronUp className="w-4 h-4" />
               ) : (
@@ -795,13 +953,13 @@ export function BriefPanel({ sessionId, contentType, isLoggedIn, userPlan }: Bri
                     >
                       <Paperclip className="h-4 w-4" />
                     </Button>
-                    <AbilitiesMenu 
+                    <AbilitiesMenu
                       onSelect={(prompt) => {
                         setRefinement(prompt);
                         if (!refinementImage) {
                           fileInputRef.current?.click();
                         }
-                      }} 
+                      }}
                     />
                     <input
                       type="file"
@@ -843,7 +1001,9 @@ export function BriefPanel({ sessionId, contentType, isLoggedIn, userPlan }: Bri
                   size="icon"
                   className="rounded-full shrink-0 h-9 w-9 bg-foreground text-background hover:bg-foreground/90 transition-colors disabled:opacity-30 disabled:bg-muted-foreground"
                   onClick={() => submitRefinement()}
-                  disabled={!refinement.trim() || isRefining || briefStream.isStreaming}
+                  disabled={
+                    !refinement.trim() || isRefining || briefStream.isStreaming
+                  }
                   aria-label="Send message"
                 >
                   <ArrowUp className="h-4 w-4" />
@@ -870,33 +1030,44 @@ export function BriefPanel({ sessionId, contentType, isLoggedIn, userPlan }: Bri
           // Mobile: fixed full-screen overlay when open, hidden when closed
           isRightPanelOpen
             ? "fixed lg:relative inset-0 lg:inset-auto z-40 lg:z-auto w-full lg:w-1/2 opacity-100"
-            : "hidden lg:flex w-0 opacity-0 pointer-events-none"
+            : "hidden lg:flex w-0 opacity-0 pointer-events-none",
         )}
       >
         {/* Right pane header */}
         <div className="px-4 md:px-6 py-3 border-b border-border bg-background flex items-center justify-between shrink-0">
           <div className="flex items-center gap-2">
             {/* Mobile back button */}
-            <button
+            <Button
+              variant="ghost"
+              size="sm"
               onClick={toggleRightPanel}
-              className="lg:hidden flex items-center gap-1 text-muted-foreground hover:text-foreground transition-colors mr-1"
+              className="lg:hidden flex items-center gap-1.5 font-medium text-foreground hover:bg-muted -ml-2 h-8 px-2"
               aria-label="Close preview"
             >
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M15 18l-6-6 6-6" />
-              </svg>
-            </button>
+              <ArrowLeft className="w-4 h-4" />
+              <span className="text-xs font-semibold">Back to Brief</span>
+            </Button>
             {generationResult ? (
               <>
-                {generationResult.type === "image" && <ImageIcon className="w-4 h-4 text-primary" />}
-                {generationResult.type === "video" && <Video className="w-4 h-4 text-primary" />}
-                {generationResult.type === "document" && <FileText className="w-4 h-4 text-primary" />}
-                <p className="text-label font-medium text-foreground capitalize">Generated {generationResult.type}</p>
+                {generationResult.type === "image" && (
+                  <ImageIcon className="w-4 h-4 text-primary" />
+                )}
+                {generationResult.type === "video" && (
+                  <Video className="w-4 h-4 text-primary" />
+                )}
+                {generationResult.type === "document" && (
+                  <FileText className="w-4 h-4 text-primary" />
+                )}
+                <p className="text-label font-medium text-foreground capitalize">
+                  Generated {generationResult.type}
+                </p>
               </>
             ) : (
               <>
                 <Sparkles className="w-4 h-4 text-muted-foreground" />
-                <p className="text-label font-medium text-muted-foreground">Output Preview</p>
+                <p className="text-label font-medium text-muted-foreground">
+                  Output Preview
+                </p>
               </>
             )}
           </div>
@@ -904,12 +1075,22 @@ export function BriefPanel({ sessionId, contentType, isLoggedIn, userPlan }: Bri
             {generationResult && (
               <button
                 onClick={() => setGenerationResult(null)}
-                className="text-muted-foreground hover:text-foreground transition-colors"
+                className="text-muted-foreground hover:text-foreground transition-colors p-1"
                 aria-label="Clear preview"
+                title="Clear output"
               >
                 <X className="w-4 h-4" />
               </button>
             )}
+            {/* Mobile close button */}
+            <button
+              onClick={toggleRightPanel}
+              className="lg:hidden text-muted-foreground hover:text-foreground transition-colors p-1"
+              aria-label="Close preview overlay"
+              title="Close preview"
+            >
+              <X className="w-4 h-4" />
+            </button>
             {/* Desktop collapse button */}
             <button
               onClick={toggleRightPanel}
@@ -923,7 +1104,7 @@ export function BriefPanel({ sessionId, contentType, isLoggedIn, userPlan }: Bri
         </div>
 
         {/* Right pane content — always fixed height, never grows with left scroll */}
-        <div className="flex-1 overflow-y-auto p-6 min-h-0">
+        <div className="flex-1 overflow-y-auto p-4 md:p-6 min-h-0">
           {/* Empty state — always shows above the fold when no output */}
           {!generationResult && !isRendering && (
             <div className="flex flex-col items-center justify-center h-full gap-4 text-center px-8">
@@ -931,8 +1112,13 @@ export function BriefPanel({ sessionId, contentType, isLoggedIn, userPlan }: Bri
                 <Wand2 className="w-7 h-7 text-muted-foreground/50" />
               </div>
               <div>
-                <p className="text-label font-medium text-muted-foreground">No output yet</p>
-                <p className="text-caption text-muted-foreground/60 mt-1 leading-snug">Click <strong>Recrea8</strong> to generate your asset here. You won&apos;t need to leave the page.</p>
+                <p className="text-label font-medium text-muted-foreground">
+                  No output yet
+                </p>
+                <p className="text-caption text-muted-foreground/60 mt-1 leading-snug">
+                  Click <strong>Recrea8</strong> to generate your asset here.
+                  You won&apos;t need to leave the page.
+                </p>
               </div>
             </div>
           )}
@@ -943,72 +1129,96 @@ export function BriefPanel({ sessionId, contentType, isLoggedIn, userPlan }: Bri
                 <Loader2 className="w-7 h-7 text-primary animate-spin" />
               </div>
               <div className="text-center">
-                <p className="text-label font-medium text-foreground">Generating...</p>
-                <p className="text-caption text-muted-foreground mt-1">This may take a few seconds</p>
+                <p className="text-label font-medium text-foreground">
+                  Generating...
+                </p>
+                <p className="text-caption text-muted-foreground mt-1">
+                  This may take a few seconds
+                </p>
               </div>
             </div>
           )}
 
-          {generationResult && generationResult.type === "image" && (() => {
-            const canDownload = true;
-            return (
-              <div className="flex flex-col gap-4">
-                {generationResult.images.map((img, i) => (
-                  <img
-                    key={i}
-                    src={`data:${img.mimeType};base64,${img.base64}`}
-                    alt={`Generated image ${i + 1}`}
-                    className="w-full rounded-2xl border border-border object-contain shadow-lg"
-                    draggable={canDownload}
-                  />
-                ))}
-                
-                {/* Generation Details */}
-                <div className="flex items-center justify-between mt-2">
-                  <div className="flex items-center gap-3">
-                    <div className="flex items-center gap-1.5">
-                      <ImageIcon className="w-4 h-4 text-primary" />
-                      <span className="text-sm font-medium text-foreground">Generated Image</span>
+          {generationResult &&
+            generationResult.type === "image" &&
+            (() => {
+              const canDownload = true;
+              return (
+                <div className="flex flex-col gap-4">
+                  {generationResult.images.map((img, i) => (
+                    <div
+                      key={i}
+                      className="flex justify-center w-full bg-black/5 dark:bg-black/30 rounded-2xl p-2 border border-border"
+                    >
+                      <img
+                        src={`data:${img.mimeType};base64,${img.base64}`}
+                        alt={`Generated image ${i + 1}`}
+                        className="w-full max-h-[45vh] sm:max-h-[55vh] rounded-xl object-contain shadow-md"
+                        draggable={canDownload}
+                      />
                     </div>
+                  ))}
+
+                  {/* Generation Details */}
+                  <div className="flex items-center justify-between mt-1">
+                    <div className="flex items-center gap-3">
+                      <div className="flex items-center gap-1.5">
+                        <ImageIcon className="w-4 h-4 text-primary" />
+                        <span className="text-sm font-medium text-foreground">
+                          Generated Image
+                        </span>
+                      </div>
+                    </div>
+
+                    {!isPaidPlan(userPlan) && (
+                      <span className="text-xs text-amber-600 dark:text-amber-500 font-medium">
+                        Expires in 24h
+                      </span>
+                    )}
                   </div>
+                  <a
+                    href={`data:${generationResult.images[0].mimeType};base64,${generationResult.images[0].base64}`}
+                    download={`recrea8-image.png`}
+                    className={cn(
+                      buttonVariants({ variant: "default" }),
+                      "w-full",
+                    )}
+                  >
+                    <Download className="w-4 h-4 mr-2" />
+                    Download Image
+                  </a>
 
-                  {!isPaidPlan(userPlan) && (
-                    <span className="text-xs text-amber-600 dark:text-amber-500 font-medium">
-                      Expires in 24h
-                    </span>
-                  )}
+                  <Link
+                    href={`/session/${sessionId}/output${searchParams.toString() ? `?${searchParams.toString()}` : ""}`}
+                    className={cn(
+                      buttonVariants({ variant: "outline" }),
+                      "w-full",
+                    )}
+                  >
+                    View in Output
+                  </Link>
                 </div>
-                <a
-                  href={`data:${generationResult.images[0].mimeType};base64,${generationResult.images[0].base64}`}
-                  download={`recrea8-image.png`}
-                  className={cn(buttonVariants({ variant: "default" }), "w-full")}
-                >
-                  <Download className="w-4 h-4 mr-2" />
-                  Download Image
-                </a>
-
-                <Link
-                  href={`/session/${sessionId}/output${searchParams.toString() ? `?${searchParams.toString()}` : ""}`}
-                  className={cn(buttonVariants({ variant: "outline" }), "w-full")}
-                >
-                  View in Output
-                </Link>
-              </div>
-            );
-          })()}
+              );
+            })()}
 
           {generationResult && generationResult.type === "video" && (
             <div className="flex flex-col gap-4">
               {generationResult.video.url ? (
-                <video src={generationResult.video.url} controls className="w-full rounded-2xl border border-border shadow-lg" />
+                <video
+                  src={generationResult.video.url}
+                  controls
+                  className="w-full max-h-[45vh] sm:max-h-[55vh] rounded-2xl border border-border shadow-lg"
+                />
               ) : generationResult.video.base64 ? (
                 <video
                   src={`data:${generationResult.video.mimeType ?? "video/mp4"};base64,${generationResult.video.base64}`}
                   controls
-                  className="w-full rounded-2xl border border-border shadow-lg"
+                  className="w-full max-h-[45vh] sm:max-h-[55vh] rounded-2xl border border-border shadow-lg"
                 />
               ) : (
-                <p className="text-body text-muted-foreground">Video generated successfully.</p>
+                <p className="text-body text-muted-foreground">
+                  Video generated successfully.
+                </p>
               )}
               <Link
                 href={`/session/${sessionId}/output${searchParams.toString() ? `?${searchParams.toString()}` : ""}`}

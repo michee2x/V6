@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import Script from "next/script";
 import { Button } from "@/components/ui/button";
 import { createClient } from "@/utils/supabase/client";
@@ -26,6 +26,46 @@ export function CheckoutButton({
   const [paddleInitialized, setPaddleInitialized] = useState(false);
   const [isUpgrading, setIsUpgrading] = useState(false);
   const supabase = createClient();
+
+  const initPaddle = useCallback(() => {
+    if (typeof window !== "undefined" && window.Paddle) {
+      try {
+        window.Paddle.Environment.set(
+          process.env.NEXT_PUBLIC_PADDLE_ENV === "sandbox"
+            ? "sandbox"
+            : "production",
+        );
+        window.Paddle.Initialize({
+          token: process.env.NEXT_PUBLIC_PADDLE_CLIENT_TOKEN!,
+          eventCallback: function (data: any) {
+            if (data.name === "checkout.completed") {
+              window.dispatchEvent(
+                new CustomEvent("paddle-checkout-completed"),
+              );
+            }
+          },
+        });
+        setPaddleInitialized(true);
+        return true;
+      } catch (err) {
+        console.error("Paddle initialization error:", err);
+        setPaddleInitialized(true);
+        return true;
+      }
+    }
+    return false;
+  }, []);
+
+  useEffect(() => {
+    if (!initPaddle()) {
+      const interval = setInterval(() => {
+        if (initPaddle()) {
+          clearInterval(interval);
+        }
+      }, 100);
+      return () => clearInterval(interval);
+    }
+  }, [initPaddle]);
 
   useEffect(() => {
     if (paddleInitialized && autoOpen && window.Paddle) {
@@ -84,25 +124,7 @@ export function CheckoutButton({
       <Script
         src="https://cdn.paddle.com/paddle/v2/paddle.js"
         onLoad={() => {
-          // Initialize Paddle
-          if (typeof window !== "undefined" && window.Paddle) {
-            window.Paddle.Environment.set(
-              process.env.NEXT_PUBLIC_PADDLE_ENV === "sandbox"
-                ? "sandbox"
-                : "production",
-            );
-            window.Paddle.Initialize({
-              token: process.env.NEXT_PUBLIC_PADDLE_CLIENT_TOKEN!,
-              eventCallback: function (data: any) {
-                if (data.name === "checkout.completed") {
-                  window.dispatchEvent(
-                    new CustomEvent("paddle-checkout-completed"),
-                  );
-                }
-              },
-            });
-            setPaddleInitialized(true);
-          }
+          initPaddle();
         }}
       />
       <Button
