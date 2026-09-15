@@ -79,6 +79,7 @@ export async function inpaintImageWithOpenAI(
     new Blob([processedMaskBuffer], { type: "image/png" }),
     "mask.png"
   );
+  formData.append("model", "dall-e-2");
   formData.append("prompt", prompt);
   formData.append("n", "1");
   formData.append("size", "1024x1024");
