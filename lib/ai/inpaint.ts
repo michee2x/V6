@@ -79,10 +79,11 @@ export async function inpaintImageWithOpenAI(
     new Blob([processedMaskBuffer], { type: "image/png" }),
     "mask.png"
   );
-  formData.append("model", "dall-e-2");
+  formData.append("model", "dall-e-3");
   formData.append("prompt", prompt);
   formData.append("n", "1");
   formData.append("size", "1024x1024");
+  formData.append("response_format", "b64_json");
   // Some OpenAI endpoints/proxies reject response_format for edits
   // defaulting to URL instead.
 
@@ -105,6 +106,7 @@ export async function inpaintImageWithOpenAI(
   }
 
   const data = (await response.json()) as {
+    data: { b64_json: string }[];
     data: { url?: string; b64_json?: string }[];
   };
 
@@ -112,6 +114,7 @@ export async function inpaintImageWithOpenAI(
     throw new Error("OpenAI returned no generated images.");
   }
 
+  const resultBase64 = data.data[0].b64_json;
   let resultBuffer: Buffer;
   
   if (data.data[0].b64_json) {
@@ -125,6 +128,7 @@ export async function inpaintImageWithOpenAI(
   }
 
   // 7. Crop the square image back to the original aspect ratio
+  const resultBuffer = Buffer.from(resultBase64, "base64");
 
   const scale = targetSize / squareSize;
   const originalScaledWidth = Math.round(width * scale);
