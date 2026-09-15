@@ -83,7 +83,8 @@ export async function inpaintImageWithOpenAI(
   formData.append("prompt", prompt);
   formData.append("n", "1");
   formData.append("size", "1024x1024");
-  formData.append("response_format", "b64_json");
+  // Some OpenAI endpoints/proxies reject response_format for edits
+  // defaulting to URL instead.
 
   // 6. Call OpenAI Edits API
   const response = await fetch("https://api.openai.com/v1/images/edits", {
@@ -104,17 +105,26 @@ export async function inpaintImageWithOpenAI(
   }
 
   const data = (await response.json()) as {
-    data: { b64_json: string }[];
+    data: { url?: string; b64_json?: string }[];
   };
 
   if (!data.data || data.data.length === 0) {
     throw new Error("OpenAI returned no generated images.");
   }
 
-  const resultBase64 = data.data[0].b64_json;
+  let resultBuffer: Buffer;
+  
+  if (data.data[0].b64_json) {
+    resultBuffer = Buffer.from(data.data[0].b64_json, "base64");
+  } else if (data.data[0].url) {
+    const imgRes = await fetch(data.data[0].url);
+    if (!imgRes.ok) throw new Error("Failed to download generated image.");
+    resultBuffer = Buffer.from(await imgRes.arrayBuffer());
+  } else {
+    throw new Error("No image data returned from OpenAI.");
+  }
 
   // 7. Crop the square image back to the original aspect ratio
-  const resultBuffer = Buffer.from(resultBase64, "base64");
 
   const scale = targetSize / squareSize;
   const originalScaledWidth = Math.round(width * scale);
