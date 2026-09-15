@@ -29,6 +29,7 @@ import {
   Check,
   PanelRightClose,
   PanelRightOpen,
+  Brush,
 } from "lucide-react";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -39,6 +40,7 @@ import ReactMarkdown from "react-markdown";
 import { ChatThread, Message } from "./chat-thread";
 import { OutOfCreditsModal } from "@/components/modals/out-of-credits-modal";
 import { AbilitiesMenu } from "./abilities-menu";
+import { ImageMaskEditorModal } from "@/components/features/image-editor/image-mask-editor-modal";
 
 interface BriefPanelProps {
   sessionId: string;
@@ -105,6 +107,9 @@ export function BriefPanel({
   const [aspectRatio, setAspectRatio] = React.useState<AspectRatio>("1:1");
   const [showMoreAspect, setShowMoreAspect] = React.useState(false);
   const [showRecrea8Modal, setShowRecrea8Modal] = React.useState(false);
+
+  const [editorOpen, setEditorOpen] = React.useState(false);
+  const [editingImage, setEditingImage] = React.useState<{ base64: string; mimeType: string } | null>(null);
 
   const [chatMessages, setChatMessages] = React.useState<Message[]>([]);
   const [history, setHistory] = React.useState<string[]>([]);
@@ -1187,6 +1192,30 @@ export function BriefPanel({
                     <Download className="w-4 h-4 mr-2" />
                     Download Image
                   </a>
+                  <div className="flex gap-2">
+                    <Button
+                      variant="outline"
+                      className="flex-1"
+                      onClick={() => {
+                        setEditingImage({ base64: generationResult.images[0].base64, mimeType: generationResult.images[0].mimeType });
+                        setEditorOpen(true);
+                      }}
+                    >
+                      <Brush className="w-4 h-4 mr-2" />
+                      Edit Region
+                    </Button>
+                    <a
+                      href={`data:${generationResult.images[0].mimeType};base64,${generationResult.images[0].base64}`}
+                      download={`recrea8-image.png`}
+                      className={cn(
+                        buttonVariants({ variant: "default" }),
+                        "flex-1",
+                      )}
+                    >
+                      <Download className="w-4 h-4 mr-2" />
+                      Download
+                    </a>
+                  </div>
 
                   <Link
                     href={`/session/${sessionId}/output${searchParams.toString() ? `?${searchParams.toString()}` : ""}`}
@@ -1244,6 +1273,24 @@ export function BriefPanel({
           )}
         </div>
       </div>
+
+      {editingImage && (
+        <ImageMaskEditorModal
+          isOpen={editorOpen}
+          onClose={() => setEditorOpen(false)}
+          base64Image={editingImage.base64}
+          mimeType={editingImage.mimeType}
+          sessionId={sessionId}
+          onComplete={(newImage) => {
+            // Replace the currently displayed generationResult with the newly inpainted image
+            setGenerationResult({
+              type: "image",
+              images: [newImage]
+            });
+            toast.success("Image successfully edited!");
+          }}
+        />
+      )}
     </div>
   );
 }
