@@ -87,7 +87,7 @@ export async function inpaintImageWithOpenAI(
   formData.append("prompt", prompt);
   formData.append("n", "1");
   formData.append("size", "1024x1024");
-  formData.append("response_format", "b64_json");
+  
 
   // 6. Call OpenAI Edits API
   const response = await fetch("https://api.openai.com/v1/images/edits", {
