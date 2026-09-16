@@ -40,7 +40,7 @@ export const models = {
  * Returns the gpt-image-1 image generation model.
  */
 export function getOpenAIImageModel() {
-  return openai.image("dall-e-3");
+  return openai.image("gpt-image-2.5-flare");
 }
 
 /**
