@@ -79,11 +79,9 @@ export async function inpaintImageWithOpenAI(
     new Blob([processedMaskBuffer], { type: "image/png" }),
     "mask.png"
   );
-  // NOTE: OpenAI's /v1/images/edits endpoint only supports "dall-e-2"
-  // (or "gpt-image-1", which uses a different response shape and does
-  // not accept response_format). "dall-e-3" is NOT valid here and will
-  // be rejected by the API.
-  formData.append("model", "dall-e-2");
+  // NOTE: OpenAI's /v1/images/edits endpoint requires the newer gpt-image-2.5 engines.
+  // We use gpt-image-2.5-sunburst for precision editing/inpainting.
+  formData.append("model", "gpt-image-2.5-sunburst");
   formData.append("prompt", prompt);
   formData.append("n", "1");
   formData.append("size", "1024x1024");
